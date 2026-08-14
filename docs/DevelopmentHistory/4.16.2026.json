@@ -1,0 +1,63 @@
+{
+  "date": "2026-04-16",
+  "title": "Profile tabbed UI; in-page Structure CRUD on view/edit; Main tab AJAX save to POST /api/profile/update; structure store API id + audit; Playwright structure-tab suite and local admin env defaults",
+  "summary": "Profile view and edit now use Bootstrap tabs (Main, Socio Economic, Structure, Validation Data). The Structure tab embeds a shared modal (profile_structure_crud.php) and structure-tab.js: list via GET /api/profile/{id}/structures, full CRUD via multipart POST to /api/structure/store|update|delete with image fields and remove[] arrays. Api StructureController storeApi returns { success, data: { id } } and AuditLog::record on create. Profile edit Main tab saves through form.js to POST /api/profile/update/{id} with JSON response. Playwright: profile-structure-tab.spec.ts (tabs, modal, create with PNG + assert store + table); profile-edit.spec.ts aligned with AJAX save. playwright.config.ts sets ADMIN_USER/ADMIN_PASS when CI is unset; package devDependency @types/node.",
+  "changes": [
+    {
+      "area": "App/Views/profile/view.php, App/Views/profile/form.php",
+      "items": [
+        "Tabbed layout: Main, Socio Economic, Structure, Validation Data",
+        "Structure tab includes partial profile_structure_crud.php when user has view_structure or add_structure",
+        "Inject window.profileStructureTabConfig + script structure-tab.js on view/edit when applicable"
+      ]
+    },
+    {
+      "area": "App/Views/partials/profile_structure_crud.php",
+      "items": [
+        "Bootstrap modal #profileStructureCrudModal with multipart form: owner_id, structure_tag, description, tagging_images[], structure_images[], other_details; hidden remove buckets for existing image paths"
+      ]
+    },
+    {
+      "area": "public/assets/js/profile/structure-tab.js",
+      "items": [
+        "openAdd/openView/openEdit; submitCreate/submitUpdate with FormData; refreshTable from GET /api/profile/{id}/structures",
+        "Delete confirm → POST /api/structure/delete/{id}; image lightbox integration where modal exists"
+      ]
+    },
+    {
+      "area": "public/assets/js/profile/form.js, public/assets/js/profile/view.js",
+      "items": [
+        "form.js: Main tab save via POST /api/profile/update/{id} (AJAX)",
+        "view.js: structure detail modal removed where superseded by tab; image lightbox hooks for structure tab"
+      ]
+    },
+    {
+      "area": "App/Controllers/Api/StructureController.php (and related)",
+      "items": [
+        "storeApi: multipart uploads, Structure::create, NotificationService::notifyNewStructure when applicable, AuditLog::record('structure', id, 'created')",
+        "JSON success: { success: true, data: { id } }"
+      ]
+    },
+    {
+      "area": "public/index.php",
+      "items": [
+        "GET /api/profile/{id}/structures wired to Api\\ApiController@profileStructures (JSON list for tab)"
+      ]
+    },
+    {
+      "area": "tests/e2e/profile, playwright.config.ts, package.json",
+      "items": [
+        "profile-structure-tab.spec.ts: view/edit Structure tab, Add structure modal, create with minimal PNG, assert POST /api/structure/store body and table contains new tag",
+        "profile-edit.spec.ts: persisted checks after AJAX main save",
+        "playwright.config.ts: ADMIN_USER ||= admin, ADMIN_PASS ||= admin123 when !process.env.CI",
+        "@types/node devDependency for Buffer in specs"
+      ]
+    },
+    {
+      "area": "docs (2026-04-16 pass)",
+      "items": [
+        "CHANGES.md, DEVELOPMENTGUIDE.md, API_CONTRACT.md, FRONTEND_JS_CONVENTIONS.md, AUTOMATED_FUNCTIONAL_TEST_DESIGN.md, FrameworksGuide.txt (profile structures route in API summary), README.md, this file"
+      ]
+    }
+  ]
+}

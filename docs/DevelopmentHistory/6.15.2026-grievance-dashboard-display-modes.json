@@ -1,0 +1,29 @@
+{
+  "date": "2026-06-15",
+  "title": "Grievance dashboard per-card chart/list/table customization",
+  "summary": "Each grievance dashboard card can be shown as chart, list, or table via Customize dashboard. Legacy chart/list duplicate widgets merged into single configurable cards.",
+  "changes": [
+    {
+      "area": "App/DashboardConfig.php",
+      "items": [
+        "GRIEVANCE_WIDGET_CATALOG with per-widget display options",
+        "widget_display persisted in user_dashboard_config JSON",
+        "normalizeGrievanceConfig() migrates legacy chart_status, chart_trend, chart_by_project, chart_in_progress, in_progress_levels keys"
+      ]
+    },
+    {
+      "area": "App/Controllers/GrievanceController.php + App/Views/grievance/dashboard.php",
+      "items": [
+        "Customize modal table: Show + Display as columns",
+        "Unified dg-surface-* widget containers"
+      ]
+    },
+    {
+      "area": "public/assets/js/grievance",
+      "items": [
+        "dashboard.js renders by widget_display (chart/list/table); auto table when axis count > 8",
+        "dashboard-designer.js toggles display selects"
+      ]
+    }
+  ]
+}

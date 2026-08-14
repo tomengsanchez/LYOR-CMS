@@ -1,0 +1,31 @@
+{
+  "date": "2026-08-09",
+  "title": "Docs consistency pass vs codebase",
+  "summary": "Align API_CONTRACT and ADR-0004 with live API 2FA; complete /api route index; remove orphan E2E npm scripts; document remaining spec gaps; refresh SES ERD/UML columns from migration 084; index samples; sync capability labels.",
+  "changes": [
+    {
+      "area": "docs/API",
+      "items": [
+        "docs/API_CONTRACT.md — 2FA auth, route index, validation no-op, E2E notes",
+        "docs/adr/0004-session-web-auth-bearer-api-tokens.md — API 2FA consequence"
+      ]
+    },
+    {
+      "area": "E2E cleanup",
+      "items": [
+        "package.json — remove orphan escalation/dashboard-by-category/effective-date/backup-restore-ui scripts",
+        "docs/AUTOMATED_FUNCTIONAL_TEST_DESIGN.md — Known gaps after script removal",
+        "docs/TESTING_HISTORY_PREREQUISITES.md — activity-history command"
+      ]
+    },
+    {
+      "area": "docs/SES + index",
+      "items": [
+        "docs/ERD.md §6, docs/UML_SES_IMPORT.md §6",
+        "dev-help/assets/erd-diagrams.js, ses-uml-diagrams.js",
+        "docs/DOCUMENTATION.md samples/, CAPABILITY_MATRIX.md labels",
+        "docs/changes/2026-08/CHANGES.md"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "date": "2026-07-17",
+  "summary": "Date Recorded is now required for grievance create, update, and CSV import workflows.",
+  "entries": [
+    {
+      "area": "App/Models/Grievance.php + grievance controllers",
+      "changes": [
+        "Added model-level validation requiring a valid Date Recorded date/time",
+        "Web and API create/update validate before related respondent writes",
+        "API partial updates retain a valid existing Date Recorded value when omitted"
+      ]
+    },
+    {
+      "area": "App/Views/grievance/form.php + App/GrievanceCsvImporter.php",
+      "changes": [
+        "Marked Date Recorded required and prefilled new web forms from DevClock",
+        "CSV preview rejects rows with missing or invalid date_recorded"
+      ]
+    },
+    {
+      "area": "Guidance, API artifacts, and tests",
+      "changes": [
+        "Updated help, API contract, mobile integration, CSV sample guidance, CHANGES, and Postman collection",
+        "Extended grievance create and import regression coverage",
+        "No schema migration; backup and restore remain compatible with existing nullable legacy rows"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "date": "2026-08-14",
+  "title": "Simple CMS reset",
+  "summary": "Converted PAPeR from domain-specific resettlement CMS to Simple CMS with Pages, Posts, Categories, Media. Fresh 8-migration schema; legacy migrations archived.",
+  "changes": [
+    "Archived 100 PAPeR migrations to database/migrations_legacy/",
+    "Added migrations 000-007 for auth, notifications, audit, backup, cms_pages, cms_posts, cms_categories, cms_media",
+    "Removed Profile, Structure, Grievance, Library, SES, RAP modules and related API",
+    "Added PageController, PostController, CategoryController, MediaController, PublicController",
+    "Simplified navigation, dashboard, UserController, bootstrap (no API client gate / IP blocklist)",
+    "Public routes: /p/{slug}, /blog, /blog/{slug}",
+    "Updated README, help content, CHANGES, ADR-0011, smoke tests"
+  ],
+  "migration_note": "Requires new empty database; run php cli/migrate.php"
+}

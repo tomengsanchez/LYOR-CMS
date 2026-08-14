@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Inline media upload on page and post editors",
+  "entries": [
+    {
+      "area": "Admin UX",
+      "summary": "Featured image and block builder support upload-in-place; post form adds category quick-create and tag chips."
+    },
+    {
+      "area": "API/routes",
+      "summary": "POST /admin/media/upload-json and POST /admin/categories/quick-store (CSRF check without rotate)."
+    },
+    {
+      "area": "JS",
+      "summary": "media-picker.js shared helper; blocks.js image upload + preview."
+    }
+  ]
+}

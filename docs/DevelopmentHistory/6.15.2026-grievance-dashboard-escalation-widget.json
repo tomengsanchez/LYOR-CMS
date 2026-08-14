@@ -1,0 +1,41 @@
+{
+  "date": "2026-06-15",
+  "title": "Grievance dashboard escalation widget and project-scoped config",
+  "summary": "Dashboard now shows overdue escalation/close rows from the API, scopes progress levels to the project filter, and multi-project E2E asserts dashboard API action mapping.",
+  "changes": [
+    {
+      "area": "App/Controllers/GrievanceController.php",
+      "items": [
+        "dashboard(): progressLevels via forProjectOrDefault when project filter set",
+        "lastProgressLevelId computed only for selected project; null for all-projects view",
+        "resolveLastProgressLevelId() helper"
+      ]
+    },
+    {
+      "area": "App/Views/grievance/dashboard.php + public/assets/js/grievance/dashboard.js",
+      "items": [
+        "needs_escalation widget with list link",
+        "AJAX render of needsEscalationRows with escalate/close badges"
+      ]
+    },
+    {
+      "area": "App/DashboardConfig.php",
+      "items": [
+        "needs_escalation added to GRIEVANCE_WIDGETS_DEFAULT"
+      ]
+    },
+    {
+      "area": "tests/e2e",
+      "items": [
+        "grievance-escalation-multi-project.spec.ts: dashboard API escalate/close assertions",
+        "escalation.ts: fetchGrievanceDashboard helper"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "CHANGES.md, API_CONTRACT.md, AUTOMATED_FUNCTIONAL_TEST_DESIGN.md"
+      ]
+    }
+  ]
+}

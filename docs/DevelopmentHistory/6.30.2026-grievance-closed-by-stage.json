@@ -1,0 +1,36 @@
+{
+  "date": "2026-06-30",
+  "summary": "Grievance closure denormalization (closed_at, closed_at_progress_level), dashboard closed-by-stage widget with closure-date filter, view/PDF/API closure_summary.",
+  "entries": [
+    {
+      "area": "database/migration_078_grievance_closed_at_fields.php",
+      "changes": [
+        "Added grievances.closed_at_progress_level and grievances.closed_at with dashboard index",
+        "Backfill from grievance_status_log via Grievance::backfillClosedAtFields"
+      ]
+    },
+    {
+      "area": "App/GrievanceStatusChange.php + App/Models/Grievance.php",
+      "changes": [
+        "Set closure columns on close; clear on reopen from closed",
+        "syncClosedAtFieldsForGrievance on admin effective-at edit of closed log"
+      ]
+    },
+    {
+      "area": "Grievance dashboard",
+      "changes": [
+        "Widget closed_by_stage in DashboardConfig, GrievanceDashboardStats, dashboard.js, report HTML",
+        "GrievanceDashboardFilter::sqlClosedAnd for closure-date range"
+      ]
+    },
+    {
+      "area": "API + docs",
+      "changes": [
+        "GET /api/grievance/dashboard closedByStage, closedInRangeTotal",
+        "GET /api/grievance/{id} closure_summary, closed_at fields",
+        "Help, API_CONTRACT.md, CHANGES.md, CLI test",
+        "E2E: tests/e2e/grievance/grievance-closed-by-stage.spec.ts (npm run test:e2e:grievance-closed-by-stage:fast)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "date": "2026-07-29",
+  "summary": "Socio Economic Survey (SES) zip import: flat ZIP of CSVs matched by CONTROL ID to profiles.control_number only; separate storage from Main fields; profile Socio tab with filename collapsibles, multi-row nested blocks, zip-dated version snapshots with change highlighting; System SES audit (date, uploader, projects, created/updated counts, unmatched); capabilities import_socio_economic / view_socio_economic_audit / view_socio_economic; backup via DB + uploads/socio-economic; truncate + help + Postman.",
+  "areas": [
+    {
+      "area": "database/migration_084_socio_economic.php",
+      "notes": [
+        "Tables: socio_import_batches, socio_import_batch_projects, profile_socio_sections, profile_socio_versions, profile_socio_version_sections",
+        "Grant SES capabilities to Administrator"
+      ]
+    },
+    {
+      "area": "App/SocioEconomicImporter.php + App/Models/SocioEconomic.php",
+      "notes": [
+        "Parse flat ZIP CSVs; reject nested paths and .7z",
+        "Preview/import with section+profile created/updated counts",
+        "Full socio snapshot per zip touch; diff vs previous version",
+        "Preview content-diff + clickable detail dialogs",
+        "Profile tab: show-empty-fields toggle (localStorage), clickable changed fields with previous_value",
+        "BOM strip without rewind on non-seekable ZipArchive streams (fixes Preview Request failed 200)"
+      ]
+    },
+    {
+      "area": "System UI + Profile tab",
+      "notes": [
+        "SocioEconomicController routes under /system/socio-economic",
+        "Import UI with summary and progress (public/assets/js/socio_economic/import.js)",
+        "Profile view/edit Socio tab via GET /api/profile/{id}/socio-economic and socio-tab.js"
+      ]
+    },
+    {
+      "area": "tests/e2e/socio-economic-ses.spec.ts",
+      "notes": [
+        "SES-01 empty-fields preference; SES-02 nested ZIP reject; SES-03 import+unchanged re-preview; SES-04 previous vs current modal; SES-05 API previous_value",
+        "Helpers in tests/e2e/support/ses-import.ts; npm run test:e2e:socio-economic:fast"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "date": "2026-07-22",
+  "summary": "Fix PDO restore importer so mysqldump -- comments do not skip DROP TABLE statements.",
+  "entries": [
+    {
+      "area": "cli/restore_sql_helper.php",
+      "changes": [
+        "paper_split_sql_statements skips --/# line comments and non-executable block comments",
+        "Keeps MySQL /*! versioned comments; drops MariaDB sandbox banner",
+        "paper_import_sql_file_with_pdo with clearer SQL error preview"
+      ]
+    },
+    {
+      "area": "cli/restore.php / UI / tests",
+      "changes": [
+        "Restore uses helper; Backup/Restore UI notes PDO comment handling",
+        "tests/cli/restore_sql_comment_drop_test.php"
+      ]
+    }
+  ]
+}

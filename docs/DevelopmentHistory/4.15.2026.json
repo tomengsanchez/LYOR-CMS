@@ -1,0 +1,58 @@
+{
+  "date": "2026-04-15",
+  "title": "User admin autofill off; password history LIMIT fix; profile list facets; minimum profile age 18; profile E2E coverage expansion; docs (Composer/mPDF, migration 011, seeders map, QA matrix)",
+  "summary": "PasswordPolicy::validateForUser() no longer binds LIMIT as a PDO placeholder (MySQL 1064 when the driver quotes the limit). Users add/edit form sets autocomplete hints to reduce browser/password-manager interference. Profile list: facet filters (project, field personnel, barangay, age min/max, date of invitation range, PAPSID, control number) with project-scope enforcement; same filter query keys apply to GET /api/profile/list via Profile::parseListFiltersFromRequest. Profile create/edit/import and REST store/update validate minimum age 18 (Profile::MINIMUM_PROFILE_AGE, validateMinimumAgeInput); birthday date input max on web form reflects that rule. Earlier list-only birthday range filters were removed in favor of invitation-date facets and age bounds. Profile automation now includes pending QA sections for Export/PDF and Security/Negative scenarios, plus full admin show_deleted matrix coverage (`active`, `with`, `only`). Developer docs: README setup adds composer install for mPDF; structure tree documents database/seeders/; DEVELOPMENTGUIDE notes dual migration_011* files and PdfExport; FrameworksGuide seeder list includes seed_profiles.php; CHANGES.md documents the doc pass; AUTOMATED_FUNCTIONAL_TEST_DESIGN.md now includes a QA-to-automation coverage matrix.",
+  "changes": [
+    {
+      "area": "App/PasswordPolicy.php",
+      "items": [
+        "validateForUser: use capped integer LIMIT in SQL string instead of bound ? (PDO+MySQL can emit LIMIT 'N' and SQLSTATE 1064); error message uses same effective limit"
+      ]
+    },
+    {
+      "area": "App/Views/users/form.php",
+      "items": [
+        "Form autocomplete=off; username/display/email autocomplete=off; password autocomplete=new-password; role/project selects autocomplete=off; project Select2 data-lpignore and data-1p-ignore"
+      ]
+    },
+    {
+      "area": "Profile list filtering (web + API list)",
+      "items": [
+        "App/Models/Profile.php: parseListFiltersFromRequest() for project_id, field_personnel_id, barangay, age_min/age_max, date_of_invitation_from/to, papsid, control_number; listPaginated applies facet SQL",
+        "App/Controllers/ProfileController.php: builds listFilters for index, export, and PDF list scopes; projectsForProfileFilters / fieldPersonnelForProfileFilters for dropdowns",
+        "App/Controllers/Api/ProfileController.php: listApi passes $_GET through parseListFiltersFromRequest with UserProjects::allowedProjectIds()",
+        "App/Views/profile/index.php: filter card form (GET) + show_deleted for admins"
+      ]
+    },
+    {
+      "area": "Minimum age 18 for profiles",
+      "items": [
+        "App/Models/Profile.php: MINIMUM_PROFILE_AGE = 18; validateMinimumAgeInput() for age and/or birthday",
+        "App/Controllers/ProfileController.php store/update: server-side validation before save",
+        "App/Controllers/Api/ProfileController.php storeApi/updateApi: same validation on JSON bodies",
+        "App/Views/profile/form.php: age min and birthday max attributes tied to MINIMUM_PROFILE_AGE; helper text",
+        "List UI: removed dedicated birthday-from/to filters (use invitation dates and age min/max instead)"
+      ]
+    },
+    {
+      "area": "docs/CHANGES.md, docs/DEVELOPMENTGUIDE.md, README.md, docs/FrameworksGuide.txt",
+      "items": [
+        "CHANGES + DEVELOPMENTGUIDE §6: password history LIMIT / user form autocomplete; README documentation map link for 4.15.2026.json",
+        "README: Composer/mPDF setup step; database/ tree → seeders/; composer.json in outline; setup steps renumbered",
+        "DEVELOPMENTGUIDE: composer.json in tree; §2 mPDF / PdfExport::requireLibrary(); §5 two files sharing migration 011 prefix (filename order)",
+        "FrameworksGuide: seed_profiles.php in seeder list; database/seeders/ path; Composer note for PDF"
+      ]
+    },
+    {
+      "area": "Profile Playwright automation (tests/e2e/profile, package.json, docs/AUTOMATED_FUNCTIONAL_TEST_DESIGN.md)",
+      "items": [
+        "New suite tests/e2e/profile/profile-export-pdf.spec.ts: validates admin Export/PDF controls, CSV response contract from /profile/export, and PDF payload contract from /profile/pdf",
+        "New suite tests/e2e/profile/profile-security.spec.ts: query-param tampering resilience, CSRF rejection for direct POST /profile/delete/{id} without token, and script-like input render-safety check in list rows",
+        "Updated tests/e2e/profile/profile-soft-delete.spec.ts: explicit coverage for admin show_deleted modes active/with/only in one lifecycle flow",
+        "Updated tests/e2e/support/auth.ts + tests/e2e/profile/profile-permissions.spec.ts for standard-user login path when env credentials are provided",
+        "Updated tests/e2e/profile/profile-import.spec.ts (stabilization) and package.json scripts for profile sub-suites and full regression entry point",
+        "Added '/profile' automation coverage matrix in docs/AUTOMATED_FUNCTIONAL_TEST_DESIGN.md mapping QA sections A-J to implemented spec files and pending UX/compat depth"
+      ]
+    }
+  ]
+}

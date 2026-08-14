@@ -1,0 +1,3 @@
+# Project CSV export archives must not be committed
+*
+!.gitignore

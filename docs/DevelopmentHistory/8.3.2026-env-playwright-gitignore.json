@@ -1,0 +1,20 @@
+{
+  "date": "2026-08-03",
+  "summary": "Stop tracking `.env.playwright` in git (already in `.gitignore`). Local file kept; copy from `.env.playwright.example` for new setups.",
+  "areas": [
+    {
+      "area": "Git / Playwright env",
+      "notes": [
+        "git rm --cached .env.playwright so ignore takes effect",
+        "Secrets/credentials stay local; example file remains versioned"
+      ]
+    },
+    {
+      "area": "Docs",
+      "notes": [
+        "docs/changes/2026-08/CHANGES.md",
+        "AUTOMATED_FUNCTIONAL_TEST_DESIGN notes gitignored local env file"
+      ]
+    }
+  ]
+}

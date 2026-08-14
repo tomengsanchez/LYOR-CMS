@@ -1,0 +1,18 @@
+{
+  "date": "2026-06-16",
+  "title": "Municipality and barangay codes unique per project",
+  "entries": [
+    {
+      "area": "database/migration_072_municipality_barangay_code_per_project.php",
+      "summary": "Removes global UNIQUE on municipalities.code and barangays.code; uniqueness enforced per project in application layer."
+    },
+    {
+      "area": "App/Models/Municipality.php, App/Models/Barangay.php",
+      "summary": "Validate name/code (municipality) and code (barangay) scoped to municipality_projects.project_id so different projects may reuse the same codes."
+    },
+    {
+      "area": "tests/cli/municipality_barangay_code_per_project_test.php",
+      "summary": "CLI test: same code 001 on two projects passes; duplicate within one project fails."
+    }
+  ]
+}

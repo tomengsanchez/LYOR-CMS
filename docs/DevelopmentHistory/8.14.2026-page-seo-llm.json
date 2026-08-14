@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-14",
+  "title": "Page SEO and LLM-friendly public output",
+  "entries": [
+    {
+      "area": "Database",
+      "summary": "migration_010: cms_pages featured_image_id, llm_summary, robots_noindex."
+    },
+    {
+      "area": "Admin",
+      "summary": "Pages form SEO card, LLM summary, featured image, noindex; char counters in pages/form.js."
+    },
+    {
+      "area": "Public",
+      "summary": "Open Graph, JSON-LD, meta abstract, /p/{slug}.json, /index.json, sitemap.xml, robots.txt."
+    },
+    {
+      "area": "App\\PublicSeo",
+      "summary": "Central helper for share meta, Schema.org, and machine-readable JSON documents."
+    }
+  ]
+}

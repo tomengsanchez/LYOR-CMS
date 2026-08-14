@@ -1,0 +1,35 @@
+vendor/
+storage/tmp/
+
+apache_error.log
+php_error.log
+# Application logs
+logs/*.log
+logs/*
+!logs/.htaccess
+# Local Postman scratch only; import versioned collections from docs/postman/
+/postman/*
+
+xyz/*
+
+config/database.php
+config/app.php
+
+public/uploads/*
+!public/uploads/.htaccess
+
+dbdump/*
+
+flutter_app/*
+
+sample-imports/*
+
+# Node / Playwright
+node_modules/
+playwright-report/
+test-results/
+# Documented E2E/gate run logs (not Playwright's local report folder)
+!docs/test-results/
+!docs/test-results/**
+
+.env.playwright

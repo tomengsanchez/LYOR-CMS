@@ -1,0 +1,11 @@
+{
+  "date": "2026-07-30",
+  "title": "CHANGES.md split into monthly folders",
+  "summary": "Replace monolithic docs/CHANGES.md with a TOC index plus docs/changes/YYYY-MM/CHANGES.md so edits stay light. Preserve remap/GRM docs in July file.",
+  "changes": [
+    {
+      "area": "docs",
+      "detail": "docs/CHANGES.md index; docs/changes/2026-04..07/CHANGES.md; README, MOBILE_APP_INTEGRATION, DEVELOPMENTGUIDE pointers"
+    }
+  ]
+}

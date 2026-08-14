@@ -1,0 +1,28 @@
+{
+  "date": "2026-07-31",
+  "summary": "Normalize SQL dumps before restore so MariaDB 10.11+ sandbox banners do not break the mysql-client import path on older XAMPP MariaDB.",
+  "entries": [
+    {
+      "area": "cli/backup_sql_helper.php",
+      "changes": [
+        "paper_strip_mariadb_sandbox_banner removes enable-the-sandbox-mode header",
+        "paper_sanitize_sql_dump_file reports stripped_sandbox and stripped_generated",
+        "Shared sanitize runs before both mysql-client and PDO restore"
+      ]
+    },
+    {
+      "area": "cli/restore.php",
+      "changes": [
+        "Log sanitize actions and import_path=mysql|pdo with client version",
+        "large-mode label only when --large-mode is set for mysql import progress"
+      ]
+    },
+    {
+      "area": "tests / docs / UI",
+      "changes": [
+        "tests/cli/backup_sql_generated_columns_test.php covers sandbox strip",
+        "README, DEVELOPMENTGUIDE, CHANGES, Backup/Restore UI note"
+      ]
+    }
+  ]
+}

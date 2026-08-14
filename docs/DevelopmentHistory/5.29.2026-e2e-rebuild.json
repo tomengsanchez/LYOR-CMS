@@ -1,0 +1,28 @@
+{
+  "date": "2026-05-29",
+  "title": "E2E suite rebuilt — full-system serial journey",
+  "summary": "Recreated tests/e2e from scratch after folder removal: serial full-system spec (login, dashboard, library bootstrap, profile invitation, structure GPS text, grievance, users, system pages), api-smoke, support helpers, npm scripts for headed 1200ms at http://eco.local.",
+  "changes": [
+    {
+      "area": "tests/e2e",
+      "items": [
+        "full-system.spec.ts — 12-step serial journey across major modules",
+        "api-smoke.spec.ts — session API envelope checks",
+        "support/auth.ts, global-setup.ts, bootstrap.ts, profile-structure.ts, grievance-form.ts, helpers.ts, config.ts"
+      ]
+    },
+    {
+      "area": "package.json",
+      "items": [
+        "test:e2e:full, test:e2e:full:headed:slow1200, test:e2e:api, test:e2e:all, test:e2e:seed variants"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "CHANGES.md, AUTOMATED_FUNCTIONAL_TEST_DESIGN.md quick start",
+        ".env.playwright.example"
+      ]
+    }
+  ]
+}

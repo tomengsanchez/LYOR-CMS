@@ -1,0 +1,30 @@
+{
+  "date": "2026-07-27",
+  "summary": "Align PHP and MySQL session timezone with System → General for Activity History / audit timestamps; keep grievance effective_at and date_recorded as naive business datetimes with no conversion; label header clock as Local.",
+  "areas": [
+    {
+      "area": "Core/Database.php",
+      "notes": ["SET time_zone offset on PDO connect", "refreshSessionTimezone after General save"]
+    },
+    {
+      "area": "App/UserTime.php, App/GeneralSettings.php",
+      "notes": ["Org timezone in app_settings", "formatSystem vs formatBusiness", "mysqlOffset +08:00 portable"]
+    },
+    {
+      "area": "App/AuditLog.php, HistoryController, history_sidebar, audit_trail",
+      "notes": ["Explicit created_at write", "format system times for UI/API"]
+    },
+    {
+      "area": "GrievanceStatusLog::entryForApi, Status History UI",
+      "notes": ["effective_at pass-through", "created_at system format only"]
+    },
+    {
+      "area": "layout/main.php",
+      "notes": ["Local label on nav/header clock"]
+    }
+  ],
+  "docs": ["docs/CHANGES.md", "docs/API_CONTRACT.md", "docs/DEVELOPMENTGUIDE.md", "App/Views/help/content.php", "help profile-view / grievance-view"],
+  "backup_restore": "Timezone keys live in app_settings (included in backup dump). No schema migration. Restore does not rewrite grievance effective_at / date_recorded. Re-save System → General after restore if org timezone should differ from DEFAULT UTC.",
+  "api_postman": "GET /api/history items[].created_at in org TZ; response may include timezone; regenerate Postman notes via generate-collection.cjs",
+  "grievance_effectivity_guard": "No bulk update or timezone conversion on effective_at or date_recorded; SET time_zone is session-only."
+}

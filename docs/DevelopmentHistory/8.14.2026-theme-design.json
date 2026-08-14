@@ -1,0 +1,38 @@
+{
+  "date": "2026-08-14",
+  "title": "Theme design — admin, public, auth",
+  "entries": [
+    {
+      "area": "CSS / layout",
+      "summary": "Admin theme (admin.css), public site (site.css + layout.php), auth pages (auth.css); dashboard stat cards; mobile sidebar drawer."
+    },
+    {
+      "area": "Branding",
+      "summary": "Logo on admin sidebar, login, public header; favicon; public accent color in System → General."
+    },
+    {
+      "area": "Help modal",
+      "summary": "Restored help modal markup in admin layout; help-modal.js wired for /admin/help links."
+    },
+    {
+      "area": "Public homepage",
+      "summary": "welcome/home slugs render hero + card layout on public site."
+    },
+    {
+      "area": "Public dark mode",
+      "summary": "Header toggle, theme.js (localStorage + prefers-color-scheme), dark CSS variables in site.css."
+    },
+    {
+      "area": "Admin lists",
+      "summary": "Table header styling, hover rows, compact action buttons in admin.css."
+    },
+    {
+      "area": "Admin dark mode",
+      "summary": "Per-user light/dark/system color mode in UserUiSettings and admin.css."
+    },
+    {
+      "area": "Help cleanup",
+      "summary": "Legacy PAPeR help partials archived; CMS module help stubs added."
+    }
+  ]
+}

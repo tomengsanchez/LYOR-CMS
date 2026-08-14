@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-09",
+  "title": "Database ERD documentation (docs/ERD.md)",
+  "summary": "Add Mermaid ER diagrams for the PAPeR MySQL/MariaDB schema (migrations 000–091), grouped by domain, with a table inventory and maintenance notes. Link from DEVELOPMENTGUIDE, README, FrameworksGuide, and dev-help. Documentation only.",
+  "changes": [
+    {
+      "area": "docs",
+      "items": [
+        "docs/ERD.md — overview + domain Mermaid ERDs + inventory",
+        "docs/DEVELOPMENTGUIDE.md — tree entry and §4 pointer",
+        "README.md — docs table + More detail link",
+        "docs/FrameworksGuide.txt — ERD pointer",
+        "dev-help/index.php — ERD.md link",
+        "docs/changes/2026-08/CHANGES.md + CHANGES.md August entry count"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+/* RAP mapping — drag handle for field reorder */
+.rap-drag-col {
+  width: 2rem;
+  vertical-align: middle !important;
+}
+
+.rap-drag-handle {
+  display: inline-block;
+  cursor: grab;
+  user-select: none;
+  font-size: 0.95rem;
+  letter-spacing: -0.15em;
+  line-height: 1;
+  padding: 0.25rem 0.15rem;
+  color: #6c757d;
+}
+
+.rap-drag-handle:active {
+  cursor: grabbing;
+}
+
+.rap-field-group.sortable-ghost {
+  opacity: 0.45;
+}
+
+.rap-field-group.sortable-chosen .rap-field-row {
+  background-color: rgba(13, 110, 253, 0.06);
+}
+
+#rap-reorder-status.is-saving {
+  color: #0d6efd;
+}
+
+#rap-reorder-status.is-saved {
+  color: #198754;
+}
+
+#rap-reorder-status.is-error {
+  color: #dc3545;
+}

@@ -1,0 +1,19 @@
+{
+  "date": "2026-08-09",
+  "title": "Architectural Decision Records under docs/adr",
+  "summary": "Introduce docs/adr with README process/index and Accepted ADRs 0001–0010 capturing binding stack choices (MVC, MySQL/MariaDB, auth, API envelope, external JS, capabilities, backup/restore, mobile REST, Playwright BASE_URL). Link from DEVELOPMENTGUIDE and README. Documentation only; no schema or runtime changes.",
+  "changes": [
+    {
+      "area": "docs",
+      "items": [
+        "docs/adr/README.md — status legend, template, index",
+        "docs/adr/0001–0010 — Accepted ADRs (retroactive formalization where noted)",
+        "docs/DEVELOPMENTGUIDE.md — adr/ in tree + stack pointers",
+        "README.md — docs table + More detail link",
+        "docs/changes/2026-08/CHANGES.md + CHANGES.md August entry count",
+        "docs/FrameworksGuide.txt — pointer to ADRs",
+        "dev-help/index.php — links to docs/adr/"
+      ]
+    }
+  ]
+}

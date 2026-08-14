@@ -1,0 +1,30 @@
+{
+  "date": "2026-08-14",
+  "title": "WordPress extended CMS features",
+  "entries": [
+    {
+      "area": "Comments",
+      "summary": "Public forms, moderation queue, threaded replies, honeypot, dashboard pending count."
+    },
+    {
+      "area": "Widgets",
+      "summary": "Sidebar/footer areas; search widget wired to blog listing."
+    },
+    {
+      "area": "Permalinks",
+      "summary": "Custom URL patterns; SEO/social URLs use Permalink; cross-table slug validation."
+    },
+    {
+      "area": "Block builder",
+      "summary": "JSON blocks on pages/posts; plain-text + blocks in JSON exports; post .json route."
+    },
+    {
+      "area": "Polish",
+      "summary": "Blog search, API general settings extended, E2E cms-wp-extended.spec.ts."
+    },
+    {
+      "area": "Migration",
+      "summary": "migration_013_wp_comments_widgets_blocks.php"
+    }
+  ]
+}

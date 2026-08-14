@@ -1,0 +1,12 @@
+{
+  "date": "2026-05-21",
+  "summary": "Central contacts table and read-only Contacts module. Profile and User forms are the only write paths; list links to owner edit screens.",
+  "entries": [
+    {
+      "title": "Contacts module (read-only directory)",
+      "summary": "New contacts table (entity_type profile|user), migration backfill from profiles.contacts_json, ContactService dual-write to profiles.contact_number/contacts_json, GET /contacts and GET /api/contact/list, view_contacts capability, User form contact rows.",
+      "area": "database/migration_057_contacts_table.php; migration_058_view_contacts_capability.php; App/Models/Contact.php; App/Services/ContactService.php; App/Controllers/ContactController.php; App/Controllers/Api/ContactController.php; App/Views/contacts/index.php; public/assets/js/shared/contact-rows.js; users/form; profile form; docs/API_CONTRACT.md; docs/CHANGES.md",
+      "tests": "npm run test:e2e:contacts:headed:slow1200"
+    }
+  ]
+}

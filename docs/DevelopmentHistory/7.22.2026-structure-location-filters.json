@@ -1,0 +1,20 @@
+{
+  "date": "2026-07-22",
+  "summary": "Structure list: project/municipality/barangay columns and cascading filters; Playwright coverage.",
+  "entries": [
+    {
+      "area": "App/Models/Structure.php / ListConfig",
+      "changes": [
+        "municipality_id and barangay_id list facets",
+        "project_name, municipality_name, barangay_name columns with joins/sort/search"
+      ]
+    },
+    {
+      "area": "structure/index UI + JS",
+      "changes": [
+        "Cascading municipality/barangay filter selects",
+        "tests/e2e/structure-location-filters.spec.ts"
+      ]
+    }
+  ]
+}

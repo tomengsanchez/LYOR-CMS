@@ -1,0 +1,21 @@
+.widget-drag-handle {
+    cursor: grab;
+    user-select: none;
+    color: #64748b;
+    font-size: 1.1rem;
+    letter-spacing: -0.15em;
+    padding: 0 0.25rem;
+}
+
+.widget-row--dragging {
+    opacity: 0.55;
+}
+
+.widget-row--over {
+    outline: 2px dashed var(--bs-primary, #2563eb);
+    outline-offset: 2px;
+}
+
+.widget-row[draggable="true"]:active .widget-drag-handle {
+    cursor: grabbing;
+}

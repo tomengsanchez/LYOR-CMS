@@ -1,0 +1,3 @@
+# Backup archives and restore work dirs must not be committed
+*
+!.gitignore

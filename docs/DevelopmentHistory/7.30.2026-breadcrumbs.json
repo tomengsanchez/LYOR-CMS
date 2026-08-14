@@ -1,0 +1,40 @@
+{
+  "date": "2026-07-30",
+  "summary": "Added layout breadcrumbs from App\\NavTrail so nested System/Grievance paths are visible on every page.",
+  "areas": [
+    {
+      "area": "App/NavTrail.php; App/Views/layout/main.php",
+      "notes": [
+        "Central trail map keyed by $currentPage / $helpPage mirrors nested menus",
+        "Bootstrap breadcrumb rendered above flash/content when trail has more than Home",
+        "Optional $breadcrumbs override and $breadcrumbLeaf for detail screens"
+      ]
+    },
+    {
+      "area": "App/Views/help/content.php; grievance/view; socio_economic/view; users/view; help/index.php",
+      "notes": [
+        "Overall help documents breadcrumbs and FAQ for nested orientation",
+        "Detail pages set breadcrumbLeaf where useful",
+        "Help full page sets $currentPage = help for trail"
+      ]
+    },
+    {
+      "area": "tests/e2e/system/nested-system-menu.spec.ts; tests/e2e/breadcrumbs.spec.ts; package.json",
+      "notes": [
+        "Asserts Home → System → Data tools → Backup/Restore and Live Traffic crumbs",
+        "All-pages breadcrumbs.spec.ts covers every main route + Home crumb navigation",
+        "npm run test:e2e:breadcrumbs:fast; BASE_URL configurable"
+      ]
+    }
+  ],
+  "docs": [
+    "docs/changes/2026-07/CHANGES.md",
+    "docs/CHANGES.md",
+    "docs/DevelopmentHistory/7.30.2026-breadcrumbs.json",
+    "docs/DEVELOPMENTGUIDE.md"
+  ],
+  "tests": [
+    "tests/e2e/system/nested-system-menu.spec.ts",
+    "tests/e2e/breadcrumbs.spec.ts"
+  ]
+}

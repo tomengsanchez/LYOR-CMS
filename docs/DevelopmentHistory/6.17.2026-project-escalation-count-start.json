@@ -1,0 +1,30 @@
+{
+  "date": "2026-06-17",
+  "summary": "Per-project escalation SLA day-count start (effective date vs next day) on Library project edit; GrievanceEscalation honors projects.escalation_count_start across list, calendar, and dashboard.",
+  "changes": [
+    {
+      "area": "database/migration_076_project_escalation_count_start.php",
+      "detail": "projects.escalation_count_start ENUM(effective_date, next_day) NOT NULL DEFAULT next_day; backfill existing rows"
+    },
+    {
+      "area": "App/GrievanceEscalation.php",
+      "detail": "countStartForProject(), normalizeCountStart(); daysOpen/deadlineDate/isOverdue accept project_id; overdue filters always PHP-evaluated per project"
+    },
+    {
+      "area": "App/Models/Project.php; App/Controllers/LibraryController.php; App/Views/library/form.php; App/Views/library/view.php",
+      "detail": "Edit Project UI for escalation_count_start; reset GrievanceEscalation cache on update"
+    },
+    {
+      "area": "App/GrievanceCalendar.php; App/Models/Grievance.php; App/GrievanceDashboardStats.php; App/Controllers/Api/DashboardController.php",
+      "detail": "Pass project_id into escalation helpers; unify overdue counting via GrievanceEscalation PHP path"
+    },
+    {
+      "area": "tests/cli/grievance_escalation_business_days_test.php; tests/cli/grievance_escalation_clock_test.php",
+      "detail": "effective_date vs next_day assertions"
+    },
+    {
+      "area": "docs/CHANGES.md; docs/API_CONTRACT.md; App/Views/help/content.php",
+      "detail": "Document per-project escalation count start"
+    }
+  ]
+}

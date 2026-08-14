@@ -1,0 +1,10 @@
+{
+  "date": "2026-06-16",
+  "title": "Help — AJAX large modal",
+  "entries": [
+    {
+      "area": "HelpController / layout / help-modal.js",
+      "summary": "All /help links open a large Bootstrap modal via GET /help/fragment; full /help page remains as fallback."
+    }
+  ]
+}

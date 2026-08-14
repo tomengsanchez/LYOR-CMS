@@ -1,0 +1,42 @@
+{
+  "date": "2026-07-22",
+  "summary": "P1/P2 security hardening: headers, logout CSRF, API token idle/expiry, trusted proxies, backup download POST, CSV import type checks, logs deny.",
+  "entries": [
+    {
+      "area": "Core/SecurityHeaders.php, bootstrap.php, config/app.php",
+      "changes": [
+        "Send CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, HSTS on HTTPS",
+        "Configurable via security_headers; trusted_proxies for LoginThrottle"
+      ]
+    },
+    {
+      "area": "Auth / logout",
+      "changes": [
+        "POST /logout with CSRF; account menu uses form submit",
+        "E2E auth helper posts logout with meta csrf-token"
+      ]
+    },
+    {
+      "area": "App/ApiToken.php, migration_080",
+      "changes": [
+        "Default expiry 7 days; last_used_at + idle timeout (default 72h)",
+        "Settings api_token_expiry_days and api_token_idle_minutes"
+      ]
+    },
+    {
+      "area": "Backup / Profile import / logs",
+      "changes": [
+        "Backup download is POST + CSRF",
+        "Profile CSV import validates .csv extension and MIME",
+        "logs/.htaccess Require all denied"
+      ]
+    },
+    {
+      "area": "tests/e2e/security/p1-p2-hardening.spec.ts",
+      "changes": [
+        "Playwright coverage for headers, logout CSRF, backup GET block, logs, token expiry",
+        "npm run test:e2e:security-hardening:fast"
+      ]
+    }
+  ]
+}

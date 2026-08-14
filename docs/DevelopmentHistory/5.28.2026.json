@@ -1,0 +1,57 @@
+{
+  "date": "2026-05-28",
+  "title": "Profile form order and household/location fields update",
+  "summary": "Updated the profile create/edit form layout so contact details appear immediately after Date of Invitation, and added new household/address-style inputs after the spouse field.",
+  "changes": [
+    {
+      "area": "App/Views/profile/form.php",
+      "items": [
+        "Moved the contact numbers block to render directly after the Date of Invitation input and before visit entries"
+      ]
+    },
+    {
+      "area": "App/Views/profile/form.php (after spouse field)",
+      "items": [
+        "Added new fields: Total HouseHold (number), HouseHold Number, Structure Number, House Number, Building Number, Lot & Block Number, Street Name, Village/Subd, Barangay (text), and City/Municipality"
+      ]
+    },
+    {
+      "area": "Persistence (web + API + model + schema)",
+      "items": [
+        "Added migration_059_profile_household_location_fields.php to add profiles columns: total_household, household_number, structure_number, house_number, building_number, lot_block_number, street_name, village_subd, barangay_text, city_municipality",
+        "Profile model create/update/list/all now saves and selects these fields",
+        "Web controller and API controller payload mapping now accept and persist these fields",
+        "Profile API responses now include these fields in GET/store/update results",
+        "Profile view and profile PDF now render the new household/location fields"
+      ]
+    },
+    {
+      "area": "App/Views/profile/form.php and view.php",
+      "items": [
+        "Grouped fields into Household information, Structure & property numbers, and Representative information (name + address merged)"
+      ]
+    },
+    {
+      "area": "App/Views/profile/form.php and view.php",
+      "items": [
+        "Invitation card: 1st/2nd/3rd visits and Invitation received by; placed after Representative address (Date of Invitation remains above contact details)"
+      ]
+    },
+    {
+      "area": "Representative information (profile form/view)",
+      "items": [
+        "PAPS Last/First/Middle/Suffix at top; Representative information card (name, 3 contact numbers, address) after Structure & property numbers",
+        "migration_061_profiles_representative_name.php; web/API/model persist representative name fields (distinct from PAPS profile name)"
+      ]
+    },
+    {
+      "area": "Invitation card (profile form/view/API/PDF)",
+      "items": [
+        "migration_064_profile_invitation_fields.php: RSVP, reasons, visit personnel, distribution status, visit status text",
+        "Invitation card partials with value-set selects (RSVP, Date Received, Status of Distribution)",
+        "Profile::resolveInvitationFieldsForSave(); web gatherProfileData and API buildProfilePayload merge invitation fields",
+        "API transformProfile returns invitation_* plus invitation_rsvp_label and invitation_distribution_status_label"
+      ]
+    }
+  ]
+}

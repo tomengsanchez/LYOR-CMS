@@ -1,0 +1,52 @@
+{
+  "date": "2026-05-29",
+  "title": "Main and grievance dashboard API performance",
+  "summary": "Refactored GET /api/dashboard and GET /api/grievance/dashboard to reduce redundant aggregations and heavy audit_log subqueries. Main dashboard uses entity counts with optional date filters; grievance dashboard metrics live in GrievanceDashboardStats with shared GrievanceDashboardFilter. Escalation SLA uses denormalized current_level_started_at (migration 066).",
+  "changes": [
+    {
+      "area": "App/GrievanceJsonSql.php + migration_068_grievance_json_mvi.php",
+      "items": [
+        "Multi-valued indexes on grievance_type_ids and grievance_category_ids",
+        "MEMBER OF() replaces JSON_CONTAINS in dashboard breakdowns and respondent history"
+      ]
+    },
+    {
+      "area": "App/DashboardDateRange.php + Api/DashboardController.php",
+      "items": [
+        "Optional date_from/date_to on main dashboard; profile/structure/grievance created counts from tables with JOINs",
+        "Indexed audit_log JOINs for image uploads and grievance status changes",
+        "migration_067_audit_log_dashboard_indexes.php"
+      ]
+    },
+    {
+      "area": "App/GrievanceDashboardFilter.php + App/GrievanceDashboardStats.php",
+      "items": [
+        "Shared project/date filter for all grievance dashboard queries",
+        "Single GROUP BY status for total + breakdown; preloaded progress levels for escalation row actions",
+        "Api/GrievanceController::dashboard delegates to GrievanceDashboardStats"
+      ]
+    },
+    {
+      "area": "App/Models/Grievance.php",
+      "items": [
+        "current_level_started_at column; sqlDaysOpenExceedsSla(); applyEscalationClock on status/level change",
+        "migration_066_grievance_current_level_started_at.php"
+      ]
+    },
+    {
+      "area": "tests",
+      "items": [
+        "tests/cli/dashboard_date_range_test.php",
+        "tests/cli/grievance_dashboard_filter_test.php",
+        "tests/cli/grievance_escalation_clock_test.php",
+        "api-smoke.spec.ts: grievance dashboard envelope + main dashboard date filter"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "CHANGES.md, API_CONTRACT.md updated for both dashboard endpoints"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "date": "2026-05-07",
+  "summary": "Updates Library navigation submenu labels and adds Municipality CRUD with Name, Code, Description plus persisted project linkage.",
+  "areas": [
+    {
+      "area": "App/Views/layout/main.php",
+      "notes": [
+        "Top navigation Library dropdown now lists Project, Municipality, and Brgy",
+        "Sidebar Library submenu now lists Project, Municipality, and Brgy",
+        "Municipality submenu now links to /library/municipalities"
+      ]
+    },
+    {
+      "area": "App/Controllers/MunicipalityController.php; App/Views/library/municipalities/*; App/Models/Municipality.php; public/index.php",
+      "notes": [
+        "Added Municipality web CRUD routes and pages",
+        "Municipality form fields: name, code, description",
+        "Municipality form includes searchable Projects dropdown (after code) and persists selected linkage",
+        "Municipality list/detail display linked project(s)",
+        "Added model validation for unique municipality name and code"
+      ]
+    },
+    {
+      "area": "database/migration_052_municipalities_code_description.php",
+      "notes": [
+        "Adds municipalities.code (required, unique) and municipalities.description",
+        "Backfills code for existing rows as MUN-####"
+      ]
+    },
+    {
+      "area": "database/migration_053_municipality_projects_link.php",
+      "notes": [
+        "Adds municipality_projects junction table",
+        "Persists municipality to project links with FK constraints and cascade deletes"
+      ]
+    },
+    {
+      "area": "cli/truncate_fresh_install.php",
+      "notes": [
+        "Fresh-install truncate now clears municipalities, barangays, project_affected_barangays, and municipality_projects",
+        "Prevents stale municipality data from surviving reset runs"
+      ]
+    },
+    {
+      "area": "App/Views/library/form.php; App/Controllers/LibraryController.php",
+      "notes": [
+        "Removed affected municipality/barangay fields from Library create/edit forms",
+        "Project view still displays affected areas",
+        "Controller now preserves existing affected areas when create/edit forms do not post area fields"
+      ]
+    }
+  ],
+  "docs": [
+    "docs/CHANGES.md",
+    "docs/DEVELOPMENTGUIDE.md",
+    "docs/DevelopmentHistory/5.7.2026-library-submenu.json",
+    "dev-help/index.php"
+  ],
+  "tests": [
+    "tests/e2e/library/municipality-crud.spec.ts"
+  ]
+}

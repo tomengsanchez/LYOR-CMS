@@ -1,0 +1,20 @@
+.profile-structure-tag-select2-dropdown .select2-results__option {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+}
+
+.profile-structure-tag-dropdown-header {
+    background: #f8f9fa;
+}
+
+.profile-structure-tag-option .profile-structure-tag-col {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 0.5rem;
+}
+
+.profile-structure-tag-option .profile-structure-tag-col:last-child {
+    padding-right: 0;
+}

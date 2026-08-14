@@ -1,0 +1,17 @@
+{
+  "date": "2026-07-27",
+  "summary": "Profile list Full Name column includes suffix; list query selects p.suffix; PdfTable full_name formatting passes suffix.",
+  "areas": [
+    {
+      "area": "App/Models/Profile.php::listPaginated",
+      "notes": ["SELECT includes p.suffix"]
+    },
+    {
+      "area": "App/Views/profile/index.php; App/PdfTable.php",
+      "notes": ["formatNameLastFirstMiddle receives suffix for Full Name"]
+    }
+  ],
+  "docs": ["docs/CHANGES.md"],
+  "backup_restore": "No schema change",
+  "api_postman": "No API change"
+}

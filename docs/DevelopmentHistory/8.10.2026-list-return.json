@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-10",
+  "title": "List Back remembers page and filters",
+  "summary": "Session ListReturn for Profile, Structure, and Grievance so View/Edit Back restores page, search, and filters for sequential encoding.",
+  "changes": [
+    {
+      "area": "App",
+      "items": [
+        "App/ListReturn.php",
+        "Remember on list index; pass listReturnUrl to view/form",
+        "entity_type in profileListExtraParams"
+      ]
+    },
+    {
+      "area": "Tests / Docs",
+      "items": [
+        "tests/e2e/list-return.spec.ts",
+        "help FAQ; changes/2026-08/CHANGES.md"
+      ]
+    }
+  ]
+}

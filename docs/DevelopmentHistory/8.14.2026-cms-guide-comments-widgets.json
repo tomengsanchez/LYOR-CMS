@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-14",
+  "title": "CMS guide, comment rate limit, widget drag-drop",
+  "entries": [
+    {
+      "area": "Documentation",
+      "summary": "DEVELOPMENTGUIDE.md rewritten for Simple CMS (migrations 000–013, modules, testing)."
+    },
+    {
+      "area": "Comments",
+      "summary": "CommentRateLimit per IP/hour; General → Discussion setting; honeypot + DB count."
+    },
+    {
+      "area": "Widgets",
+      "summary": "HTML5 drag-and-drop reorder in admin; widgets.css + updated form.js."
+    }
+  ]
+}

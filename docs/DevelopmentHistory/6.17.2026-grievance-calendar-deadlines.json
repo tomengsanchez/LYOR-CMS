@@ -1,0 +1,18 @@
+{
+  "date": "2026-06-17",
+  "title": "Grievance Calendar — SLA deadlines",
+  "entries": [
+    {
+      "area": "App/GrievanceEscalation.php",
+      "summary": "deadlineDate() and daysOpenAsOf() for SLA deadline on calendar grid."
+    },
+    {
+      "area": "App/GrievanceCalendar.php",
+      "summary": "Month/day payloads include due escalate/close counts; day list shows overdue only."
+    },
+    {
+      "area": "public/assets/js/grievance/calendar.js",
+      "summary": "Single view: recorded + deadline pills; day panel Recorded and Overdue sections."
+    }
+  ]
+}

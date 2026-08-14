@@ -1,0 +1,17 @@
+{
+  "date": "2026-08-11",
+  "title": "Users and Account access dashboard",
+  "summary": "Currently-online overview on Users; per-user and Account Access & activity panels for web sessions, API tokens, and recent audit actions with scoped revoke.",
+  "changes": [
+    {
+      "area": "Users / Account",
+      "items": [
+        "App\\UserAccessDashboard",
+        "UserSession::listForUser / ApiToken::listForUser",
+        "POST /users/{id}/sessions|tokens revoke",
+        "POST /account/tokens/logout/{id}",
+        "help / CHANGES / DEVELOPMENTGUIDE"
+      ]
+    }
+  ]
+}

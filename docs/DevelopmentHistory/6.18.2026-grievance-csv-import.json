@@ -1,0 +1,15 @@
+{
+  "date": "2026-06-18",
+  "title": "Grievance CSV import with preview",
+  "summary": "Added a two-step CSV importer on the grievance list: preview summarizes validation (project, municipality, barangay, grievance options) and skips existing case numbers; import inserts only ready rows.",
+  "changes": [
+    "App/GrievanceCsvImporter.php — parse, validate, preview, and import grievance CSV rows",
+    "GrievanceBrowseController@importPreview and @import — AJAX endpoints",
+    "POST /grievance/import/preview and POST /grievance/import routes",
+    "Grievance list modal + public/assets/js/grievance/import.js",
+    "Help topic grievance-list updated with Import CSV action",
+    "docs/samples/grievance-import-sample.csv and public/samples/grievance-import-sample.csv — downloadable template with three example rows",
+    "tests/e2e/grievance/grievance-import.spec.ts and tests/e2e/support/grievance-import.ts — Playwright GI-01..GI-04",
+    "Import modal returns refreshed csrf_token after preview so import POST succeeds"
+  ]
+}

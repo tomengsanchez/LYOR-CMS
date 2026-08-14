@@ -1,0 +1,269 @@
+{
+  "info": {
+    "name": "Simple CMS API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "REST API and public JSON endpoints for Simple CMS. Set baseUrl (e.g. http://eco.local). Login stores token for Bearer auth."
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://eco.local"},
+    {"key": "token", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"},
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "CMS (authenticated)",
+      "item": [
+        {
+          "name": "List Pages",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/pages"
+          }
+        },
+        {
+          "name": "Get Page",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/pages/1"
+          }
+        },
+        {
+          "name": "List Posts",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/posts"
+          },
+          "description": "Posts include featured_image_id and blocks_json when set."
+        },
+        {
+          "name": "Get Post",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/posts/1"
+          }
+        },
+        {
+          "name": "List Media",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/media"
+          }
+        },
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/notifications"
+          }
+        },
+        {
+          "name": "UI Settings",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/settings/ui"
+          }
+        },
+        {
+          "name": "System General (admin)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/system/general"
+          },
+          "description": "Branding, site SEO, public theme, reading, discussion, permalinks."
+        },
+        {
+          "name": "Meta Error Codes",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/meta/error-codes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public (no auth)",
+      "item": [
+        {
+          "name": "Site JSON",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/site.json"
+          }
+        },
+        {
+          "name": "Post JSON",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/blog/welcome.json"
+          },
+          "description": "Replace slug with a published post slug."
+        },
+        {
+          "name": "Sitemap",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/sitemap.xml"
+          }
+        },
+        {
+          "name": "RSS Feed",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/feed.xml"
+          }
+        },
+        {
+          "name": "Robots",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/robots.txt"
+          }
+        },
+        {
+          "name": "llms.txt",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/llms.txt"
+          },
+          "description": "llmstxt.org index for AI assistants (disable in General → SEO)."
+        },
+        {
+          "name": "llms-full.txt",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/llms-full.txt"
+          }
+        },
+        {
+          "name": "Blog JSON catalog",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/blog.json"
+          }
+        },
+        {
+          "name": "Share media (full)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/share/media/1"
+          },
+          "description": "Public original image. Replace 1 with a real media id."
+        },
+        {
+          "name": "Share media (medium size)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/share/media/1/medium"
+          },
+          "description": "WordPress-style intermediate size. Falls back to full if missing."
+        }
+      ]
+    },
+    {
+      "name": "Admin editor (session cookie)",
+      "item": [
+        {
+          "name": "Upload media JSON (from page/post form)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "csrf_token", "value": "{{csrf}}", "type": "text"},
+                {"key": "file", "type": "file", "src": []},
+                {"key": "alt_text", "value": "Optional alt", "type": "text"}
+              ]
+            },
+            "url": "{{baseUrl}}/admin/media/upload-json"
+          },
+          "description": "Requires logged-in admin session cookie. Used by featured image and block builder upload buttons."
+        },
+        {
+          "name": "Quick create category",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "csrf_token", "value": "{{csrf}}", "type": "text"},
+                {"key": "name", "value": "News", "type": "text"}
+              ]
+            },
+            "url": "{{baseUrl}}/admin/categories/quick-store"
+          }
+        },
+        {
+          "name": "Save page visual layout",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "csrf_token", "value": "{{csrf}}", "type": "text"},
+                {"key": "layout_json", "value": "{\"version\":1,\"sections\":[]}", "type": "text"}
+              ]
+            },
+            "url": "{{baseUrl}}/admin/builder/page/1/save"
+          },
+          "description": "Requires session cookie + edit_pages. Empty sections clears layout_json. Replace 1 with a real page id."
+        },
+        {
+          "name": "Save post visual layout",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {"key": "csrf_token", "value": "{{csrf}}", "type": "text"},
+                {"key": "layout_json", "value": "{\"version\":1,\"sections\":[]}", "type": "text"}
+              ]
+            },
+            "url": "{{baseUrl}}/admin/builder/post/1/save"
+          },
+          "description": "Requires session cookie + edit_posts. Replace 1 with a real post id."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "date": "2026-07-17",
+  "summary": "Grievance create now supports an authorized initial status, progress stage, effective date, note, and status attachments with matching atomic history and escalation state.",
+  "entries": [
+    {
+      "area": "App/Views/grievance/form.php + public/assets/js/grievance/form.js",
+      "changes": [
+        "Added an Initial Status card for users with change_grievance_status",
+        "Loads progress stages from GET /api/grievance/options using the selected project",
+        "Moved grievance form configuration to HTML data attributes so JavaScript remains external"
+      ]
+    },
+    {
+      "area": "App/Controllers/GrievanceController.php + App/GrievanceStatusChange.php",
+      "changes": [
+        "Validates create-time status permission, project-scoped stage, and effective date",
+        "Creates one status log matching the selected initial status and initializes escalation or closure fields atomically",
+        "Accepts optional initial status note and image/PDF status attachments"
+      ]
+    },
+    {
+      "area": "App/Controllers/Api/GrievanceController.php",
+      "changes": [
+        "POST /api/grievance/store supports initial status history fields and multipart status attachments",
+        "Non-default initial status/history requires edit_grievance or change_grievance_status in addition to add_grievance",
+        "In Progress requires a valid project-scoped progress level"
+      ]
+    },
+    {
+      "area": "Tests and guidance",
+      "changes": [
+        "Added tests/e2e/grievance/grievance-create-initial-status.spec.ts",
+        "Updated create-form help, API contract, mobile integration guide, Postman collection generator, and CHANGES.md",
+        "No schema migration; existing database and public/uploads backup/restore coverage applies"
+      ]
+    }
+  ]
+}

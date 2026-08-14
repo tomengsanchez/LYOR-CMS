@@ -1,0 +1,30 @@
+{
+  "date": "2026-08-15",
+  "title": "Divi-style frontend visual layout builder (Phase 1)",
+  "entries": [
+    {
+      "area": "Database",
+      "summary": "Migration 016 adds layout_json MEDIUMTEXT on cms_pages and cms_posts."
+    },
+    {
+      "area": "Layout engine",
+      "summary": "App\\LayoutBuilder parse/normalize/render for Section→Row→Column→Module; Phase 1 modules; sanitize HTML; plain text for SEO/JSON."
+    },
+    {
+      "area": "Admin UI",
+      "summary": "BuilderController + editor view/JS/CSS; Edit via Frontend editor on page/post forms; AJAX save with CSRF."
+    },
+    {
+      "area": "Column picker",
+      "summary": "Row Content panel visual layouts (1–4 equal and common splits); Columns chrome button; module content preserved on resize."
+    },
+    {
+      "area": "Editor UX polish",
+      "summary": "Side-panel module type picker (no prompt); empty-column add affordance; module/section/row reorder and duplicate; Ctrl/Cmd+S save."
+    },
+    {
+      "area": "Public",
+      "summary": "ContentBlocks::renderEntity prefers layout_json over blocks_json over body; site.css layout module styles."
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+/**
+ * Simple CMS — auth pages (login, 2FA). Uses public theme CSS variables from themes.css.
+ */
+:root {
+    --pub-bg: #f8fafc;
+    --pub-surface: #ffffff;
+    --pub-text: #0f172a;
+    --pub-muted: #64748b;
+    --pub-border: #e2e8f0;
+    --pub-accent: #2563eb;
+    --pub-radius: 12px;
+    --pub-font: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html[data-theme="dark"] {
+    --pub-bg: #0b1220;
+    --pub-surface: #1e293b;
+    --pub-text: #f1f5f9;
+    --pub-muted: #94a3b8;
+    --pub-border: #334155;
+    color-scheme: dark;
+}
+
+body.auth-page {
+    font-family: var(--pub-font);
+    color: var(--pub-text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        radial-gradient(ellipse at top, color-mix(in srgb, var(--pub-accent) 12%, transparent), transparent 55%),
+        var(--pub-bg);
+    padding: 1.5rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid var(--pub-border);
+    border-radius: var(--pub-radius);
+    box-shadow: 0 16px 40px color-mix(in srgb, var(--pub-text) 8%, transparent);
+    background: var(--pub-surface);
+}
+
+.auth-card .card-body {
+    padding: 2rem;
+}
+
+.auth-brand {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--pub-text);
+}
+
+.auth-sub {
+    color: var(--pub-muted);
+    font-size: 0.9rem;
+}
+
+.auth-back {
+    font-size: 0.85rem;
+    color: var(--pub-muted);
+    text-decoration: none;
+}
+
+.auth-back:hover {
+    color: var(--auth-accent, var(--pub-accent, #2563eb));
+}
+
+body.auth-page .btn-primary {
+    background-color: var(--auth-accent, var(--pub-accent, #2563eb));
+    border-color: var(--auth-accent, var(--pub-accent, #2563eb));
+}
+
+body.auth-page .btn-primary:hover,
+body.auth-page .btn-primary:focus {
+    background-color: color-mix(in srgb, var(--auth-accent, var(--pub-accent, #2563eb)) 85%, #000);
+    border-color: color-mix(in srgb, var(--auth-accent, var(--pub-accent, #2563eb)) 85%, #000);
+}
+
+.auth-logo {
+    display: block;
+    margin: 0 auto;
+    border-radius: calc(var(--pub-radius) - 2px);
+    object-fit: contain;
+    border: 1px solid var(--pub-border);
+    background: var(--pub-surface);
+}
+
+.auth-code-input {
+    letter-spacing: 0.5em;
+    font-size: 1.25rem;
+}
+
+html[data-theme="dark"] body.auth-page .form-control {
+    background-color: color-mix(in srgb, var(--pub-surface) 92%, #000);
+    border-color: var(--pub-border);
+    color: var(--pub-text);
+}
+
+html[data-theme="dark"] body.auth-page .form-control:focus {
+    background-color: var(--pub-surface);
+    color: var(--pub-text);
+}

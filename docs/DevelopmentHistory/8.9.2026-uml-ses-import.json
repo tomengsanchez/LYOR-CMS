@@ -1,0 +1,23 @@
+{
+  "date": "2026-08-09",
+  "title": "UML for PAPS Socio-Economic SES ZIP import",
+  "summary": "Add docs/UML_SES_IMPORT.md with Mermaid diagrams for SES preview/import, profile tab read, validation, classes, and data model (control_number match; Main fields untouched). Live /dev-help/#ses-uml. Fix ERD SES relationship note (version sections are JSON snapshots, not section_id FK).",
+  "changes": [
+    {
+      "area": "docs",
+      "items": [
+        "docs/UML_SES_IMPORT.md",
+        "docs/ERD.md + erd-diagrams.js SES accuracy",
+        "DOCUMENTATION.md, UML.md, GLOSSARY.md, README links",
+        "changes/2026-08/CHANGES.md"
+      ]
+    },
+    {
+      "area": "dev-help",
+      "items": [
+        "assets/ses-uml-diagrams.js + ses-uml.js",
+        "index.php #ses-uml section and nav"
+      ]
+    }
+  ]
+}

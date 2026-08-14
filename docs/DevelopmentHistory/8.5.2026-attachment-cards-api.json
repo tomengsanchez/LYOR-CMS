@@ -1,0 +1,27 @@
+{
+  "date": "2026-08-05",
+  "title": "Profile and grievance attachment cards on REST API",
+  "summary": "Additive attachments[] on profile/grievance GET; multipart card upload on profile store and grievance store/update. Status-history and structure image APIs unchanged. No schema or backup/restore changes.",
+  "changes": [
+    {
+      "area": "API — Profile",
+      "items": [
+        "GET /api/profile/{id} includes attachments[] with serve URLs",
+        "POST /api/profile/store processes multipart attachment cards (same as update)"
+      ]
+    },
+    {
+      "area": "API — Grievance",
+      "items": [
+        "GET /api/grievance/{id} includes attachments[] (card URLs via /serve/grievance-card-attachment)",
+        "POST /api/grievance/store and update/{id} process attachment_title/description/file (+ attachment_section on replace)"
+      ]
+    },
+    {
+      "area": "Docs",
+      "items": [
+        "MOBILE_APP_INTEGRATION.md, API_CONTRACT.md, MOBILE_EXCHANGES.md, CHANGES, Postman, help"
+      ]
+    }
+  ]
+}

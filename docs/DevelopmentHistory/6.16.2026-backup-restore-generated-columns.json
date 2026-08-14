@@ -1,0 +1,30 @@
+{
+  "date": "2026-06-16",
+  "title": "Backup/restore fix for generated columns (migration 069)",
+  "summary": "Backups no longer include STORED generated column values in INSERT statements; restore sanitizes legacy dumps to fix MySQL error 3105.",
+  "changes": [
+    {
+      "area": "cli/backup_sql_helper.php",
+      "items": [
+        "Parse generated columns from CREATE TABLE in SQL dumps",
+        "Strip generated columns from INSERT lines (with or without column list)",
+        "mysqldump --skip-generated-columns detection helper"
+      ]
+    },
+    {
+      "area": "cli/backup.php + cli/restore.php",
+      "items": [
+        "mysqldump uses --skip-generated-columns when supported",
+        "PDO exporter omits generated columns from SELECT/INSERT",
+        "restore sanitizes database.sql before import for legacy archives"
+      ]
+    },
+    {
+      "area": "tests + docs",
+      "items": [
+        "tests/cli/backup_sql_generated_columns_test.php",
+        "docs/CHANGES.md"
+      ]
+    }
+  ]
+}

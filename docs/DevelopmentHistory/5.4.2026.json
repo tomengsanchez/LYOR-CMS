@@ -1,0 +1,49 @@
+{
+  "date": "2026-05-04",
+  "title": "Profile field visits (three date + remarks sets)",
+  "summary": "PAP profiles store three rounds of field visit date and remarks (1st–3rd visit), editable on web create/edit, returned on profile API and PDF/detail view; migration_048 adds columns; CSV export can include the new keys.",
+  "changes": [
+    {
+      "area": "database/migration_048_profile_three_visits.php",
+      "items": [
+        "profiles.visit_1_date through visit_3_remarks (DATE/TEXT NULL)"
+      ]
+    },
+    {
+      "area": "App/Models/Profile.php",
+      "items": [
+        "create, update, createWithPapsid, listPaginated / all() SELECTs include visit columns"
+      ]
+    },
+    {
+      "area": "App/Views/profile/form.php + view.php; App/Views/pdf/profile_detail.php",
+      "items": [
+        "Three bordered sections (date of visit + remarks); view and PDF mirror"
+      ]
+    },
+    {
+      "area": "App/Controllers/ProfileController.php + Api/ProfileController.php",
+      "items": [
+        "gatherProfileData, audit field lists, buildProfilePayload, transformProfile"
+      ]
+    },
+    {
+      "area": "App/ListConfig.php (export columns); docs/API_CONTRACT.md; docs/postman/PAPeR-API.postman_collection.json; docs/DEVELOPMENTGUIDE.md",
+      "items": [
+        "Documented REST keys visit_1_date … visit_3_remarks; Postman store example snippet"
+      ]
+    },
+    {
+      "area": "App/Controllers/ProfileController.php (web delete/restore)",
+      "items": [
+        "AuditLog::record deleted on soft-delete; restored on restore (match API)"
+      ]
+    },
+    {
+      "area": "tests/e2e/profile/profile-field-visits-crud-history.spec.ts; package.json headed:slow1200 + headed:slow-run; playwright.config.ts PW_SLOW_RUN / PW_SLOW_MO_MS",
+      "items": [
+        "Serial E2E: visit fields CRUD + Activity History; npm headed:slow1200 uses PW_SLOW_MO_MS=1200; headed:slow-run uses PW_SLOW_RUN only"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "date": "2026-07-30",
+  "title": "Remap Audit System guide",
+  "summary": "Add System → Remap Audit with view_remap_audit / run_remap_audit capabilities so administrators can see per project whether GRM, preferred language, or progress-level Remap is needed after Initialize.",
+  "changes": [
+    {
+      "area": "database",
+      "detail": "migration_086_remap_audit_capability.php"
+    },
+    {
+      "area": "app",
+      "detail": "App/RemapAudit.php; RemapAuditController; remap_audit view; System menu; PresencePageMap"
+    },
+    {
+      "area": "docs / help",
+      "detail": "remap-audit help; Options Library links; Admin Guide; API_CONTRACT; CHANGES July"
+    }
+  ]
+}

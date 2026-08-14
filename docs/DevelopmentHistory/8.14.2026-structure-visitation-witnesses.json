@@ -1,0 +1,30 @@
+{
+  "date": "2026-08-14",
+  "title": "Structure visitation witnesses (two per visit) + copy from primary",
+  "summary": "Expand Structure Visitation Data with Name / Position and Organization / Date of Visitation for Witness 1 and 2 on each of three visits; retain remarks; keep legacy date_*_visit synced from witness 1; Secondary may manually copy visitation from linked Primary.",
+  "changes": [
+    {
+      "area": "Schema / Model",
+      "items": [
+        "migration_097_structure_visit_witnesses — 18 witness columns",
+        "Structure::expandTaggingPayload syncs date_*_visit from witness 1 date when witness date key is present",
+        "create/update/find/list SELECT include witness fields"
+      ]
+    },
+    {
+      "area": "Web UI",
+      "items": [
+        "_structure_visitation_fields.php / display / PDF cards",
+        "Copy visitation from primary button (form.js) when Secondary + linked primary",
+        "ListConfig + list cell truncation for new columns"
+      ]
+    },
+    {
+      "area": "API / Docs",
+      "items": [
+        "GET/store/update structure payloads include witness fields",
+        "API_CONTRACT, DEVELOPMENTGUIDE, CHANGES, help, Postman"
+      ]
+    }
+  ]
+}

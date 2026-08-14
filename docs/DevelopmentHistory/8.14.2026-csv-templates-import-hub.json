@@ -1,0 +1,40 @@
+{
+  "date": "2026-08-14",
+  "title": "System CSV Templates + strict import preview",
+  "summary": "Added System CSV Templates hub and aligned Profile/Structure/Grievance list imports to strict mapped preview with new vs update counts (prefer id then natural keys; unknown/ambiguous name lookups need clarification).",
+  "files": [
+    "App/CsvImportSupport.php",
+    "App/CsvImportTemplates.php",
+    "App/Controllers/CsvTemplatesController.php",
+    "App/Views/system/csv_templates.php",
+    "App/ProfileCsvImporter.php",
+    "App/StructureCsvImporter.php",
+    "App/GrievanceCsvImporter.php",
+    "App/Controllers/ProfileController.php",
+    "App/Controllers/StructureController.php",
+    "App/Controllers/GrievanceBrowseController.php",
+    "App/Views/profile/index.php",
+    "App/Views/structure/index.php",
+    "App/Views/grievance/index.php",
+    "App/Views/layout/main.php",
+    "App/Views/help/pages/csv-templates.php",
+    "App/Views/help/helpers.php",
+    "App/Views/help/content.php",
+    "public/assets/js/profile/import.js",
+    "public/assets/js/structure/import.js",
+    "public/assets/js/grievance/import.js",
+    "public/samples/profile-import-sample.csv",
+    "public/samples/structure-import-sample.csv",
+    "public/index.php",
+    "tests/e2e/csv-templates-import.spec.ts",
+    "tests/e2e/support/csv-import.ts",
+    "tests/e2e/grievance/grievance-import.spec.ts",
+    "docs/DEVELOPMENTGUIDE.md",
+    "docs/changes/2026-08/CHANGES.md"
+  ],
+  "notes": [
+    "No schema change; backup/restore unaffected.",
+    "MySQL/MariaDB-safe lookups only; UserProjects scope on Structure/Profile as applicable.",
+    "Playwright BASE_URL configurable; scripts test:e2e:csv-templates-import and :fast."
+  ]
+}

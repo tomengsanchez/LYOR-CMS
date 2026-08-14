@@ -1,0 +1,13 @@
+{
+  "date": "2026-08-14",
+  "title": "Admin under /admin; public site at /",
+  "summary": "Public homepage at GET /; all authenticated admin UI moved under /admin. Legacy URLs redirect with 301.",
+  "changes": [
+    "Added App\\AdminPath helper and global admin_url()",
+    "PublicController@home serves welcome/home slug at /",
+    "Rewrote public/index.php admin routes with /admin prefix",
+    "LegacyRedirectController 301 redirects for /login, /pages, /help, etc.",
+    "Updated layout, controllers, views, NavTrail, NotificationService, help-modal.js",
+    "E2E auth.ts and cms-smoke.spec.ts updated for /admin/login"
+  ]
+}

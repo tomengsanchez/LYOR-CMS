@@ -1,0 +1,38 @@
+{
+  "date": "2026-07-30",
+  "summary": "Reorganized System and Grievance Options Library into nested menu groups with readable third-level link typography; added Playwright coverage.",
+  "areas": [
+    {
+      "area": "App/Views/layout/main.php; public/assets/js/layout/main.js",
+      "notes": [
+        "System nested groups: Configuration, Data tools, Traffic & realtime, Logs & audit, Development",
+        "Grievance Options Library is a collapsible nested parent in sidebar",
+        "Top nav uses dropdown headers + indented items for the same grouping",
+        "Nested leaf font size raised and contrast improved for readability",
+        "nav-parent click uses stopPropagation so nested toggles work independently"
+      ]
+    },
+    {
+      "area": "App/Views/help/*",
+      "notes": [
+        "Help steps/paths updated to System → group → page where navigation changed"
+      ]
+    },
+    {
+      "area": "tests/e2e/system/nested-system-menu.spec.ts; package.json",
+      "notes": [
+        "E2E verifies nested System groups, Backup/Restore and Live Traffic reachability, nested font >= 12px",
+        "npm run test:e2e:nested-system-menu:fast; BASE_URL configurable"
+      ]
+    }
+  ],
+  "docs": [
+    "docs/changes/2026-07/CHANGES.md",
+    "docs/CHANGES.md",
+    "docs/DevelopmentHistory/7.30.2026-nested-system-menu.json",
+    "docs/DEVELOPMENTGUIDE.md"
+  ],
+  "tests": [
+    "tests/e2e/system/nested-system-menu.spec.ts"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-09",
+  "title": "Restrict /dev-help to localhost when project-root docroot",
+  "summary": "Block non-local HTTP access to the unauthenticated developer guide: root .htaccess 403 for remote /dev-help, Require local in dev-help/.htaccess. Document prefer public/ DocumentRoot, nginx deny, and verify externally. No app schema or backup/restore changes.",
+  "changes": [
+    {
+      "area": "web-server",
+      "items": [
+        ".htaccess — RewriteCond localhost-only before forbidding dev-help",
+        "dev-help/.htaccess — Require local"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "DEPLOYMENT.md §4.1, SECURITY.md, CONFIGURATION.md, RUNBOOK.md §7.7",
+        "dev-help/index.php note",
+        "changes/2026-08/CHANGES.md"
+      ]
+    }
+  ]
+}

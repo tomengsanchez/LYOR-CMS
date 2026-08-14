@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-15",
+  "title": "WordPress-style responsive media sizes",
+  "entries": [
+    {
+      "area": "Database",
+      "summary": "migration_015_media_responsive_sizes: cms_media_sizes table for intermediate image variants."
+    },
+    {
+      "area": "App\\MediaImageSizes",
+      "summary": "GD resize on upload; thumbnail/medium/large/etc.; srcset helpers and responsive imgTag."
+    },
+    {
+      "area": "Public",
+      "summary": "Featured images and content blocks use srcset; /share/media/{id}/{size} serves variants."
+    },
+    {
+      "area": "CLI",
+      "summary": "php cli/regenerate_media_sizes.php backfills existing library images."
+    }
+  ]
+}

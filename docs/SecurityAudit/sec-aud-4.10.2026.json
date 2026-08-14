@@ -1,0 +1,148 @@
+{
+  "audit_date": "2026-04-10",
+  "auditor": "Cursor AI Assistant",
+  "project": "PAPeR",
+  "scope": {
+    "in_scope": [
+      "Core/Auth.php",
+      "Core/Controller.php",
+      "Core/Csrf.php",
+      "App/ApiToken.php",
+      "App/Controllers/AuthController.php",
+      "App/Controllers/Api/AuthController.php",
+      "App/Controllers/StructureController.php",
+      "App/Controllers/GrievanceController.php",
+      "App/Controllers/ProfileController.php",
+      "App/Controllers/Api/ApiController.php",
+      "App/Models/Profile.php",
+      "App/Models/Structure.php",
+      "App/Models/Project.php",
+      "App/Models/Grievance.php"
+    ],
+    "method": "Targeted static security review (auth, session, CSRF, uploads, file serving, SQL usage)",
+    "limitations": [
+      "No runtime penetration testing performed",
+      "No infrastructure/web-server config review included",
+      "No dependency CVE scan included in this file"
+    ]
+  },
+  "last_updated": "2026-04-15",
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 2,
+    "low": 3,
+    "passed_controls": [
+      "Prepared statements broadly used for SQL inputs",
+      "CSRF tokens validated for web POST routes",
+      "Bearer API tokens are stored hashed (sha256)",
+      "Serve endpoints require auth + capability checks",
+      "Upload handlers validate MIME type and uploaded-file source",
+      "Web login rotates session id: Auth::login() calls session_regenerate_id(true) (SEC-2026-001 remediated)"
+    ]
+  },
+  "findings": [
+    {
+      "id": "SEC-2026-001",
+      "severity": "high",
+      "title": "Session fixation risk: missing session ID regeneration on login",
+      "status": "remediated",
+      "remediated_at": "2026-04-15",
+      "evidence": [
+        "Core/Auth.php -> login() sets $_SESSION['user_id'] without session_regenerate_id(true)",
+        "No session_regenerate_id() usage found across codebase",
+        "Remediated: Core/Auth.php login() now calls session_regenerate_id(true) when session is active; AuthController calls Auth::login() before UserSession::onLogin() on password and 2FA verify paths"
+      ],
+      "risk": "An attacker who can set or predict a victim session ID before login may retain authenticated session access after victim logs in.",
+      "recommendation": "Call session_regenerate_id(true) immediately after successful login (web auth flow), and consider regenerating after 2FA verification as well.",
+      "remediation_notes": "Implemented in Core/Auth::login() so both direct login and post-2FA verification rotate the session id before user_sessions is written."
+    },
+    {
+      "id": "SEC-2026-002",
+      "severity": "medium",
+      "title": "Upload hardening gaps (size/content validation)",
+      "status": "open",
+      "evidence": [
+        "App/Controllers/StructureController.php -> handleUpload() validates MIME but no explicit max size checks",
+        "App/Controllers/GrievanceController.php -> handleStatusUpload()/uploadOneAttachmentCard() validate MIME but no explicit max size checks"
+      ],
+      "risk": "Large uploads can increase storage/DoS risk; MIME-only controls can be bypassed by crafted files in some environments.",
+      "recommendation": "Enforce per-file size limits server-side, add extension allowlist consistency checks, and optionally re-encode images or use deeper file signature validation."
+    },
+    {
+      "id": "SEC-2026-003",
+      "severity": "medium",
+      "title": "Authorization model relies on broad role name checks in some paths",
+      "status": "open",
+      "evidence": [
+        "Core/Auth.php -> isAdmin() based on role_name string comparison",
+        "Multiple controllers gate elevated behaviors via Auth::isAdmin()"
+      ],
+      "risk": "Role-name coupling can create fragility if roles are renamed/misconfigured; capability checks are generally safer as single source of truth.",
+      "recommendation": "Prefer explicit capabilities for privileged actions; keep isAdmin checks only where truly required as global bypass."
+    },
+    {
+      "id": "SEC-2026-004",
+      "severity": "low",
+      "title": "Potential sensitive logging of auth activity metadata",
+      "status": "accepted_risk",
+      "evidence": [
+        "App/Controllers/Api/AuthController.php logs login attempts with username",
+        "Core/Logger.php writes plain-text logs under logs/"
+      ],
+      "risk": "User identifiers in logs are useful for audit, but may increase sensitivity of log files.",
+      "recommendation": "Keep strict file permissions on logs, rotate logs, and avoid adding secrets/tokens/passwords to log context."
+    },
+    {
+      "id": "SEC-2026-005",
+      "severity": "low",
+      "title": "API token lifecycle can be strengthened",
+      "status": "open",
+      "evidence": [
+        "App/ApiToken.php uses fixed default 30-day expiry",
+        "No token binding to device/user-agent/IP in validation path"
+      ],
+      "risk": "Long-lived tokens increase impact window if token is leaked.",
+      "recommendation": "Add configurable shorter expiry, optional rolling refresh strategy, and token metadata controls (last_used_at/device)."
+    },
+    {
+      "id": "SEC-2026-006",
+      "severity": "low",
+      "title": "File serving endpoints could add defensive response headers",
+      "status": "open",
+      "evidence": [
+        "Structure and grievance serve endpoints set Content-Type and Content-Length only"
+      ],
+      "risk": "Browser content sniffing/cache behavior may be less constrained than desired.",
+      "recommendation": "Add headers like X-Content-Type-Options: nosniff and explicit Cache-Control based on sensitivity."
+    }
+  ],
+  "priority_actions": [
+    {
+      "priority": 1,
+      "action": "Implement session_regenerate_id(true) on login and post-2FA completion — DONE (Auth::login, 2026-04-15)",
+      "owner": "Backend",
+      "target_window": "Complete"
+    },
+    {
+      "priority": 2,
+      "action": "Add upload max-size and stricter file validation rules for all upload handlers",
+      "owner": "Backend",
+      "target_window": "This sprint"
+    },
+    {
+      "priority": 3,
+      "action": "Harden token policy (expiry + metadata/rotation) and document operational standards",
+      "owner": "Backend + DevOps",
+      "target_window": "Next sprint"
+    }
+  ],
+  "retest_plan": {
+    "after_fixes": [
+      "Validate new session ID issuance after login and 2FA",
+      "Attempt oversized and malformed uploads to confirm rejection",
+      "Confirm privileged actions still enforce expected capability matrix",
+      "Review logs and headers for sensitive endpoints"
+    ]
+  }
+}

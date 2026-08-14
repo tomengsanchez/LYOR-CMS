@@ -1,0 +1,56 @@
+Documentation map
+Full SE pack index: docs/DOCUMENTATION.md (requirements, NFR, glossary, capabilities, runbook, security, tests, release).
+Architectural decisions
+Binding “why” records: docs/adr/ (see docs/adr/README.md). Living how-to: docs/DEVELOPMENTGUIDE.md and API docs.
+Schema diagrams: docs/ERD.md (Mermaid ERD by domain).
+Structure & behaviour: docs/UML.md (Mermaid UML; live at /dev-help/#uml).
+Contributing: CONTRIBUTING.md (repo root).
+Backend stack
+Custom PHP MVC framework, not Laravel/CodeIgniter.
+Core framework lives under Core/ (router, base controller, DB, auth, CSRF, logger, mail, migrations, Helpers, SystemDebug, LoggingPDO/LoggingStatement for debug, optional abstract Model for legacy EAV).
+Requests enter through public/index.php (front controller) and are routed via Core\Router to App\Controllers\... methods.
+Config: copy config/database-sample.php to config/database.php and config/app-sample.php to config/app.php (optional base_url).
+API (REST)
+REST-style API under /api/: auth (login, me, logout); dropdown/search (projects, project barangays, project users, field-personnel users, linked-project users, user projects, profiles, profile structures, notifications); grievance respondent autocomplete and history (/api/respondents/first-names, middle-names, last-names, history, latest-details—first name must be at least 3 characters before queries run, server-enforced; name matching includes linked profile fallback via profile_id); audit history (/api/history); main and grievance dashboards (/api/dashboard, /api/grievance/dashboard); grievance list + CRUD + restore + status history (/api/grievance/list, /api/grievance/{id}, /api/grievance/status-log/{id}, store, update, /api/grievance/status-update/{id}, delete, restore); read-only settings and system config for integrators (/api/settings/ui, email, security; /api/system/general, development, operational); profile list + CRUD + restore (/api/profile/list, /api/profile/{id}, /api/profile/{id}/structures, store, update, delete, restore); structure CRUD + restore plus /api/structure/next-strid. API controllers live under App\Controllers\Api\. Authentication via Bearer token (App\ApiToken) when no session; tokens stored hashed in api_tokens table (migration 020). Use requireAuthApi() in API actions for 401 JSON on unauthenticated requests. A full route list is in docs/API_CONTRACT.md (HTTP route index). Contract and auth examples: docs/API_CONTRACT.md, docs/API_AUTH.md; Postman collections may live under postman/ if present.
+Auth and security
+Session auth (Core\Auth); on web login Auth::login() issues session_regenerate_id(true) to mitigate session fixation (password and 2FA completion paths). Optional idle session timeout (user_logout_after_minutes in Security Settings; 0 = disabled). Two-factor authentication (2FA): optional email-based 2FA (enable_email_2fa, 2fa_expiration_minutes in app_settings); routes /login/2fa and /login/2fa/verify. User sessions: user_sessions table (migration 023) tracks device/session per user; App\UserSession on login and each request; /account/sessions lists active sessions and allows "logout other devices" (SessionsController).
+Frontend stack
+Server-rendered PHP views, no SPA framework.
+Uses Bootstrap 5, jQuery, and Select2 (with a Bootstrap 5 theme) for UI and enhanced form controls.
+Main layout supports:
+- Sidebar or top-navigation layouts (per-user via UserUiSettings).
+- Optional “super mobile-friendly” mode, which on small screens:
+  - Stacks Bootstrap grid columns vertically.
+  - Makes tables more compact with horizontal scrolling.
+  - Turns the sidebar into an overlay drawer with a hamburger toggle and backdrop.
+Application structure
+App\Controllers\ – HTTP and API controllers (e.g. dashboard, profile, structure, grievance—including /grievance/respondents (list filters + PDF; /grievance/respondent redirects here; registered respondents plus inline/PAPS-aggregated names)—library, users, roles, account/sessions, settings, email, security, notifications, help, admin in-app guide, system: general / operational / audit-trail / debug-log / development, etc.). App\Models\ – PDO-based models, no heavy ORM; mostly one class per table/domain (standalone classes; Core\Model is legacy EAV-oriented and not used by current models). UserProfileController exists as legacy/unwired code; user flows use UserController and AccountController.
+App\Views\ – module-based PHP templates with a shared layout (layout/main.php) and partials (pagination, toolbars, sidebars). View JS behavior is externalized under public/assets/js (module/view-aligned files), with no inline event handlers in templates.
+Clear MVC pattern with role/capability-based access checks in controllers and menus.
+Export: CSV export from Profile, Structure, Grievance, Users, and Library. Select Columns and Export dialogs show all available fields (ListConfig::getExportColumns). CsvExporter streams CSV; Grievance::listForExport resolves lookup names.
+Database layer & schema
+DB config via config/database.php, used by Core\Database (PDO singleton).
+Schema defined by PHP migration scripts under database/migration_*.php and seeders under database/seeders/seed_*.php. Migrations: run via php cli/migrate.php; status via --status; rollback via --rollback or --rollback --steps=N (LIFO, requires callable 'down' in each migration). Cron: run php cli/send_queued_emails.php periodically (e.g. every 1–5 min) to send notification emails from email_queue.
+Main domains: users/roles/capabilities, projects, profiles, structures, grievances + grievance status/history + grievance_respondents (migration 025; grievances.respondent_id), app/user settings, notifications, audit log, API tokens, user_sessions (active session tracking).
+Security-related schema additions:
+- app_settings: stores security and UI configuration (2FA, login throttling, password policy, email settings, UI preferences, etc.).
+- users.password_changed_at: used for password expiry checks.
+- user_password_history: per-user history of password hashes for enforcing “last N passwords” reuse rules.
+- user_sessions (migration 023): user_id, session_id, user_agent, ip_address, created_at, last_activity_at, revoked_at; for "where you're logged in" and remote logout.
+- api_tokens (migration 020): token_hash, user_id, expires_at for REST Bearer auth.
+Development and assets
+DevClock: optional simulated current time for development (System > Development). System admin pages: /system/general, /system/operational, /system/audit-trail, /system/debug-log, /system/development; GET /api/system/log feeds the debug log viewer. In-app pages /help and /admin-guide. Serve routes: /serve/structure, /serve/profile, /serve/grievance, /serve/grievance-card-attachment, /serve/app-logo for images, attachments, and app logo. Note: /serve/profile no longer serves legacy profile questionnaire attachment folders (migration_037); use /serve/structure for structure assets.
+Grievance progress levels and escalation (latest):
+- grievance_progress_levels is project-scoped (migration_026): project-specific levels are supported via project_id; default fallback levels use project_id = NULL (Level 1/2/3).
+- Escalation timing does not reset on note-only updates. Timer resets only on real status/level transition; logic uses start of current in-progress segment (not MAX(created_at)).
+- Dashboard/API are project-aware for level labels and escalation rows; mixed-project views prefix labels with project name when needed.
+- Remap tools:
+  - UI: Grievance > In Progress Stages > "Re-map existing records"
+  - CLI: php cli/remap_progress_levels.php [--project=<id>]
+- Seeder options (shipped in database/seeders/):
+  - php database/seeders/seed_grievance_options.php (grievance lookup tables; safe to re-run)
+  - php database/seeders/seed_profiles.php [--count=N|--profiles=N|-n/-c or trailing number] (bulk demo profiles; default 500; needs at least one active project)
+  - php database/seeders/seed_projects_users_field_team.php [--profiles=N] (demo projects, Field Team role, demo user, optional SEED-DEMO profiles; see script header)
+  - php database/seeders/seed_grievances.php [N|--count=N|--grievances=N|-n N] (bulk demo grievances; default 1000; needs projects)
+- Staff PDF exports (list/detail) need composer dependencies: run composer install (mPDF in composer.json); see App\PdfExport
+- Fresh DB reset (destructive): php cli/truncate_fresh_install.php [--yes] — keeps migrations, roles/capabilities, admin user; see DEVELOPMENTGUIDE.md §6

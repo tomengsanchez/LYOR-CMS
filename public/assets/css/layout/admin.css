@@ -1,0 +1,515 @@
+/**
+ * Simple CMS — admin panel theme (sidebar, header, cards, color variants).
+ */
+:root {
+    --sidebar-width: 260px;
+    --header-height: 56px;
+    --font-sans: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --surface: #f1f5f9;
+    --surface-card: #ffffff;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-soft: rgba(59, 130, 246, 0.12);
+    --nav-bg: #0f172a;
+    --nav-border: #1e293b;
+    --nav-text: #94a3b8;
+    --nav-text-active: #f8fafc;
+    --nav-hover: #1e293b;
+    --nav-accent: #3b82f6;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+    --radius: 10px;
+}
+
+body.ui-theme-green {
+    --accent: #10b981;
+    --accent-hover: #059669;
+    --accent-soft: rgba(16, 185, 129, 0.12);
+    --nav-bg: #022c22;
+    --nav-border: #064e3b;
+    --nav-hover: #065f46;
+    --nav-accent: #34d399;
+}
+
+body.ui-theme-violet {
+    --accent: #8b5cf6;
+    --accent-hover: #7c3aed;
+    --accent-soft: rgba(139, 92, 246, 0.12);
+    --nav-bg: #2e1065;
+    --nav-border: #4c1d95;
+    --nav-hover: #5b21b6;
+    --nav-accent: #a78bfa;
+}
+
+body.ui-theme-amber {
+    --accent: #f59e0b;
+    --accent-hover: #d97706;
+    --accent-soft: rgba(245, 158, 11, 0.14);
+    --nav-bg: #451a03;
+    --nav-border: #78350f;
+    --nav-hover: #92400e;
+    --nav-accent: #fbbf24;
+}
+
+body.ui-theme-slate {
+    --accent: #64748b;
+    --accent-hover: #475569;
+    --accent-soft: rgba(100, 116, 139, 0.14);
+    --nav-bg: #0f172a;
+    --nav-border: #334155;
+    --nav-hover: #334155;
+    --nav-accent: #94a3b8;
+}
+
+body.admin-app {
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    color: var(--text);
+    background: var(--surface);
+    line-height: 1.5;
+}
+
+.admin-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    background: linear-gradient(180deg, var(--nav-bg) 0%, color-mix(in srgb, var(--nav-bg) 92%, #000) 100%);
+    color: var(--nav-text);
+    overflow-y: auto;
+    z-index: 1045;
+    border-right: 1px solid var(--nav-border);
+}
+
+.admin-sidebar .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1.1rem 1.25rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--nav-text-active);
+    border-bottom: 1px solid var(--nav-border);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+}
+
+.admin-sidebar .brand-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--nav-accent);
+    color: var(--nav-bg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.admin-sidebar .brand-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: rgba(255, 255, 255, 0.95);
+    flex-shrink: 0;
+}
+
+.admin-sidebar nav a {
+    display: block;
+    padding: 0.55rem 1.25rem;
+    color: var(--nav-text);
+    text-decoration: none;
+    border-left: 3px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.admin-sidebar nav a:hover {
+    background: var(--nav-hover);
+    color: var(--nav-text-active);
+}
+
+.admin-sidebar nav a.active {
+    background: color-mix(in srgb, var(--nav-accent) 14%, transparent);
+    color: var(--nav-text-active);
+    border-left-color: var(--nav-accent);
+    font-weight: 600;
+}
+
+.admin-sidebar .nav-label {
+    padding: 1rem 1.25rem 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--nav-text) 75%, transparent);
+}
+
+.admin-sidebar .nav-sub a {
+    padding-left: 1.65rem;
+    font-size: 0.9rem;
+}
+
+.admin-main-wrap {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-header {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    min-height: var(--header-height);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.65rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-header .admin-header-start {
+    margin-right: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.admin-sidebar-toggle {
+    display: none;
+    border: 1px solid var(--border);
+    background: var(--surface-card);
+    color: var(--text);
+    border-radius: 8px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    line-height: 1;
+}
+
+.admin-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.45);
+    z-index: 1040;
+}
+
+body.admin-sidebar-open .admin-sidebar-overlay {
+    display: block;
+}
+
+.admin-content {
+    flex: 1;
+    padding: 1.35rem 1.5rem 2rem;
+}
+
+.admin-content .card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-content .card-header {
+    background: var(--surface-card);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+}
+
+.admin-content .breadcrumb {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.admin-content h1,
+.admin-content h2,
+.admin-content .h2 {
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+.admin-content .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.admin-content .btn-primary:hover,
+.admin-content .btn-primary:focus {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.admin-content .btn-outline-primary {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.admin-content .btn-outline-primary:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.admin-user-chip {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 0.35rem 0.65rem;
+    background: var(--surface);
+    border-radius: 999px;
+    border: 1px solid var(--border);
+}
+
+/* Settings theme swatches */
+.ui-theme-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.ui-theme-swatch-default { background: linear-gradient(135deg, #3b82f6, #0f172a); }
+.ui-theme-swatch-green { background: linear-gradient(135deg, #10b981, #022c22); }
+.ui-theme-swatch-violet { background: linear-gradient(135deg, #8b5cf6, #2e1065); }
+.ui-theme-swatch-amber { background: linear-gradient(135deg, #f59e0b, #451a03); }
+.ui-theme-swatch-slate { background: linear-gradient(135deg, #64748b, #0f172a); }
+
+@media (max-width: 991.98px) {
+    .admin-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        width: min(85vw, 300px);
+        box-shadow: var(--shadow-md);
+    }
+
+    body.admin-sidebar-open .admin-sidebar {
+        transform: translateX(0);
+    }
+
+    .admin-main-wrap {
+        margin-left: 0;
+    }
+
+    .admin-sidebar-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.dashboard-stat {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-card);
+    box-shadow: var(--shadow-sm);
+    padding: 1.25rem;
+    height: 100%;
+    border-top: 3px solid var(--accent);
+}
+
+.dashboard-stat .stat-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.dashboard-stat .stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--text);
+}
+
+.dashboard-stat .stat-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.dashboard-stat a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.dashboard-stat a:hover {
+    text-decoration: underline;
+}
+
+.admin-content .table {
+    margin-bottom: 0;
+}
+
+.admin-content .table thead th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-bottom-width: 1px;
+    background: color-mix(in srgb, var(--surface) 70%, var(--surface-card));
+}
+
+.admin-content .table-hover tbody tr:hover {
+    background: var(--accent-soft);
+}
+
+.admin-content .table td .btn-sm {
+    --bs-btn-padding-y: 0.2rem;
+    --bs-btn-padding-x: 0.55rem;
+    font-size: 0.8rem;
+}
+
+.admin-content .table td .btn + .btn,
+.admin-content .table td .btn + form,
+.admin-content .table td form + form {
+    margin-left: 0.25rem;
+}
+
+.admin-content .card > .table-responsive {
+    border-radius: var(--radius);
+}
+
+.admin-content .card > .table-responsive > .table > :last-child > *:last-child {
+    border-bottom: 0;
+}
+
+.admin-empty {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text-muted);
+}
+
+/* Admin color mode (light / dark / system) */
+body.admin-app.ui-color-dark,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system {
+        color-scheme: dark;
+        --surface: #0f172a;
+        --surface-card: #1e293b;
+        --text: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border: #334155;
+        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+    }
+}
+
+body.admin-app.ui-color-dark .admin-header,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .admin-header {
+        background: var(--surface-card);
+        border-color: var(--border);
+    }
+}
+
+body.admin-app.ui-color-dark .admin-user-chip,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .admin-user-chip {
+        background: var(--surface);
+        border-color: var(--border);
+        color: var(--text-muted);
+    }
+}
+
+body.admin-app.ui-color-dark .admin-sidebar-toggle,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .admin-sidebar-toggle {
+        background: var(--surface-card);
+        border-color: var(--border);
+        color: var(--text);
+    }
+}
+
+body.admin-app.ui-color-dark .form-control,
+body.admin-app.ui-color-dark .form-select,
+body.admin-app.ui-color-dark .form-check-input,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .form-control,
+    body.admin-app.ui-color-system .form-select,
+    body.admin-app.ui-color-system .form-check-input {
+        background-color: #0f172a;
+        border-color: var(--border);
+        color: var(--text);
+    }
+}
+
+body.admin-app.ui-color-dark .form-control:focus,
+body.admin-app.ui-color-dark .form-select:focus,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .form-control:focus,
+    body.admin-app.ui-color-system .form-select:focus {
+        background-color: #0f172a;
+        color: var(--text);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--accent) 25%, transparent);
+    }
+}
+
+body.admin-app.ui-color-dark .table,
+body.admin-app.ui-color-dark .table td,
+body.admin-app.ui-color-dark .table th,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .table,
+    body.admin-app.ui-color-system .table td,
+    body.admin-app.ui-color-system .table th {
+        --bs-table-bg: transparent;
+        --bs-table-color: var(--text);
+        --bs-table-border-color: var(--border);
+        color: var(--text);
+    }
+}
+
+body.admin-app.ui-color-dark .breadcrumb-item,
+body.admin-app.ui-color-dark .breadcrumb-item.active,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .breadcrumb-item,
+    body.admin-app.ui-color-system .breadcrumb-item.active {
+        color: var(--text-muted);
+    }
+}
+
+body.admin-app.ui-color-dark .breadcrumb-item a,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .breadcrumb-item a {
+        color: var(--accent);
+    }
+}
+
+body.admin-app.ui-color-dark .modal-content,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .modal-content {
+        background: var(--surface-card);
+        color: var(--text);
+        border-color: var(--border);
+    }
+}
+
+body.admin-app.ui-color-dark .modal-header,
+body.admin-app.ui-color-dark .modal-footer,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .modal-header,
+    body.admin-app.ui-color-system .modal-footer {
+        border-color: var(--border);
+    }
+}
+
+body.admin-app.ui-color-dark .btn-close,
+@media (prefers-color-scheme: dark) {
+    body.admin-app.ui-color-system .btn-close {
+        filter: invert(1) grayscale(100%);
+    }
+}

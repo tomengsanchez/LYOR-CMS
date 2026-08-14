@@ -1,0 +1,41 @@
+{
+  "date": "2026-05-18",
+  "entries": [
+    {
+      "title": "E2E — all API endpoints headless (Bearer)",
+      "summary": "Playwright spec exercises every /api/* route with envelope checks and profile/grievance/structure CRUD smoke. npm run test:e2e:api:headless; api-client.ts helpers.",
+      "area": "tests/e2e/smoke/api-all-endpoints-headless.spec.ts; tests/e2e/support/api-client.ts; package.json; docs/",
+      "tests": "npm run test:e2e:api:headless"
+    },
+    {
+      "title": "API success responses unified via apiSuccess()",
+      "summary": "All App/Controllers/Api/* success paths use apiSuccess(); no raw json() in Api layer. Profile/Grievance/ApiController manual fixes; cli/refactor_api_success.php codemod.",
+      "area": "App/Controllers/Api/*; cli/refactor_api_success.php; docs/CHANGES.md; docs/MOBILE_APP_INTEGRATION.md",
+      "tests": "npm run test:e2e:full:headless"
+    },
+    {
+      "title": "API standardized error codes and mobile registry",
+      "summary": "ApiErrorCode + Controller apiSuccess/apiError; all Api controllers refactored; GET /api/meta/error-codes; auth/me capabilities; GET /api/grievance/options; docs/API_ERROR_CODES.md.",
+      "area": "App/ApiErrorCode.php; App/ApiErrorRegistry.php; Core/Controller.php; App/Controllers/Api/*; public/index.php; docs/*",
+      "tests": "npm run test:e2e:full:headless"
+    },
+    {
+      "title": "Mobile app integration guide (MOBILE_APP_INTEGRATION.md)",
+      "summary": "Docs for third-party/mobile clients: auth, capabilities, location picker flow, profile/structure/grievance API examples, multipart uploads, limitations. Linked from README and API_CONTRACT.",
+      "area": "docs/MOBILE_APP_INTEGRATION.md; README.md; docs/API_CONTRACT.md; docs/CHANGES.md",
+      "tests": "N/A (documentation)"
+    },
+    {
+      "title": "Municipality findOrCreateByName assigns MUN-AUTO code",
+      "summary": "findOrCreateByName no longer inserts NULL code; uses TMP insert + MUN-AUTO-{id} update and ensureAutoCode for legacy rows. Fixes E2E_DB_SEED / seed_projects_users_field_team.php after municipalities.code NOT NULL.",
+      "area": "App/Models/Municipality.php; docs/CHANGES.md",
+      "tests": "npm run test:e2e:full:headless:seed"
+    },
+    {
+      "title": "Full application headless E2E suite",
+      "summary": "Serial Playwright spec covers login, dashboard UI + /api/dashboard, profile create/list, grievance create/list, structure/users headings, and grievance respondents shell. Bootstraps Library project/municipality/barangay when DB has none. npm scripts test:e2e:full:headless and test:e2e:full:headless:seed; BASE_URL from playwright.config.ts.",
+      "area": "tests/e2e/smoke/full-application-headless.spec.ts; package.json; docs/AUTOMATED_FUNCTIONAL_TEST_DESIGN.md; docs/CHANGES.md",
+      "tests": "npm run test:e2e:full:headless | npm run test:e2e:full:headless:seed"
+    }
+  ]
+}

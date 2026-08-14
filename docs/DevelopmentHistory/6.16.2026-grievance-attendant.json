@@ -1,0 +1,22 @@
+{
+  "date": "2026-06-16",
+  "title": "Grievance attendant (GRM)",
+  "entries": [
+    {
+      "area": "database/migration_073_grievance_attendant.php",
+      "summary": "Adds optional attendant_id on grievances (FK to users)."
+    },
+    {
+      "area": "App/Views/grievance/form.php, public/assets/js/grievance/form.js",
+      "summary": "Grievance Registration card Attendant Select2 via GET /api/users/linked-projects; blank default, type to search, optional project filter."
+    },
+    {
+      "area": "App/Controllers/Api/ApiController.php",
+      "summary": "linkedProjectUsers endpoint for users with user_projects rows."
+    },
+    {
+      "area": "App/Controllers/GrievanceController.php, App/Controllers/Api/GrievanceController.php, App/Models/Grievance.php",
+      "summary": "attendant_id validation, persistence, API payload, export attendant_name."
+    }
+  ]
+}

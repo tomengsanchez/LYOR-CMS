@@ -1,0 +1,15 @@
+{
+  "date": "2026-08-12",
+  "title": "Structure list GPS columns with map dialog",
+  "summary": "Add GPS latitude/longitude to Structure Select Columns and list/export. List values open the same satellite map dialog as Structure view.",
+  "changes": [
+    {
+      "area": "Structure list",
+      "items": [
+        "ListConfig gps_latitude / gps_longitude",
+        "Clickable list cells + gps-map-dialog on index",
+        "CSV/PDF coordinate display text"
+      ]
+    }
+  ]
+}

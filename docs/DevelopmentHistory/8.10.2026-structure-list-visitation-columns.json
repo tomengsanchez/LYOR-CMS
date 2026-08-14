@@ -1,0 +1,29 @@
+{
+  "date": "2026-08-10",
+  "title": "Structure list columns — visitation, Actual Usage, Description",
+  "summary": "Add Actual Usage and all visitation date/remarks columns to the Structure list table (and export/Select Columns). Description already existed; list SQL and cell rendering updated. E2E covers headers and values.",
+  "changes": [
+    {
+      "area": "ListConfig / Structure model",
+      "items": [
+        "List + export columns for remarks_first/second/third_visit, date_second/third_visit, actual_usage",
+        "listPaginated SELECT and nested secondaries SELECT include new fields; sort keys added"
+      ]
+    },
+    {
+      "area": "Web UI / Help",
+      "items": [
+        "structure/index.php cell formatting for visit dates and truncated remarks/usage",
+        "Help Structure overview Select Columns + FAQ"
+      ]
+    },
+    {
+      "area": "Tests / Docs",
+      "items": [
+        "tests/e2e/structure-list-visitation-columns.spec.ts",
+        "npm run test:e2e:structure-list-visitation-columns:fast",
+        "changes/2026-08/CHANGES.md"
+      ]
+    }
+  ]
+}

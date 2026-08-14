@@ -1,0 +1,19 @@
+{
+  "date": "2026-07-22",
+  "summary": "Structure list nesting is opt-in via Primary only checkbox; default remains flat list.",
+  "entries": [
+    {
+      "area": "Structure list filters",
+      "changes": [
+        "primary_only GET filter / checkbox on structure/index",
+        "listPaginated nests Secondaries under Primary only when primary_only is set"
+      ]
+    },
+    {
+      "area": "tests/e2e/structure-primary-secondary-nest.spec.ts",
+      "changes": [
+        "Assert flat default; nested behavior with primary_only=1"
+      ]
+    }
+  ]
+}

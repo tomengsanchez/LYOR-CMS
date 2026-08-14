@@ -1,0 +1,39 @@
+{
+  "date": "2026-08-13",
+  "summary": "Fix backup --no-uploads so UI exclude-uploads and CLI DB-only ZIPs actually omit the uploads tree.",
+  "entries": [
+    {
+      "area": "cli/cli_script_args.php",
+      "changes": [
+        "paper_cli_append_script_args / paper_cli_has_flag: normalize flags so keys with or without -- never emit ----no-uploads"
+      ]
+    },
+    {
+      "area": "cli/backup.php",
+      "changes": [
+        "Detect --no-uploads via shared helper",
+        "Print Uploads: skipped|included|none",
+        "Closing warning distinguishes DB-only vs full ZIP"
+      ]
+    },
+    {
+      "area": "App/Controllers/BackupRestoreController.php",
+      "changes": [
+        "Pass no-uploads boolean through paper_cli_append_script_args instead of prefixing -- onto an already-dashed key"
+      ]
+    },
+    {
+      "area": "cli/restore.php",
+      "changes": [
+        "Parse boolean flags through paper_cli_has_flag (same as backup)"
+      ]
+    },
+    {
+      "area": "tests / docs / help",
+      "changes": [
+        "tests/cli/backup_no_uploads_flag_test.php and npm run test:backup-no-uploads",
+        "Help Backup/Restore FAQ, README, DEVELOPMENTGUIDE, CHANGES"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "date": "2026-05-18",
+  "entries": [
+    {
+      "title": "API standardized error codes and mobile registry",
+      "summary": "ApiErrorCode + Controller apiSuccess/apiError helpers; all Api controllers refactored; GET /api/meta/error-codes; auth/me capabilities; GET /api/grievance/options; API_ERROR_CODES.md and api-error-codes.json.",
+      "area": "App/ApiErrorCode.php; App/ApiErrorRegistry.php; Core/Controller.php; Core/Auth.php; App/Controllers/Api/*; public/index.php; docs/*; docs/postman/*",
+      "tests": "npm run test:e2e:full:headless; GET /api/meta/error-codes"
+    }
+  ]
+}

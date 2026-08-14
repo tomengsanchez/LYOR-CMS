@@ -1,0 +1,122 @@
+{
+  "date": "2026-04-14",
+  "title": "Documentation/repo alignment, session fixation (SEC-2026-001), grievance respondent list & autocomplete/profile-link safeguards",
+  "summary": "Synced README, DEVELOPMENTGUIDE, FrameworksGuide, API_CONTRACT, and CHANGES with the code that actually ships (seeders, truncate_fresh_install, migration 038, operational API, SecurityAudit map, /api route index, removed obsolete script references). Documented DevelopmentHistory filenames as calendar dates (M.D.YYYY). Implemented session_regenerate_id(true) in Core\\Auth::login() for password and 2FA web login; updated security audit SEC-2026-001 to remediated. Recorded legacy UserProfileController as unwired. Grievance respondent list: UNION includes inline non-registered grievances (respondent_id NULL) with PAPS and profile-derived names; per-row paps_yes_count/paps_no_count and GrievanceRespondent::formatIsPapsLabel() show mixed Yes/No in one cell (web + PDF). Grievance create: respondent /api/respondents/* calls deferred until first name has at least 3 characters (JS + ApiController); form hint text added. Respondent first/middle/last/history/latest APIs now include linked-profile name fallback (`profiles` via grievance/respondent profile_id), and docs now include new `database/seeders/seed_profiles.php`. Same release day: Grievance REST write parity and list filtering — POST /api/grievance/store|update|delete|restore, GET /api/grievance/list query alignment with web filters/export where applicable, App\\Capabilities tweak, Grievance model/list/view soft-delete UX (see changes entry below).",
+  "changes": [
+    {
+      "area": "README.md",
+      "items": [
+        "Documentation map: added docs/SecurityAudit/",
+        "DevelopmentHistory: filenames are calendar dates M.D.YYYY.json (e.g. 4.14.2026 = 14 April 2026); JSON date field YYYY-MM-DD",
+        "Optional seeds: seed_projects_users_field_team.php; removed obsolete seed_profiles_structures* table",
+        "Data reset: cli/truncate_fresh_install.php (--yes) and follow-up seed_grievance_options.php",
+        "Structure tree: sample-imports/, dbdump/; note on non-canonical extra top-level folders",
+        "Legacy note: historical seed_profiles_structures* removed; current seeders named explicitly"
+      ]
+    },
+    {
+      "area": "docs/DEVELOPMENTGUIDE.md",
+      "items": [
+        "§1 tree: database/ and cli/ match repo; SecurityAudit/, sample-imports/, dbdump/; optional-paths paragraph; DevelopmentHistory comment M.D.YYYY",
+        "§2 Auth: session_regenerate_id(true) in Auth::login() after authenticated session binding",
+        "§3: /system/operational and GET /api/system/general|development|operational",
+        "§4.2: migration_038 soft-delete columns and affected tables",
+        "§5: migration list includes 038",
+        "§6: truncate_fresh_install behavior; UserProfileController legacy/unwired"
+      ]
+    },
+    {
+      "area": "docs/FrameworksGuide.txt",
+      "items": [
+        "API summary: barangays, field-personnel, operational system API, restore routes, pointer to API_CONTRACT route index",
+        "Controllers: operational system page; UserProfileController legacy note",
+        "System pages list includes /system/operational",
+        "Seeder/remap: seed_grievance_options, seed_projects_users_field_team, truncate_fresh_install; removed old seed list",
+        "Auth: session_regenerate_id on web login"
+      ]
+    },
+    {
+      "area": "docs/API_CONTRACT.md",
+      "items": [
+        "Seeder paths: current scripts only; note old seed_profiles_structures* not shipped",
+        "New HTTP route index table for all /api/* routes from public/index.php"
+      ]
+    },
+    {
+      "area": "docs/CHANGES.md",
+      "items": [
+        "New section: Documentation aligned with repository (2026-04)",
+        "Replaced Truncate scripts with CLI fresh-install reset (truncate_fresh_install.php)",
+        "Security — session regeneration on login (SEC-2026-001)"
+      ]
+    },
+    {
+      "area": "Core/Auth.php",
+      "items": [
+        "Auth::login(): after setting user_id and last_activity, session_regenerate_id(true) when session_status() is PHP_SESSION_ACTIVE"
+      ]
+    },
+    {
+      "area": "docs/SecurityAudit/sec-aud-4.10.2026.json",
+      "items": [
+        "SEC-2026-001 remediated; summary high count 0; passed_controls and priority_actions updated"
+      ]
+    },
+    {
+      "area": "App/Models/GrievanceRespondent.php",
+      "items": [
+        "listPaginated sqlG: include PAPS inline grievances (removed g.is_paps = 0-only restriction); LEFT JOIN profiles for effective first/middle/last when names live on profile; MAX(g.is_paps), MAX(g.profile_id), paps_* from profile",
+        "Aggregated paps_yes_count and paps_no_count on both sqlR and sqlG branches; formatIsPapsLabel() for web/PDF (Yes, No when mixed)"
+      ]
+    },
+    {
+      "area": "App/Views/grievance/respondents.php, App/Controllers/GrievanceController.php (pdfRespondents)",
+      "items": [
+        "Is PAPS column uses formatIsPapsLabel()"
+      ]
+    },
+    {
+      "area": "public/assets/js/grievance/form.js, App/Views/grievance/form.php",
+      "items": [
+        "RESPONDENT_FIRST_MIN_API_LEN = 3: no /api/respondents/* until trimmed first name length >= 3; empty datalists below threshold",
+        "Helper text under first name field"
+      ]
+    },
+    {
+      "area": "App/Controllers/Api/ApiController.php",
+      "items": [
+        "RESPONDENT_FIRST_NAME_MIN_SEARCH_LEN = 3: first-names requires q length >= 3; middle-names, last-names, history, latest-details require first_name length >= 3 (mb_strlen); otherwise empty / matched false"
+      ]
+    },
+    {
+      "area": "App/Controllers/Api/ApiController.php",
+      "items": [
+        "respondentFirstNames/respondentMiddleNames/respondentLastNames/respondentHistory/respondentLatestDetails: added LEFT JOIN profiles and effective name fallback r -> g -> p; removed non-PAPS-only filters so linked-profile respondents are searchable and historical matches include profile-linked rows"
+      ]
+    },
+    {
+      "area": "database/seeders/seed_profiles.php",
+      "items": [
+        "New bulk profile seeder (default 500; --count/--profiles/-n/-c/trailing number), requires active projects, inserts SEED-PROFILE-* rows via Profile::createWithPapsid"
+      ]
+    },
+    {
+      "area": "Grievance REST parity, list filters, soft-delete UX (same day)",
+      "items": [
+        "App/Controllers/Api/GrievanceController.php: REST store/update/delete/restore and list API aligned with domain rules (capabilities + requireAuthApi)",
+        "App/Controllers/GrievanceController.php, App/Models/Grievance.php: list/export/filter behavior adjustments for API and web parity",
+        "App/Views/grievance/index.php: list filter/export-related UI",
+        "App/Views/grievance/view.php: soft-deleted row presentation / actions",
+        "App/Capabilities.php: menu slug grievance-progress-levels maps to manage_grievance_options",
+        "public/index.php, docs/API_CONTRACT.md: routes and contract text for grievance REST"
+      ]
+    },
+    {
+      "area": "docs/DEVELOPMENTGUIDE.md, docs/CHANGES.md, docs/API_CONTRACT.md, docs/FrameworksGuide.txt, docs/FRONTEND_JS_CONVENTIONS.md",
+      "items": [
+        "Documented respondent list UNION/PAPS/mixed Is PAPS, create-form autocomplete minimum first-name length, linked-profile respondent lookup behavior, and seed_profiles seeder (aligned with code)"
+      ]
+    }
+  ]
+}
+ 

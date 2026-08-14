@@ -1,0 +1,41 @@
+{
+  "date": "2026-05-14",
+  "entries": [
+    {
+      "title": "Structure create/edit: Select2 project, municipality, barangay + DB columns",
+      "summary": "migration_055 adds structures.project_id/municipality_id/barangay_id; web form and API store/update validate Library linkage; list scope uses COALESCE with profile project; ApiController allows structure caps on project area GETs.",
+      "area": "database/migration_055_structures_project_location.php; App/Models/Structure.php; App/Controllers/StructureController.php; App/Views/structure/form.php; public/assets/js/structure/form.js; App/Controllers/Api/ApiController.php; App/Controllers/Api/StructureController.php; docs/API_CONTRACT.md; docs/postman/*",
+      "tests": "php cli/migrate.php; manual /structure/create Select2 flow"
+    },
+    {
+      "title": "Playwright global setup: always seed grievance options",
+      "summary": "global-setup runs seed_grievance_options.php on default runs (idempotent) so grievance create/dashboard E2E has GRM/language/type/category inputs; E2E_SKIP_GRIEVANCE_OPTIONS_SEED=1 to opt out.",
+      "area": "tests/e2e/support/global-setup.ts; docs/AUTOMATED_FUNCTIONAL_TEST_DESIGN.md; docs/CHANGES.md",
+      "tests": "npm run test:e2e (grievance + dashboard suites); npm run test:e2e:smoke-full"
+    },
+    {
+      "title": "Grievance full self-contained: Library project + municipality/barangay",
+      "summary": "createProjectViaLibrary no longer uses removed area repeater; ensureMunicipalityAndBarangayForProject wires municipality_projects + barangays so the long self-contained spec passes on current Library UI.",
+      "area": "tests/e2e/support/grievance-self-contained-helpers.ts; tests/e2e/grievance/grievance-full-self-contained.spec.ts",
+      "tests": "npm run test:e2e:grievance-full-self-contained"
+    },
+    {
+      "title": "Shared grievance web helpers + full-application smoke E2E",
+      "summary": "tests/e2e/support/grievance-form-web.ts consolidates API unwrap, project pick, and required GRM-mode checks; dashboard + grievance specs refactored to import it; new serial smoke spec tests login → dashboard → create → list.",
+      "area": "tests/e2e/support/grievance-form-web.ts; tests/e2e/smoke/full-application-e2e.spec.ts; tests/e2e/dashboard/dashboard-main.spec.ts; tests/e2e/grievance/*.spec.ts (imports)",
+      "tests": "npm run test:e2e:smoke-full"
+    },
+    {
+      "title": "E2E login settle: main.content + 45s default test timeout",
+      "summary": "submitLoginAndSettle waits for main.content (layout shell) instead of Profile nav-link only; playwright default test timeout 45s so login waits fit under global timeout.",
+      "area": "tests/e2e/support/auth.ts; playwright.config.ts; docs/CHANGES.md",
+      "tests": "npx playwright test tests/e2e/dashboard/dashboard-main.spec.ts tests/e2e/grievance/grievance-create.spec.ts:35 --workers=1"
+    },
+    {
+      "title": "Dashboard grievance E2E: Select2 project + stable create",
+      "summary": "selectProjectOnGrievanceForm triggers jQuery change and asserts native value; dashboard-main create reorders fields, sets gender, scoped submit with waitForURL and longer test timeout.",
+      "area": "tests/e2e/support/grievance-form-web.ts; tests/e2e/dashboard/dashboard-main.spec.ts; docs/CHANGES.md",
+      "tests": "npx playwright test tests/e2e/dashboard/dashboard-main.spec.ts"
+    }
+  ]
+}

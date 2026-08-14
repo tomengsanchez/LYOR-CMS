@@ -1,0 +1,37 @@
+{
+  "date": "2026-05-04",
+  "title": "Municipalities lookup table (profiles + project areas)",
+  "summary": "Introduces municipalities table and municipality_id FKs on project_affected_barangays and profiles (custom_municipality_id). Web profile form and REST accept ids; barangay API prefers municipality_id query. Legacy custom_municipality name still supported on profile API read/write alias.",
+  "changes": [
+    {
+      "area": "database/migration_050_municipalities_table.php",
+      "items": [
+        "municipalities; project_affected_barangays.municipality_id; profiles.custom_municipality_id; backfill from prior municipality varchar"
+      ]
+    },
+    {
+      "area": "App/Models/Municipality.php; App/Models/Project.php; App/Models/Profile.php",
+      "items": [
+        "Location validation and joins by municipality id; list/search expose custom_municipality as joined name"
+      ]
+    },
+    {
+      "area": "App/Controllers/ProfileController.php; App/Controllers/Api/ProfileController.php; profile form + public/assets/js/profile/form.js",
+      "items": [
+        "POST custom_municipality_id; audit custom_municipality_id with human-readable municipality names; API payload + transformProfile"
+      ]
+    },
+    {
+      "area": "database/seeders/seed_profiles.php; database/seeders/seed_projects_users_field_team.php",
+      "items": [
+        "Area pairs use municipality_id from normalized project_affected_barangays join"
+      ]
+    },
+    {
+      "area": "docs/API_CONTRACT.md; docs/CHANGES.md; docs/DEVELOPMENTGUIDE.md; docs/postman/PAPeR-API.postman_collection.json",
+      "items": [
+        "Document municipalities resource and profile custom_municipality_id"
+      ]
+    }
+  ]
+}

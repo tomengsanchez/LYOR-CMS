@@ -1,0 +1,32 @@
+{
+  "date": "2026-08-05",
+  "title": "Structure list API for mobile Structures tab",
+  "summary": "Additive GET /api/structure/list with pagination and project-scoped filters (same as web Structure list). Documents mobile exchange agreement in MOBILE_EXCHANGES.md. No schema or backup/restore changes.",
+  "changes": [
+    {
+      "area": "API",
+      "items": [
+        "Route GET /api/structure/list before /api/structure/{id}",
+        "Api\\StructureController::listApi — view_structure, ListConfig columns/sort, UserProjects + Structure::parseListFiltersFromRequest + listPaginated",
+        "Normalized structure_classification + classification_label on list rows (and nested secondaries)"
+      ]
+    },
+    {
+      "area": "Docs / Postman / Help",
+      "items": [
+        "docs/MOBILE_EXCHANGES.md — exchange log for mobile ↔ PHP",
+        "MOBILE_APP_INTEGRATION.md §7.0 list",
+        "API_CONTRACT.md list + route index",
+        "Postman List structures request",
+        "changes/2026-08/CHANGES.md",
+        "Help Structure overview mentions mobile/API list"
+      ]
+    },
+    {
+      "area": "Tests",
+      "items": [
+        "api-smoke.spec.ts structure list envelope"
+      ]
+    }
+  ]
+}

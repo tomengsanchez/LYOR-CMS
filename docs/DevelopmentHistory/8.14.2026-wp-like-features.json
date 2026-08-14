@@ -1,0 +1,30 @@
+{
+  "date": "2026-08-14",
+  "title": "WordPress-like CMS features",
+  "entries": [
+    {
+      "area": "Reading settings",
+      "summary": "Homepage static page vs latest posts; posts per page; paginated blog."
+    },
+    {
+      "area": "Menus",
+      "summary": "cms_menus + cms_menu_items; Content → Menus; dynamic public header."
+    },
+    {
+      "area": "Tags",
+      "summary": "cms_tags + cms_post_tags; post form + Content → Tags; /blog/tag/{slug}."
+    },
+    {
+      "area": "Archives",
+      "summary": "/blog/category/{slug} with pagination."
+    },
+    {
+      "area": "Page hierarchy",
+      "summary": "cms_pages.parent_id; breadcrumbs on public pages."
+    },
+    {
+      "area": "Migration",
+      "summary": "migration_012_wp_features.php"
+    }
+  ]
+}

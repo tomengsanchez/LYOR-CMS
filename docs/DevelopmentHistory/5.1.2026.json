@@ -1,0 +1,93 @@
+{
+  "date": "2026-05-01",
+  "title": "Structure tagging extension (visits, GPS, classification, status)",
+  "summary": "Added migration_047 and full web/API support for structure tagging fields: location, visit rounds, Primary/Secondary/Associated classification with primary-structure search, GPS, tagging status with conditional other/refusal text.",
+  "changes": [
+    {
+      "area": "database/migration_047_structure_tagging_fields.php",
+      "items": [
+        "New columns on structures for tagging workflow; optional FK associated_primary_structure_id → structures(id)"
+      ]
+    },
+    {
+      "area": "App/Models/Structure.php",
+      "items": [
+        "Classification/status option helpers, expandTaggingPayload, searchPrimaryStructures, find() join for associated primary tag",
+        "create/update/createWithStrid persist tagging columns"
+      ]
+    },
+    {
+      "area": "App/Views/structure/_tagging_extended_fields.php + _tagging_extended_display.php + form.php + view.php + pdf/structure_detail.php",
+      "items": [
+        "Form and read-only display for all tagging fields; PDF rows aligned"
+      ]
+    },
+    {
+      "area": "App/Controllers/StructureController.php + Api/StructureController.php + public/index.php",
+      "items": [
+        "mergeStructureTaggingFromRequest on web store/update and API store/update",
+        "GET /api/structure/primary-search",
+        "getApi exposes new fields"
+      ]
+    },
+    {
+      "area": "public/assets/js/structure/form.js",
+      "items": [
+        "Toggle associated primary Select2, other specify, refusal reason; primary-search ajax"
+      ]
+    },
+    {
+      "area": "docs/API_CONTRACT.md + docs/DEVELOPMENTGUIDE.md + docs/CHANGES.md + README.md",
+      "items": [
+        "Documented fields, route, migration 047"
+      ]
+    },
+    {
+      "area": "App/ListConfig.php + App/Models/Structure.php listPaginated + App/Views/structure/index.php + CsvExporter + PdfTable",
+      "items": [
+        "Structure list Status column (tagging_status), sort/search, labeled export cells"
+      ]
+    },
+    {
+      "area": "App/Views/structure/form.php",
+      "items": [
+        "Edit form Back link targets /structure/view/{id}; create still Back to /structure"
+      ]
+    },
+    {
+      "area": "App/Controllers/StructureController.php + tests/e2e",
+      "items": [
+        "mergeStructureTaggingFromRequest is protected so Api StructureController can merge POST fields (fixes profile modal POST /api/structure/store)",
+        "structure-list-paps-data.spec passes explicit columns= so search includes structure_tag when user column prefs omit it"
+      ]
+    },
+    {
+      "area": "App/Controllers/ProfileController.php + App/Controllers/StructureController.php (pdfIndex)",
+      "items": [
+        "List PDF uses GET per_page (10–500, default 250) instead of always 2500 rows; avoids mPDF OOM on large installs; aligns with list_toolbar PDF URL"
+      ]
+    },
+    {
+      "area": "tests/e2e/profile",
+      "items": [
+        "profile-age-minimum: .alert-danger:not(.d-none)",
+        "profile-soft-delete: list name Last, First",
+        "profile-export-pdf: PDF bytes + content-type with per_page=15",
+        "profile-edit + profile-ownership-fields: waitForResponse without resp.ok() so failed API calls fail fast",
+        "profile-ownership-fields edit test: ensure contact + barangay selectOption so client validation runs Save main"
+      ]
+    },
+    {
+      "area": "App/Views/structure/_tagging_extended_display.php",
+      "items": [
+        "Structure view GPS latitude/longitude become clickable Google Maps links when both coordinates exist"
+      ]
+    },
+    {
+      "area": "App/Models/Structure.php",
+      "items": [
+        "Added tagging status option exceeded_number_of_visits (label: Exceeded number of Visits)"
+      ]
+    }
+  ]
+}

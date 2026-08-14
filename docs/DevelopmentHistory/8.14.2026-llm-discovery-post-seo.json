@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-14",
+  "title": "LLM discovery, post SEO, and AI crawler controls",
+  "entries": [
+    {
+      "area": "Database",
+      "summary": "migration_014_post_seo_llm: cms_posts meta_title, meta_description, llm_summary, robots_noindex."
+    },
+    {
+      "area": "Public",
+      "summary": "/llms.txt, /llms-full.txt, /blog.json; robots.txt AI crawler rules; sitemap categories/tags; SearchAction and BlogPosting JSON-LD."
+    },
+    {
+      "area": "Admin",
+      "summary": "Post form SEO/LLM fields; General toggles for llms.txt, AI crawlers, Facebook/LinkedIn sameAs URLs."
+    },
+    {
+      "area": "Tests",
+      "summary": "tests/cli/cms_llm_discovery_smoke_test.php"
+    }
+  ]
+}

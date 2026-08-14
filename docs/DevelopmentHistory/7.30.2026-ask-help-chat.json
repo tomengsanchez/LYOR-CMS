@@ -1,0 +1,32 @@
+{
+  "date": "2026-07-30",
+  "summary": "Ask Help floating chat: screen-aware answers from in-app Help (local match or optional OpenAI-compatible LLM), admin settings on System → General, CSRF + rate limit API.",
+  "areas": [
+    {
+      "area": "database/migration_088_help_chat.php",
+      "notes": [
+        "Default app_settings: help_chat_enabled, api_key/base/model, max_per_hour"
+      ]
+    },
+    {
+      "area": "App/HelpChat*.php + Api\\HelpChatController",
+      "notes": [
+        "Context from help views; LLM or local fallback; file rate limit logs/help_chat_rate.json",
+        "POST /api/help/chat + GET /api/help/chat/status"
+      ]
+    },
+    {
+      "area": "UI",
+      "notes": [
+        "layout help-chat.css/js widget; System → General Ask Help form",
+        "TrafficLog excludes /api/help/chat"
+      ]
+    },
+    {
+      "area": "docs",
+      "notes": [
+        "Help content, CHANGES, DEVELOPMENTGUIDE, API_CONTRACT, Postman generator"
+      ]
+    }
+  ]
+}

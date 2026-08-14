@@ -1,0 +1,27 @@
+{
+  "date": "2026-07-31",
+  "summary": "Grievance attendant: Free text or User mode (migration 091 attendant_text). Municipality and Barangay optional on create/edit/API/CSV (both together or neither).",
+  "areas": [
+    {
+      "area": "database/migration_091_grievance_attendant_text.php",
+      "notes": [
+        "Adds nullable attendant_text VARCHAR(255) after attendant_id"
+      ]
+    },
+    {
+      "area": "Grievance form / model / API / CSV",
+      "notes": [
+        "Radio Free text vs User; mutually exclusive attendant_id / attendant_text",
+        "validateLocationFields allows both empty; pair still validated when set",
+        "CSV attendant_name unmatched → free text; mun/brgy optional"
+      ]
+    },
+    {
+      "area": "Help / docs / Postman",
+      "notes": [
+        "_grievance-form-fields, API_CONTRACT, DEVELOPMENTGUIDE, CHANGES, Postman store description",
+        "Playwright grievance-attendant-optional-location.spec.ts + form-submit-guard update"
+      ]
+    }
+  ]
+}

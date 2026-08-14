@@ -1,0 +1,25 @@
+{
+  "date": "2026-08-09",
+  "title": "Software engineering documentation pack",
+  "summary": "Scaffold full SE docs: DOCUMENTATION index, requirements, NFR, glossary, capability matrix, runbook, configuration, deployment, security (+ root SECURITY.md), test strategy, release checklist, CONTRIBUTING. Wire into README, DEVELOPMENTGUIDE, FrameworksGuide, adr README, and dev-help. Documentation only.",
+  "changes": [
+    {
+      "area": "docs",
+      "items": [
+        "docs/DOCUMENTATION.md",
+        "docs/REQUIREMENTS.md, NFR.md, GLOSSARY.md, CAPABILITY_MATRIX.md",
+        "docs/RUNBOOK.md, CONFIGURATION.md, DEPLOYMENT.md, SECURITY.md",
+        "docs/TEST_STRATEGY.md, RELEASE.md",
+        "SECURITY.md + CONTRIBUTING.md at repo root",
+        "README / DEVELOPMENTGUIDE / FrameworksGuide / adr README links",
+        "docs/changes/2026-08/CHANGES.md + CHANGES.md August count"
+      ]
+    },
+    {
+      "area": "dev-help",
+      "items": [
+        "index.php — DOCUMENTATION.md and key SE doc links"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "date": "2026-06-08",
+  "title": "Grievance status history attachment links",
+  "summary": "Status History sidebar and PDF export now show files uploaded during status changes, using existing grievance_status_log.attachments JSON and /serve/grievance.",
+  "changes": [
+    {
+      "area": "App/Models/GrievanceStatusLog.php",
+      "items": [
+        "attachmentLinksForEntry(): parse stored paths and build secure serve URLs via GrievanceController::attachmentUrl"
+      ]
+    },
+    {
+      "area": "App/Views/partials/history_sidebar.php",
+      "items": [
+        "Status History entries list attachment links under the note when attachments exist"
+      ]
+    },
+    {
+      "area": "App/Views/pdf/grievance_detail.php",
+      "items": [
+        "Status History table: Attachments column with file names"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "CHANGES.md: status history attachments entry"
+      ]
+    }
+  ]
+}

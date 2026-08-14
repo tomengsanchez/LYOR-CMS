@@ -1,0 +1,22 @@
+{
+  "date": "2026-07-22",
+  "summary": "Add Structure list filter card: first visit date range, structure tag, linked PAPS search, project/classification/status.",
+  "entries": [
+    {
+      "area": "App/Models/Structure.php",
+      "changes": [
+        "parseListFiltersFromRequest for list facets",
+        "listPaginated applies date_first_visit range, structure_tag, paps_q, project, classification, tagging_status",
+        "Toolbar q always searches tag + linked PAPS"
+      ]
+    },
+    {
+      "area": "Structure UI / ListConfig / help",
+      "changes": [
+        "Filter card on structure/index.php; export/PDF preserve filters",
+        "date_first_visit list and export column",
+        "Help content for Structure filters"
+      ]
+    }
+  ]
+}

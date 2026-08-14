@@ -1,0 +1,15 @@
+{
+  "date": "2026-08-10",
+  "title": "Structure PN number and Other details placement",
+  "summary": "Add optional pn_number after location; move other_details after description in Structure tagging information; remove Detailed Measurements tab.",
+  "changes": [
+    {
+      "area": "Structure",
+      "items": [
+        "migration_093_structure_pn_number",
+        "Form/view/PDF/API/ListConfig/NotificationService",
+        "Other details after Description; Detailed Measurements tab removed"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "date": "2026-08-14",
+  "title": "Per-project CSV export ZIP",
+  "summary": "Added admin System UI + CLI to export one Library project as a ZIP of CSVs including core modules, audit_log, notifications, and linked user sessions/API token metadata, with optional PII redaction.",
+  "files": [
+    "App/ProjectCsvExporter.php",
+    "cli/export_project_csv.php",
+    "App/Controllers/ProjectCsvExportController.php",
+    "App/Views/system/project_csv_export.php",
+    "App/Views/layout/main.php",
+    "App/Views/help/pages/project-csv-export.php",
+    "public/index.php",
+    "storage/project-csv-exports/.gitignore",
+    "tests/cli/export_project_csv_smoke_test.php",
+    "docs/changes/2026-08/CHANGES.md"
+  ],
+  "notes": [
+    "No schema change; backup/restore unaffected.",
+    "Omits password_hash and api token_hash.",
+    "Optional --redact / UI checkbox redacts names, address, age, contact, email (and related JSON keys).",
+    "profile_structure_tags ordered by profile_id, sort_order, structure_tag (not structure_id)."
+  ]
+}

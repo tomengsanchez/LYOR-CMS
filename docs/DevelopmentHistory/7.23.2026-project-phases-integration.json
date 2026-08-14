@@ -1,0 +1,41 @@
+{
+  "date": "2026-07-23",
+  "summary": "Project-scoped Phases (Name, Description) with Library CRUD on Edit Project; Structure/Profile/Grievance fields; Unassigned seed+backfill; filters, export, PDF, API, CSV, help, Postman.",
+  "areas": [
+    {
+      "area": "database/migration_081_project_phases.php",
+      "notes": [
+        "CREATE project_phases with soft-delete",
+        "phase_id on structures, profiles, grievances",
+        "Seed Unassigned per project; backfill structure/profile"
+      ]
+    },
+    {
+      "area": "App/Models/ProjectPhase.php; Project::create seeds Unassigned",
+      "notes": ["CRUD, usage block on delete, validateForProject"]
+    },
+    {
+      "area": "Library edit project Phases card + routes",
+      "notes": ["store/update/delete/edit phase under /library/{id}/phases"]
+    },
+    {
+      "area": "Structure / Profile / Grievance forms + JS",
+      "notes": [
+        "Phase after Barangay",
+        "Structure required when project set; Profile required; Grievance optional",
+        "Structure tags still project+mun+brgy only",
+        "Soft-deleted phase readonly on edit"
+      ]
+    },
+    {
+      "area": "List filters, ListConfig, PDF, CSV, API GET /api/projects/{id}/phases",
+      "notes": ["Profile/Structure/Grievance phase_name columns; grievance CSV phase_name/phase_id"]
+    }
+  ],
+  "docs": [
+    "docs/CHANGES.md",
+    "docs/API_CONTRACT.md",
+    "docs/DEVELOPMENTGUIDE.md",
+    "docs/postman/PAPeR-API.postman_collection.json"
+  ]
+}

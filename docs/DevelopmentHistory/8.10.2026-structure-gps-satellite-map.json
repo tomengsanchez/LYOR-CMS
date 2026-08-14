@@ -1,0 +1,16 @@
+{
+  "date": "2026-08-10",
+  "title": "Structure GPS map links open in satellite view",
+  "summary": "Structure GPS opens a satellite map dialog with View full on new page; embed + full URLs via Structure helpers.",
+  "changes": [
+    {
+      "area": "Structure",
+      "items": [
+        "googleMapsSatelliteUrl + googleMapsSatelliteEmbedUrl",
+        "_gps_map_modal.php + gps-map-dialog.js",
+        "View/form coordinate clicks open dialog",
+        "CSP frame-src allows Google Maps embed"
+      ]
+    }
+  ]
+}

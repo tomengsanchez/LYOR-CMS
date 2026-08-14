@@ -1,0 +1,32 @@
+{
+  "date": "2026-07-21",
+  "title": "Structure list classification & Status History sidebar",
+  "summary": "Structure list adds Classification column. Structure view activates Status History for tagging status changes from audit_log. Profile/structure help and developer docs updated.",
+  "changes": [
+    {
+      "area": "Structure list",
+      "items": [
+        "ListConfig structure_classification column",
+        "Structure::listPaginated SELECT/sort/search",
+        "CSV/PDF export labels via CsvExporter/PdfTable"
+      ]
+    },
+    {
+      "area": "Structure view Status History",
+      "items": [
+        "Structure::taggingStatusHistory() from audit_log",
+        "status_changed audit on tagging_status save (web + API)",
+        "history_sidebar structure statusLogKind rendering"
+      ]
+    },
+    {
+      "area": "Help & docs",
+      "items": [
+        "help/content.php profile + structure sections",
+        "help/pages/profile-view.php",
+        "_profile-form-fields.php, _structure-form-fields.php",
+        "DEVELOPMENTGUIDE.md, README.md, API_CONTRACT.md, MOBILE_APP_INTEGRATION.md, CHANGES.md"
+      ]
+    }
+  ]
+}

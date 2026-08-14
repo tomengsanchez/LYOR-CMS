@@ -1,0 +1,42 @@
+{
+  "date": "2026-08-14",
+  "title": "Public site theme customizer",
+  "entries": [
+    {
+      "area": "App\\PublicTheme",
+      "summary": "Preset themes (Default, Ocean, Forest, Sunset, Violet, Slate, Rose, Custom), accent, font, radius, content width, default color mode, header style, toggle visibility; stored in app_settings."
+    },
+    {
+      "area": "Admin UI",
+      "summary": "System → General — theme section with preset swatches, live preview (theme-customizer.js), saved with General form."
+    },
+    {
+      "area": "Public site",
+      "summary": "themes.css + html classes/data attributes in public layout; theme.js respects admin default mode and toggle setting."
+    },
+    {
+      "area": "Auth pages",
+      "summary": "Login/2FA inherit PublicTheme presets, fonts, radius, accent, and default color mode via themes.css + auth.css."
+    },
+    {
+      "area": "Blog width",
+      "summary": "pub_theme_blog_width in General settings (inherit / narrow / normal / wide) for /blog listing."
+    },
+    {
+      "area": "Per-page layout",
+      "summary": "migration_011 content_layout on cms_pages and cms_posts; admin form dropdown."
+    },
+    {
+      "area": "Live site preview",
+      "summary": "Preview on live site button; session + ?theme_preview=1; POST theme-preview / theme-preview-clear routes."
+    },
+    {
+      "area": "API",
+      "summary": "public_theme object on GET /api/system/general."
+    },
+    {
+      "area": "Tests",
+      "summary": "tests/cli/cms_public_theme_smoke_test.php"
+    }
+  ]
+}

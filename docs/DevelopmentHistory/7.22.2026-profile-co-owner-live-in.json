@@ -1,0 +1,30 @@
+{
+  "date": "2026-07-22",
+  "summary": "Add Co-Owner structure ownership and Live-In/Common Law Partner civil status; Co-Owner PAPS list on structures.",
+  "entries": [
+    {
+      "area": "App/Models/Profile.php",
+      "changes": [
+        "STRUCTURE_OWNERSHIP_CO_OWNER and CIVIL_STATUS_LIVE_IN_COMMON_LAW",
+        "isOwnerLikeOwnership / civilStatusShowsSpouseName helpers",
+        "linkedProfilesGroupedForStructure co_owners bucket",
+        "Fix project_id COALESCE to include s.project_id for owner-less structures"
+      ]
+    },
+    {
+      "area": "Profile UI / API / Structure views",
+      "changes": [
+        "Form, view, PDF, form.js show civil status for Owner and Co-Owner",
+        "Spouse/Partner for Married or Live-In",
+        "Structure view/list/PDF and API linked_groups.co_owners"
+      ]
+    },
+    {
+      "area": "tests/e2e/profile-co-owner-live-in.spec.ts",
+      "changes": [
+        "Assert ownership and civil options; create co-owner + live-in with partner name",
+        "npm run test:e2e:profile-co-owner-live-in:fast"
+      ]
+    }
+  ]
+}

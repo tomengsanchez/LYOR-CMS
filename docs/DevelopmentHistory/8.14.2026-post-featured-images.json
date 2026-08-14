@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-14",
+  "title": "Post featured images and social sharing",
+  "entries": [
+    {
+      "area": "Database",
+      "summary": "migration_009: cms_posts.featured_image_id; cms_media width/height on image upload."
+    },
+    {
+      "area": "Admin",
+      "summary": "Post form featured image picker from Media library with 1200×630 guidance."
+    },
+    {
+      "area": "Public / SEO",
+      "summary": "GET /share/media/{id} public images; Open Graph + Twitter Card meta via App\\SocialShare."
+    },
+    {
+      "area": "Public UI",
+      "summary": "Featured image on blog list thumbnails and post detail page."
+    }
+  ]
+}

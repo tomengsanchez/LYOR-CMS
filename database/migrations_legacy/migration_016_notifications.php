@@ -1,0 +1,26 @@
+<?php
+/**
+ * Migration 016: Notifications table (user notifications for profile/grievance events)
+ */
+return [
+    'name' => 'migration_016_notifications',
+    'up' => function (\PDO $db): void {
+        $db->exec("
+            CREATE TABLE IF NOT EXISTS notifications (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                type VARCHAR(50) NOT NULL,
+                related_type VARCHAR(50) NOT NULL,
+                related_id INT NOT NULL,
+                message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_user (user_id),
+                INDEX idx_user_created (user_id, created_at),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+    },
+    'down' => function (\PDO $db): void {
+        $db->exec('DROP TABLE IF EXISTS notifications');
+    },
+];

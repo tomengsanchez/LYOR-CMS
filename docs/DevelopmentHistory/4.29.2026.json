@@ -1,0 +1,59 @@
+{
+  "date": "2026-04-29",
+  "title": "Profile ownership civil status spouse logic",
+  "summary": "Implemented ownership-dependent profile form behavior where Civil Status is shown only for owners and Spouse is shown/saved only for married owners, with aligned database, API, model normalization, and view/PDF output updates.",
+  "changes": [
+    {
+      "area": "database/migration_046_profile_civil_status.php",
+      "items": [
+        "Added migration to create/drop profiles.civil_status (VARCHAR(20) NULL)"
+      ]
+    },
+    {
+      "area": "App/Models/Profile.php",
+      "items": [
+        "Added civil status constants/options and normalizeCivilStatus()",
+        "Updated normalizeSpouseNameForSave() to require owner + married",
+        "Added civil_status in profile list/all selects and create/update SQL payloads"
+      ]
+    },
+    {
+      "area": "App/Controllers/ProfileController.php + App/Controllers/Api/ProfileController.php",
+      "items": [
+        "Added civil_status handling in profile payload gathering/building",
+        "Included civil_status in profile update change tracking fields",
+        "Updated API transformProfile() output with civil_status and married-only spouse exposure"
+      ]
+    },
+    {
+      "area": "App/Views/profile/form.php + public/assets/js/profile/form.js",
+      "items": [
+        "Added Civil Status select row in profile form",
+        "Client logic now shows Civil Status only for owner",
+        "Client logic now shows Spouse only for owner + married, clearing hidden values on change"
+      ]
+    },
+    {
+      "area": "App/Views/profile/view.php + App/Views/pdf/profile_detail.php",
+      "items": [
+        "Profile view now renders Civil Status for owner records",
+        "Spouse row now renders only when owner civil status is married",
+        "PDF profile detail mirrors the same visibility rules"
+      ]
+    },
+    {
+      "area": "tests/e2e/profile/profile-ownership-fields.spec.ts",
+      "items": [
+        "Updated ownership field test to assert Civil Status visibility and married-only spouse behavior",
+        "Updated create flow test to set civil_status=married before filling spouse"
+      ]
+    },
+    {
+      "area": "docs/API_CONTRACT.md + docs/CHANGES.md + docs/DEVELOPMENTGUIDE.md",
+      "items": [
+        "Documented new civil_status contract and owner/married spouse persistence rule",
+        "Recorded feature change summary and migration list update"
+      ]
+    }
+  ]
+}

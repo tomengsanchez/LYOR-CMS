@@ -1,0 +1,17 @@
+{
+  "date": "2026-08-09",
+  "title": "Testing History prerequisites guide",
+  "summary": "Add docs/TESTING_HISTORY_PREREQUISITES.md covering Activity History, Status History, SES versions, and notification history setup before testing. Mermaid flows for env readiness and data path. Wire into DOCUMENTATION, TEST_STRATEGY, and related indexes. Documentation only.",
+  "changes": [
+    {
+      "area": "docs",
+      "items": [
+        "docs/TESTING_HISTORY_PREREQUISITES.md",
+        "DOCUMENTATION.md, TEST_STRATEGY.md, AUTOMATED_FUNCTIONAL_TEST_DESIGN.md",
+        "README.md, GLOSSARY.md, DEVELOPMENTGUIDE.md tree",
+        "dev-help docs links",
+        "changes/2026-08/CHANGES.md"
+      ]
+    }
+  ]
+}

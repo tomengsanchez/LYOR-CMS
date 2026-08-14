@@ -1,0 +1,30 @@
+{
+  "date": "2026-08-14",
+  "title": "Profile list columns — Address, Representative, related Structure PN numbers",
+  "summary": "Add Address, Representative information (with contacts), and Related Structure PN numbers to Profile list/Select Columns/CSV/PDF export. PN values are aggregated from linked structures (owner, tagged-by, matching tags).",
+  "changes": [
+    {
+      "area": "ListConfig / Profile model",
+      "items": [
+        "List + export columns: address, representative_info, related_structure_pn_numbers",
+        "listPaginated SELECT includes representative_* fields; enrichListDerivedFields attaches derived columns",
+        "Search and header sort support for the three new columns (PN sort via correlated GROUP_CONCAT)"
+      ]
+    },
+    {
+      "area": "Web UI / Help",
+      "items": [
+        "profile/index.php truncates long address / representative / PN cells like remarks",
+        "Help Profile overview Select Columns + FAQ"
+      ]
+    },
+    {
+      "area": "Docs",
+      "items": [
+        "API_CONTRACT.md GET /api/profile/list derived fields",
+        "DEVELOPMENTGUIDE.md list/export note",
+        "changes/2026-08/CHANGES.md"
+      ]
+    }
+  ]
+}
