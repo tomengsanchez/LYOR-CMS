@@ -31,4 +31,10 @@
 <?php if (!empty($post->excerpt)): ?><p class="text-muted"><?= htmlspecialchars($post->excerpt) ?></p><?php endif; ?>
 <div class="cms-preview border rounded p-3 mt-3"><?= $post->body ?></div>
 </div></div>
+<?php
+$entityType = 'post';
+$entityId = (int) $post->id;
+$revisions = $revisions ?? [];
+require __DIR__ . '/../partials/content_revisions.php';
+?>
 <?php $content = ob_get_clean(); $pageTitle = $post->title; $currentPage = 'posts'; require __DIR__ . '/../layout/main.php';

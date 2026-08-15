@@ -19,7 +19,8 @@ $app = [
         'hsts' => true,
         'hsts_max_age' => 31536000,
         // Optional custom CSP string; omit to use the built-in default (self + jsDelivr/jQuery CDN + Google Maps frame-src).
-        // If you override csp, include frame-src for https://maps.google.com and https://www.google.com (Structure GPS dialog).
+        // Default img-src includes https: so Media “Register URL” / layout hotlinks work. If you override csp, keep that
+        // (or list allowed image hosts) and include frame-src for https://maps.google.com and https://www.google.com.
         // 'csp' => "...",
     ],
 

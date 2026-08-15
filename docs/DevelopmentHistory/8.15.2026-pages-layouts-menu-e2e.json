@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-15",
+  "title": "Playwright sample pages with distinct layouts on Primary Menu",
+  "entries": [
+    {
+      "area": "E2E",
+      "summary": "cms-pages-layouts-menu.spec.ts upserts About/Services/Features/Team/Contact pages with different column layouts and content_layout widths, saves via visual builder, rebuilds Primary Menu, and asserts public nav + layouts."
+    },
+    {
+      "area": "Bugfix",
+      "summary": "pages/form.php closed the Content card before SEO/LLM/Save; HTML5 parsing ended the form early so Save did not submit. Fixed to wrap the full form like posts/form.php."
+    },
+    {
+      "area": "Tooling",
+      "summary": "npm script test:e2e:cms-pages-layouts-menu; DEVELOPMENTGUIDE Playwright section updated."
+    },
+    {
+      "area": "Help",
+      "summary": "Menus help notes the sample Playwright seed for demo navigation pages."
+    }
+  ]
+}

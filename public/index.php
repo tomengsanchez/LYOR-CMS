@@ -25,14 +25,14 @@ $router->get('/system/audit-trail', 'LegacyRedirectController@systemAuditTrail')
 $router->get('/', 'PublicController@home');
 $router->get('/index.json', 'PublicController@homeJson');
 $router->get('/site.json', 'PublicController@siteJson');
-$router->get('/p/{slug}', 'PublicController@page');
 $router->get('/p/{slug}.json', 'PublicController@pageJson');
+$router->get('/p/{slug}', 'PublicController@page');
 $router->get('/blog.json', 'PublicController@blogJson');
 $router->get('/blog/category/{slug}', 'PublicController@category');
 $router->get('/blog/tag/{slug}', 'PublicController@tag');
 $router->get('/blog', 'PublicController@blog');
-$router->get('/blog/{slug}', 'PublicController@post');
 $router->get('/blog/{slug}.json', 'PublicController@postJson');
+$router->get('/blog/{slug}', 'PublicController@post');
 $router->get('/share/media/{id}/{size}', 'PublicMediaController@serve');
 $router->get('/share/media/{id}', 'PublicMediaController@serve');
 $router->get('/sitemap.xml', 'PublicController@sitemap');
@@ -61,12 +61,17 @@ $router->post('/admin/pages/store', 'PageController@store');
 $router->get('/admin/pages/edit/{id}', 'PageController@edit');
 $router->post('/admin/pages/update/{id}', 'PageController@update');
 $router->post('/admin/pages/delete/{id}', 'PageController@delete');
+$router->post('/admin/pages/restore/{id}/{revisionId}', 'RevisionController@restorePage');
 
 // Visual layout builder (Divi-style)
 $router->get('/admin/builder/page/{id}', 'BuilderController@editPage');
 $router->post('/admin/builder/page/{id}/save', 'BuilderController@savePage');
 $router->get('/admin/builder/post/{id}', 'BuilderController@editPost');
 $router->post('/admin/builder/post/{id}/save', 'BuilderController@savePost');
+$router->get('/admin/builder/templates', 'BuilderController@listTemplates');
+$router->get('/admin/builder/templates/{id}', 'BuilderController@getTemplate');
+$router->post('/admin/builder/templates', 'BuilderController@saveTemplate');
+$router->post('/admin/builder/templates/{id}/delete', 'BuilderController@deleteTemplate');
 
 // Admin — Posts
 $router->get('/admin/posts', 'PostController@index');
@@ -76,6 +81,16 @@ $router->post('/admin/posts/store', 'PostController@store');
 $router->get('/admin/posts/edit/{id}', 'PostController@edit');
 $router->post('/admin/posts/update/{id}', 'PostController@update');
 $router->post('/admin/posts/delete/{id}', 'PostController@delete');
+$router->post('/admin/posts/restore/{id}/{revisionId}', 'RevisionController@restorePost');
+
+// Admin — Content library search
+$router->get('/admin/search', 'ContentSearchController@index');
+
+// Admin — Redirects (SEO)
+$router->get('/admin/redirects', 'RedirectController@index');
+$router->post('/admin/redirects/store', 'RedirectController@store');
+$router->post('/admin/redirects/update/{id}', 'RedirectController@update');
+$router->post('/admin/redirects/delete/{id}', 'RedirectController@delete');
 
 // Admin — Categories
 $router->get('/admin/categories', 'CategoryController@index');
@@ -111,6 +126,7 @@ $router->post('/admin/widgets/save', 'WidgetController@save');
 // Admin — Media
 $router->get('/admin/media', 'MediaController@index');
 $router->post('/admin/media/upload', 'MediaController@upload');
+$router->post('/admin/media/register-url', 'MediaController@registerUrl');
 $router->post('/admin/media/upload-json', 'MediaController@uploadJson');
 $router->post('/admin/media/delete/{id}', 'MediaController@delete');
 
@@ -143,6 +159,17 @@ $router->post('/admin/system/general/save', 'GeneralController@save');
 $router->post('/admin/system/general/theme-preview', 'GeneralController@themePreview');
 $router->post('/admin/system/general/theme-preview-clear', 'GeneralController@themePreviewClear');
 $router->post('/admin/system/general/help-chat', 'GeneralController@saveHelpChat');
+$router->get('/admin/customize', 'CustomizeController@index');
+$router->post('/admin/customize/preview', 'CustomizeController@preview');
+$router->post('/admin/customize/publish', 'CustomizeController@publish');
+$router->post('/admin/customize/close', 'CustomizeController@close');
+$router->post('/admin/customize/import-style-pack', 'CustomizeController@importStylePack');
+$router->post('/admin/customize/clear-style-pack', 'CustomizeController@clearStylePack');
+$router->post('/admin/customize/activate-style-pack', 'CustomizeController@activateStylePack');
+$router->post('/admin/customize/delete-style-pack', 'CustomizeController@deleteStylePack');
+$router->post('/admin/customize/install-bundled-style-pack', 'CustomizeController@installBundledStylePack');
+$router->get('/admin/customize/export-style-pack', 'CustomizeController@exportStylePack');
+$router->get('/admin/customize/sample-style-pack', 'CustomizeController@downloadSampleStylePack');
 $router->get('/admin/system/backup-restore', 'BackupRestoreController@index');
 $router->post('/admin/system/backup-restore/create', 'BackupRestoreController@createBackup');
 $router->post('/admin/system/backup-restore/download', 'BackupRestoreController@downloadBackup');
@@ -178,9 +205,15 @@ $router->get('/api/auth/me', 'Api\AuthController@me');
 $router->post('/api/auth/logout', 'Api\AuthController@logout');
 $router->get('/api/meta/error-codes', 'Api\MetaController@errorCodes');
 $router->get('/api/pages', 'Api\PageController@listApi');
+$router->post('/api/pages', 'Api\PageController@createApi');
 $router->get('/api/pages/{id}', 'Api\PageController@getApi');
+$router->patch('/api/pages/{id}', 'Api\PageController@updateApi');
+$router->delete('/api/pages/{id}', 'Api\PageController@deleteApi');
 $router->get('/api/posts', 'Api\PostController@listApi');
+$router->post('/api/posts', 'Api\PostController@createApi');
 $router->get('/api/posts/{id}', 'Api\PostController@getApi');
+$router->patch('/api/posts/{id}', 'Api\PostController@updateApi');
+$router->delete('/api/posts/{id}', 'Api\PostController@deleteApi');
 $router->get('/api/media', 'Api\MediaController@listApi');
 $router->get('/api/notifications', 'Api\NotificationController@listApi');
 $router->get('/api/settings/ui', 'Api\SettingsController@ui');

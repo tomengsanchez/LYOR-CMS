@@ -14,6 +14,11 @@ class PublicMediaController extends Controller
             http_response_code(404);
             exit;
         }
+        if (Media::isExternal($media)) {
+            header('Location: ' . trim((string) $media->source_url), true, 302);
+            header('Cache-Control: public, max-age=3600');
+            exit;
+        }
         $resolved = Media::resolveServePath($media, $size);
         if (!$resolved) {
             http_response_code(404);

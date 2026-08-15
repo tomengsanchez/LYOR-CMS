@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-15",
+  "title": "AI search and citation configuration",
+  "entries": [
+    {
+      "area": "Database",
+      "summary": "migration_021_ai_citation_bluf: cms_pages/cms_posts citation_snippet + faq_json (MySQL/MariaDB)."
+    },
+    {
+      "area": "Settings",
+      "summary": "General SEO adds publisher expertise, preferred citation, guidance, pillar topics, Reddit/YouTube sameAs, FAQ/speakable/tips toggles."
+    },
+    {
+      "area": "Public",
+      "summary": "BLUF lead .cms-ai-answer; meta citation; speakable + FAQPage JSON-LD; llms.txt citation/expertise/topic sections; JSON citation_snippet/faq."
+    },
+    {
+      "area": "Docs",
+      "summary": "Help (general/pages/posts), CONFIGURATION, CHANGES, DEVELOPMENTGUIDE, smoke test, Postman site.json description."
+    }
+  ]
+}

@@ -7,6 +7,7 @@ use App\Models\Comment;
 use App\Models\Media;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Redirect;
 use App\Models\Tag;
 use App\Models\Widget;
 use App\ContentBlocks;
@@ -39,6 +40,7 @@ class PublicController extends Controller
                 'publicJsonLd' => $seo['json_ld'],
                 'publicJsonUrl' => $seo['json_url'],
                 'publicLlmSummary' => $seo['llm_summary'],
+                'publicCitationSnippet' => $seo['citation_snippet'] ?? '',
             ]);
             return;
         }
@@ -54,6 +56,7 @@ class PublicController extends Controller
             'publicJsonUrl' => $seo['json_url'],
             'publicRobotsNoindex' => $seo['robots_noindex'],
             'publicLlmSummary' => $seo['llm_summary'],
+            'publicCitationSnippet' => $seo['citation_snippet'] ?? '',
         ]);
     }
 
@@ -96,6 +99,8 @@ class PublicController extends Controller
     {
         $page = Page::findBySlug($slug, true);
         if (!$page) {
+            Redirect::applyForRequestPath('/p/' . $slug);
+            Redirect::applyForRequestPath('/' . $slug);
             http_response_code(404);
             $this->view('public/not_found', [
                 'message' => 'Page not found.',
@@ -119,6 +124,7 @@ class PublicController extends Controller
             'publicJsonUrl' => $seo['json_url'],
             'publicRobotsNoindex' => $seo['robots_noindex'],
             'publicLlmSummary' => $seo['llm_summary'],
+            'publicCitationSnippet' => $seo['citation_snippet'] ?? '',
         ]);
     }
 
@@ -237,6 +243,7 @@ class PublicController extends Controller
             'publicJsonUrl' => $archiveSeo['json_url'],
             'publicRobotsNoindex' => $archiveSeo['robots_noindex'],
             'publicLlmSummary' => $archiveSeo['llm_summary'],
+            'publicCitationSnippet' => $archiveSeo['citation_snippet'] ?? '',
             'blogListTitle' => $listTitle,
             'blogListLead' => $listLead,
             'blogSearchQuery' => $search,
@@ -256,6 +263,7 @@ class PublicController extends Controller
     {
         $post = Post::findBySlug($slug, true);
         if (!$post) {
+            Redirect::applyForRequestPath('/blog/' . $slug);
             http_response_code(404);
             $this->view('public/not_found', [
                 'message' => 'Post not found.',
@@ -285,6 +293,7 @@ class PublicController extends Controller
             'publicJsonUrl' => $seo['json_url'],
             'publicRobotsNoindex' => $seo['robots_noindex'],
             'publicLlmSummary' => $seo['llm_summary'],
+            'publicCitationSnippet' => $seo['citation_snippet'] ?? '',
         ]);
     }
 
@@ -347,6 +356,7 @@ class PublicController extends Controller
         }
         $resolved = Permalink::resolvePath((string) $uri);
         if (!$resolved) {
+            Redirect::applyForRequestPath($uri);
             http_response_code(404);
             if ($wantJson) {
                 header('Content-Type: application/json; charset=utf-8');

@@ -23,18 +23,17 @@ test.describe('Simple CMS smoke', () => {
     await expect(page.locator('h1')).toContainText('Welcome');
   });
 
-  test('public dark mode toggle', async ({ page }) => {
+  test('public color mode follows admin default (no visitor toggle)', async ({ page }) => {
     await page.goto(`${baseURL}/`);
-    const toggle = page.locator('#publicThemeToggle');
-    const visible = await toggle.isVisible().catch(() => false);
-    if (!visible) {
-      test.skip(true, 'Theme toggle disabled in General settings');
-      return;
+    await expect(page.locator('#publicThemeToggle')).toHaveCount(0);
+    const html = page.locator('html');
+    await expect(html).toHaveAttribute('data-default-color-mode', /.+/);
+    const mode = await html.getAttribute('data-default-color-mode');
+    if (mode === 'dark') {
+      await expect(html).toHaveAttribute('data-theme', 'dark');
+    } else if (mode === 'light') {
+      await expect(html).not.toHaveAttribute('data-theme', 'dark');
     }
-    await toggle.click();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await toggle.click();
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'dark');
   });
 
   test('public site applies theme classes on html', async ({ page }) => {

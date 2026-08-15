@@ -20,7 +20,7 @@ This guide describes structure, routing, database schema, settings, and conventi
 | **Comments** | `/admin/comments` | Form on posts | Moderation, replies, rate limit |
 | **Menus** | `/admin/menus` | Primary header nav | |
 | **Widgets** | `/admin/widgets` | Sidebar + footer | Drag to reorder |
-| **Media** | `/admin/media` | `/share/media/{id}` | |
+| **Media** | `/admin/media` | `/share/media/{id}` (external → redirect to `source_url`) | Upload or **Register URL** (no download); `caption` / `source_url` on `cms_media` |
 | **General** | `/admin/system/general` | Theme, reading, discussion, permalinks, SEO | |
 | **Users / Roles** | `/admin/users`, `/admin/users/roles` | — | Capabilities in `App\Capabilities` |
 
@@ -45,7 +45,9 @@ Legacy paths (`/login`, `/pages`, …) **301 redirect** to `/admin/...` via `Leg
 │   ├── ReadingSettings.php   # Homepage / posts per page
 │   ├── DiscussionSettings.php
 │   ├── PermalinkSettings.php
-│   ├── PublicTheme.php       # Site theme customizer
+    │   ├── PublicTheme.php       # Site theme customizer
+    │   ├── ThemeStylePack.php    # Style pack zip import/export
+    │   ├── ThemeStylePack.php    # Style pack zip import/export
 │   ├── PublicSeo.php         # SEO, JSON-LD, JSON exports
 │   ├── MediaImageSizes.php   # Responsive sizes + srcset (WP-style)
 │   └── CommentRateLimit.php  # Per-IP comment throttle
@@ -54,7 +56,7 @@ Legacy paths (`/login`, `/pages`, …) **301 redirect** to `/admin/...` via `Leg
 │   ├── database.php          # MySQL/MariaDB (copy from database-sample.php)
 │   └── app.php               # base_url, security headers (optional)
 ├── database/
-│   ├── migration_000 … 016   # Active CMS migrations
+│   ├── migration_000 … 017   # Active CMS migrations
 │   └── migrations_legacy/    # Archived PAPeR migrations
 ├── public/
 │   ├── index.php             # All routes
@@ -153,6 +155,10 @@ Active CMS migrations:
 | `migration_014_post_seo_llm` | post SEO title, description, LLM summary, noindex |
 | `migration_015_media_responsive_sizes` | cms_media_sizes + WordPress-style variants |
 | `migration_016_layout_builder` | layout_json on cms_pages / cms_posts (visual builder) |
+| `migration_017_revisions_redirects` | cms_content_revisions + cms_redirects |
+| `migration_018_layout_templates` | cms_layout_templates (reusable builder layouts) |
+| `migration_019_content_width_full_default` | Default public content width → full (1320px) |
+| `migration_020_hide_public_admin_link` | Hide public Admin login links by default |
 
 Format: PHP file returning `name`, `up`, `down` callables. DDL steps should be idempotent where practical (`SHOW COLUMNS` guards).
 
@@ -166,10 +172,10 @@ Format: PHP file returning `name`, `up`, `down` callables. DDL steps should be i
 | Reading | `ReadingSettings` | homepage static vs posts, posts_per_page |
 | Discussion | `DiscussionSettings` | comments, moderation, sidebar, **comment_rate_limit** |
 | Permalinks | `PermalinkSettings` | page/post URL patterns |
-| Public theme | `PublicTheme` | presets, fonts, widths, color mode |
-| Site SEO | `AppSettings::getSiteSeoConfig()` | sitemap, RSS, JSON export, llms.txt, AI crawlers, OG defaults |
+| Public theme | `PublicTheme` / `ThemeStylePack` | presets, fonts, widths, color mode; style-pack zip import/export |
+| Site SEO | `AppSettings::getSiteSeoConfig()` | sitemap, RSS, JSON export, llms.txt, AI crawlers, OG defaults, AI citation/E-E-A-T/topic clusters |
 
-Preview unsaved theme: `/?theme_preview=1` (admin only).
+Preview unsaved theme: `/?theme_preview=1` (admin only). **Customizer:** `/admin/customize` — sidebar controls + iframe (`customize_frame=1`), session sync via `POST /admin/customize/preview`, publish via `POST /admin/customize/publish` (`CustomizeController`, `theme-preview-bridge.js`). **Style packs:** library at `public/uploads/theme-packs/library/{id}/`; activate/delete/install-bundled + import/export/sample routes on `/admin/customize/*-style-pack`. Rebuild zips: `php cli/build_style_pack.php`.
 
 ---
 
@@ -187,17 +193,31 @@ Key CMS capabilities: `view_pages`, `view_posts`, `moderate_comments`, `manage_c
 
 Examples: `public/assets/js/content/blocks.js`, `public/assets/js/builder/editor.js`, `public/assets/js/widgets/form.js`, `public/assets/js/public/comments.js`.
 
+### Content revisions
+
+Snapshots in `cms_content_revisions` (max 50 per page/post). Recorded before `Page::update` / `Post::update` / `saveLayoutJson`. Restore from page/post view: `POST /admin/pages|posts/restore/{id}/{revisionId}`.
+
+### Redirects
+
+`cms_redirects` admin at `/admin/redirects` (`manage_settings`). Public: `Redirect::applyForRequestPath` on permalink 404 and missing `/p/{slug}` / `/blog/{slug}`.
+
+### Content library search
+
+`GET /admin/search?q=` via `App\ContentSearch` (pages, posts, media). Header search box + Content → Library search.
+
 ### Visual layout builder (Divi-style)
 
-JSON stored in `layout_json` on pages/posts (migration **016**). Structure: Section → Row → Column → Module. Phase 1 modules: heading, text, image, button, CTA, spacer, divider, HTML, blurb.
+JSON stored in `layout_json` on pages/posts (migration **016**). Structure: Section → Row → Column → Module. Phase 1 modules: heading, text, image, button, CTA, spacer, divider, HTML, blurb, **carousel** (multi-slide images with autoplay/arrows/dots).
 
 - **Admin:** `GET /admin/builder/page/{id}` / `GET /admin/builder/post/{id}`; save via `POST .../save` (FormData `layout_json` + CSRF, check without rotate).
 - **Entry:** “Edit via Frontend editor” on page/post forms (after the entity is saved).
+- **Device preview:** Desktop / Tablet / Mobile toolbar toggles set canvas `max-width` (1100 / 768 / 390).
+- **Templates:** Shared library in `cms_layout_templates` (migration **018**). Toolbar **Templates** → load / save current / delete. Endpoints: `GET|POST /admin/builder/templates`, `GET /admin/builder/templates/{id}`, `POST .../{id}/delete`.
 - **Row columns:** Content panel layout picker (1–4 equal + common splits); row chrome **Columns** opens it. Modules are preserved when the layout changes.
 - **Modules:** Side-panel type picker (no `prompt`); empty-column **+ Add module**; ↑ ↓ / Dup on modules; ↑ ↓ on sections and rows; Ctrl/Cmd+S to save.
-- **PHP:** `App\LayoutBuilder` parse/normalize/render; assets `public/assets/js/builder/editor.js`, `public/assets/css/admin/builder.css`.
+- **PHP:** `App\LayoutBuilder` parse/normalize/render; `App\Models\LayoutTemplate`; assets `public/assets/js/builder/editor.js`, `public/assets/css/admin/builder.css`.
 - **Public precedence** (`ContentBlocks::renderEntity`): `layout_json` → `blocks_json` → HTML `body`.
-- **Backup:** column included in full DB dump; no special restore steps.
+- **Backup:** `layout_json` and `cms_layout_templates` included in full DB dump; no special restore steps.
 
 ### Block builder
 
@@ -225,6 +245,19 @@ Public submit: `POST /comment/post/{id}`. Honeypot field `website`. Rate limit: 
 - **Restore:** CLI only — `php cli/restore.php --from=path/to.zip`. Includes all `cms_*` tables and `app_settings`.
 - **Verify:** `npm run test:backup-restore` (when configured).
 
+### Fresh-install truncate (destructive, never production)
+
+```bash
+php cli/truncate_fresh_install.php          # prompts YES
+php cli/truncate_fresh_install.php --yes
+php cli/truncate_fresh_install.php --yes --no-reseed    # empty content
+php cli/truncate_fresh_install.php --yes --keep-uploads # leave public/uploads/media files
+```
+
+**Keeps:** `migrations`, `roles`, `role_capabilities`, `admin` user.  
+**Clears:** all `cms_*` content tables, `app_settings`, notifications/audit/email/API sessions, `backup_archives` rows, leftover legacy PAPeR tables if present, and media files under `public/uploads/media/` (unless `--keep-uploads`).  
+**Default reseed:** Welcome page, General category, Hello World post, Primary Menu (Home + Blog). ZIP files under `storage/backups/` are not deleted.
+
 ### Audit
 
 `App\AuditLog::record($entityType, $entityId, $action)` on create/update/delete for pages, posts, comments, widgets, etc.
@@ -238,7 +271,10 @@ Registered in `public/index.php` under `/api/`. JSON envelope: `{ success, data,
 | Endpoint | Auth | Purpose |
 |----------|------|---------|
 | `POST /api/auth/login` | — | Bearer token |
-| `GET /api/pages`, `/api/posts`, `/api/media` | Bearer | List (read-only) |
+| `GET /api/pages`, `/api/posts`, `/api/media` | Bearer | List |
+| `POST /api/pages`, `POST /api/posts` | Bearer (`add_*`) | Create (JSON body; optional `layout` / `layout_json`) |
+| `PATCH /api/pages/{id}`, `PATCH /api/posts/{id}` | Bearer (`edit_*`) | Update (partial merge; optional layout) |
+| `DELETE /api/pages/{id}`, `DELETE /api/posts/{id}` | Bearer (`delete_*`) | Soft-delete |
 | `GET /api/system/general` | Bearer (admin) | Branding, SEO, reading, discussion, permalinks |
 | `GET /api/settings/ui` | Bearer | User UI prefs |
 
@@ -256,16 +292,18 @@ php tests/cli/cms_wp_extended_smoke_test.php
 php tests/cli/cms_rss_smoke_test.php
 php tests/cli/cms_llm_discovery_smoke_test.php
 php tests/cli/cms_media_responsive_smoke_test.php
+php tests/cli/cms_revisions_redirects_search_smoke_test.php
+php tests/cli/cms_builder_templates_write_api_smoke_test.php
 ```
 
-Or: `npm run test:cms-wp-features`, `npm run test:cms-wp-extended`, `npm run test:cms-rss`, `npm run test:cms-llm`, `npm run test:cms-media-responsive`, `npm run test:cms-inline-media`.
+Or: `npm run test:cms-wp-features`, `npm run test:cms-wp-extended`, `npm run test:cms-rss`, `npm run test:cms-llm`, `npm run test:cms-media-responsive`, `npm run test:cms-inline-media`, `npm run test:cms-revisions-redirects-search`, `npm run test:cms-builder-templates-write-api`.
 
 ### Playwright E2E
 
 Copy `.env.playwright.example` → `.env.playwright`:
 
 ```env
-BASE_URL=http://eco.local
+BASE_URL=http://cms.local
 ADMIN_USER=admin
 ADMIN_PASS=admin123
 ```
@@ -273,6 +311,9 @@ ADMIN_PASS=admin123
 ```bash
 npm run test:e2e:cms          # headless
 npm run test:e2e:cms:headed # watch mode
+npm run test:e2e:cms-builder-tomeng       # sample post with all column layouts
+npm run test:e2e:cms-pages-layouts-menu   # sample pages (distinct layouts) + Primary Menu
+npm run test:e2e:cms-team-pogi-site       # Team POGI site: 5 pages + 5 posts + free Picsum images + menu
 ```
 
 ---

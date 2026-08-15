@@ -1,0 +1,35 @@
+{
+  "date": "2026-08-15",
+  "summary": "External media by URL (source_url + caption, no re-upload) and Playwright publish of Manhood Exclusive Rooms sermon post.",
+  "changes": [
+    {
+      "area": "database",
+      "notes": ["migration_022_media_source_caption: cms_media.source_url, cms_media.caption"]
+    },
+    {
+      "area": "media",
+      "notes": [
+        "Media::createFromExternalUrl / isExternal; serve + share redirect to source_url",
+        "POST /admin/media/register-url; Media library Register URL form",
+        "Featured image picker supports external preview URLs"
+      ]
+    },
+    {
+      "area": "layout-builder",
+      "notes": ["Image module caption → figcaption; public CSS .cms-mod-image-caption"]
+    },
+      "area": "security",
+      "notes": ["Default CSP img-src adds https: so external Media/layout hotlinks render"]
+    },
+    {
+      "area": "e2e",
+      "notes": ["tests/e2e/cms-manhood-exclusive-rooms.spec.ts; npm run test:e2e:cms-manhood-exclusive-rooms"]
+    },
+    {
+      "area": "backup-restore",
+      "notes": ["New cms_media columns included in SQL dump; no special restore logic"]
+    }
+  ],
+  "help_docs": ["App/Views/help/pages/media.php", "docs/changes/2026-08/CHANGES.md"],
+  "compatibility": "MySQL and MariaDB ALTER ADD COLUMN IF NOT EXISTS pattern via SHOW COLUMNS"
+}

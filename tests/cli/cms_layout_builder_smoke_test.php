@@ -101,4 +101,50 @@ assert($hasLayout === false, 'no layout');
 $empty = LayoutBuilder::normalizeJson('{"version":1,"sections":[]}');
 assert($empty === null, 'empty sections normalize to null');
 
+assert(isset(LayoutBuilder::moduleTypes()['carousel']), 'carousel module registered');
+
+$carouselRaw = json_encode([
+    'version' => 1,
+    'sections' => [[
+        'id' => 'sec-c',
+        'type' => 'regular',
+        'settings' => [],
+        'rows' => [[
+            'id' => 'row-c',
+            'settings' => [],
+            'columns' => [[
+                'id' => 'col-c',
+                'width' => 12,
+                'settings' => [],
+                'modules' => [[
+                    'id' => 'mod-carousel',
+                    'type' => 'carousel',
+                    'data' => [
+                        'autoplay' => true,
+                        'interval_ms' => 4000,
+                        'show_arrows' => true,
+                        'show_dots' => true,
+                        'slides' => [
+                            ['media_id' => null, 'url' => 'https://example.com/a.jpg', 'alt' => 'Alpha', 'caption' => 'First slide', 'link' => ''],
+                            ['media_id' => null, 'url' => 'https://example.com/b.jpg', 'alt' => 'Beta', 'caption' => '', 'link' => 'https://example.com'],
+                        ],
+                    ],
+                    'design' => [],
+                    'advanced' => [],
+                ]],
+            ]],
+        ]],
+    ]],
+], JSON_UNESCAPED_UNICODE);
+$carouselNorm = LayoutBuilder::normalizeJson($carouselRaw);
+$carouselParsed = LayoutBuilder::parse($carouselNorm);
+$carouselHtml = LayoutBuilder::render($carouselParsed);
+assert(str_contains($carouselHtml, 'cms-carousel'), 'carousel wrapper');
+assert(str_contains($carouselHtml, 'data-cms-carousel'), 'carousel data attr');
+assert(str_contains($carouselHtml, 'First slide'), 'carousel caption');
+assert(str_contains($carouselHtml, 'example.com/a.jpg'), 'carousel image url');
+$carouselPlain = LayoutBuilder::plainText($carouselParsed);
+assert(str_contains($carouselPlain, 'First slide'), 'carousel plain caption');
+assert(str_contains($carouselPlain, 'Beta'), 'carousel plain alt fallback');
+
 echo "cms_layout_builder_smoke_test: OK\n";

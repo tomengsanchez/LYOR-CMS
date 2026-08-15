@@ -150,11 +150,11 @@ php cli/migrate.php --rollback --steps=N
 
 ```bash
 php cli/truncate_fresh_install.php   # prompts YES
-php database/seeders/seed_grievance_options.php
-php database/seeders/seed_structure_options.php
+# or non-interactive:
+php cli/truncate_fresh_install.php --yes
 ```
 
-Keeps migrations, roles, `admin` user pattern — see DEVELOPMENTGUIDE.
+Clears Simple CMS content + ops tables; keeps migrations, roles, and `admin`. By default re-seeds Welcome / Hello World / Primary Menu. Optional: `--no-reseed`, `--keep-uploads`. See DEVELOPMENTGUIDE (Fresh-install truncate).
 
 ---
 

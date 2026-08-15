@@ -1,0 +1,10 @@
+{
+  "date": "2026-08-15",
+  "title": "Hide public Admin login button by default",
+  "entries": [
+    {
+      "area": "Public theme",
+      "summary": "pub_theme_show_admin_link defaults to off; migration 020 sets existing installs to 0. Header/footer Admin links hidden unless re-enabled in Customize/General."
+    }
+  ]
+}

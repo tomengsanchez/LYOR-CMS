@@ -1,0 +1,28 @@
+/**
+ * CMS Style Pack — extra.css (optional)
+ *
+ * Loaded after themes.css + site.css on the public site when this pack is imported.
+ * Keep rules additive. Dangerous constructs (@import, expression(), javascript:) are stripped on import.
+ *
+ * Useful public classes (non-exhaustive):
+ *   html.pub-theme-*          theme preset / options classes
+ *   .public-site              body wrapper
+ *   .public-header            site header
+ *   .public-nav               primary nav
+ *   .public-article           single page/post
+ *   .public-blog-list         blog index
+ *   .cms-mod-heading|text|image  layout-builder modules
+ */
+
+.public-header {
+  letter-spacing: 0.02em;
+}
+
+.public-article .cms-mod-heading {
+  text-wrap: balance;
+}
+
+/* Example: soften magazine kicker if present */
+.public-blog-kicker {
+  letter-spacing: 0.08em;
+}

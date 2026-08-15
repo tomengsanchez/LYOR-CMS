@@ -3,10 +3,11 @@ namespace App\Models;
 
 use App\AuditLog;
 use App\CmsSlug;
+use App\ContentBlocks;
+use App\ContentRevision;
+use App\LayoutBuilder;
 use App\PublicSeo;
 use App\PublicTheme;
-use App\ContentBlocks;
-use App\LayoutBuilder;
 use Core\Auth;
 use Core\Database;
 
@@ -170,7 +171,7 @@ class Page
     public static function publishedForLlms(): array
     {
         return Database::getInstance()->query("
-            SELECT id, slug, title, meta_description, llm_summary, body, blocks_json, layout_json, updated_at
+            SELECT id, slug, title, meta_description, llm_summary, citation_snippet, body, blocks_json, layout_json, updated_at
             FROM cms_pages
             WHERE deleted_at IS NULL AND status = 'published' AND robots_noindex = 0
             ORDER BY title ASC
@@ -188,8 +189,8 @@ class Page
             !empty($data['featured_image_id']) ? (int) $data['featured_image_id'] : null
         );
         $stmt = $db->prepare('
-            INSERT INTO cms_pages (title, slug, body, blocks_json, status, meta_title, meta_description, featured_image_id, llm_summary, robots_noindex, content_layout, parent_id, author_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO cms_pages (title, slug, body, blocks_json, status, meta_title, meta_description, featured_image_id, llm_summary, citation_snippet, faq_json, robots_noindex, content_layout, parent_id, author_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
             trim($data['title'] ?? ''),
@@ -201,6 +202,8 @@ class Page
             PublicSeo::normalizeMetaDescription($data['meta_description'] ?? ''),
             $featuredId,
             PublicSeo::normalizeLlmSummary($data['llm_summary'] ?? ''),
+            PublicSeo::normalizeCitationSnippet($data['citation_snippet'] ?? ''),
+            PublicSeo::normalizeFaqJson($data['faq_json'] ?? null),
             !empty($data['robots_noindex']) ? 1 : 0,
             PublicTheme::normalizeContentLayout($data['content_layout'] ?? null),
             self::normalizeParentId(!empty($data['parent_id']) ? (int) $data['parent_id'] : null),
@@ -226,12 +229,13 @@ class Page
         if (CmsSlug::conflictsWithOtherContent($db, 'cms_pages', $slug, $id)) {
             return false;
         }
+        ContentRevision::recordPage($existing, 'Before update');
         $featuredId = Media::resolveImageId(
             !empty($data['featured_image_id']) ? (int) $data['featured_image_id'] : null
         );
         $stmt = $db->prepare('
             UPDATE cms_pages SET title = ?, slug = ?, body = ?, blocks_json = ?, status = ?, meta_title = ?, meta_description = ?,
-                featured_image_id = ?, llm_summary = ?, robots_noindex = ?, content_layout = ?, parent_id = ?
+                featured_image_id = ?, llm_summary = ?, citation_snippet = ?, faq_json = ?, robots_noindex = ?, content_layout = ?, parent_id = ?
             WHERE id = ? AND deleted_at IS NULL
         ');
         $stmt->execute([
@@ -244,6 +248,8 @@ class Page
             PublicSeo::normalizeMetaDescription($data['meta_description'] ?? ''),
             $featuredId,
             PublicSeo::normalizeLlmSummary($data['llm_summary'] ?? ''),
+            PublicSeo::normalizeCitationSnippet($data['citation_snippet'] ?? ''),
+            PublicSeo::normalizeFaqJson($data['faq_json'] ?? null),
             !empty($data['robots_noindex']) ? 1 : 0,
             PublicTheme::normalizeContentLayout($data['content_layout'] ?? null),
             self::normalizeParentId(!empty($data['parent_id']) ? (int) $data['parent_id'] : null, $id),
@@ -255,15 +261,80 @@ class Page
 
     public static function saveLayoutJson(int $id, ?string $json): bool
     {
-        if (!self::find($id)) {
+        $existing = self::find($id);
+        if (!$existing) {
             return false;
         }
+        ContentRevision::recordPage($existing, 'Before layout save');
         $normalized = LayoutBuilder::normalizeJson($json);
         $stmt = Database::getInstance()->prepare('
             UPDATE cms_pages SET layout_json = ? WHERE id = ? AND deleted_at IS NULL
         ');
         $stmt->execute([$normalized, $id]);
         AuditLog::record('page', $id, 'layout_updated');
+        return true;
+    }
+
+    /** Restore a revision snapshot (records current state once, then applies). */
+    public static function restoreRevision(int $id, int $revisionId): bool
+    {
+        $existing = self::find($id);
+        $rev = ContentRevision::find($revisionId);
+        if (!$existing || !$rev || (string) $rev->entity_type !== 'page' || (int) $rev->entity_id !== $id) {
+            return false;
+        }
+        $snap = ContentRevision::decodeSnapshot($rev);
+        if ($snap === null) {
+            return false;
+        }
+        ContentRevision::recordPage($existing, 'Before restore to #' . (int) $rev->revision_no);
+
+        $slug = trim((string) ($snap['slug'] ?? $existing->slug));
+        if ($slug === '') {
+            $slug = CmsSlug::from((string) ($snap['title'] ?? $existing->title), 'page');
+        }
+        $db = Database::getInstance();
+        $slug = CmsSlug::unique($db, 'cms_pages', $slug, $id);
+        if (CmsSlug::conflictsWithOtherContent($db, 'cms_pages', $slug, $id)) {
+            return false;
+        }
+        $layout = $snap['layout_json'] ?? null;
+        if (is_array($layout)) {
+            $layout = json_encode($layout, JSON_UNESCAPED_UNICODE);
+        }
+        $layout = LayoutBuilder::normalizeJson(is_string($layout) ? $layout : null);
+        $blocks = $snap['blocks_json'] ?? null;
+        if (is_array($blocks)) {
+            $blocks = json_encode($blocks, JSON_UNESCAPED_UNICODE);
+        }
+        $featuredId = Media::resolveImageId(
+            !empty($snap['featured_image_id']) ? (int) $snap['featured_image_id'] : null
+        );
+        $stmt = $db->prepare('
+            UPDATE cms_pages SET title = ?, slug = ?, body = ?, blocks_json = ?, layout_json = ?, status = ?,
+                meta_title = ?, meta_description = ?, featured_image_id = ?, llm_summary = ?, citation_snippet = ?, faq_json = ?, robots_noindex = ?,
+                content_layout = ?, parent_id = ?
+            WHERE id = ? AND deleted_at IS NULL
+        ');
+        $stmt->execute([
+            trim((string) ($snap['title'] ?? '')),
+            $slug,
+            (string) ($snap['body'] ?? ''),
+            ContentBlocks::normalizeJson(is_string($blocks) ? $blocks : null),
+            $layout,
+            in_array((string) ($snap['status'] ?? ''), ['published', 'draft'], true) ? $snap['status'] : 'draft',
+            PublicSeo::normalizeMetaTitle($snap['meta_title'] ?? ''),
+            PublicSeo::normalizeMetaDescription($snap['meta_description'] ?? ''),
+            $featuredId,
+            PublicSeo::normalizeLlmSummary($snap['llm_summary'] ?? ''),
+            PublicSeo::normalizeCitationSnippet($snap['citation_snippet'] ?? ''),
+            PublicSeo::normalizeFaqJson($snap['faq_json'] ?? null),
+            !empty($snap['robots_noindex']) ? 1 : 0,
+            PublicTheme::normalizeContentLayout($snap['content_layout'] ?? null),
+            self::normalizeParentId(!empty($snap['parent_id']) ? (int) $snap['parent_id'] : null, $id),
+            $id,
+        ]);
+        AuditLog::record('page', $id, 'restored', ['revision_id' => $revisionId, 'revision_no' => (int) $rev->revision_no]);
         return true;
     }
 

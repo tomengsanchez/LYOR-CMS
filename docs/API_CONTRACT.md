@@ -336,7 +336,7 @@ Authoritative registration: `public/index.php`. Methods below are as registered;
 | GET | `/api/settings/ui` | |
 | GET | `/api/settings/email` | |
 | GET | `/api/settings/security` | |
-| GET | `/api/system/general` | Admin. `{ settings, branding, site_seo, public_theme, regions, timezones }` |
+| GET | `/api/system/general` | Admin. `{ settings, branding, site_seo, public_theme, regions, timezones }`. `site_seo` includes LLM discovery toggles plus AI citation fields (`publisher_expertise`, `preferred_citation`, `citation_guidance`, `pillar_topics`, Reddit/YouTube URLs, FAQ/speakable/tips). |
 | GET | `/api/system/development` | |
 | GET | `/api/system/operational` | |
 | GET | `/api/system/realtime-security` | |

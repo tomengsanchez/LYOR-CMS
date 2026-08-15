@@ -59,7 +59,10 @@ class PostController extends Controller
             $this->redirect(AdminPath::url('posts'));
             return;
         }
-        $this->view('posts/view', ['post' => $post]);
+        $this->view('posts/view', [
+            'post' => $post,
+            'revisions' => \App\ContentRevision::listFor('post', $id),
+        ]);
     }
 
     public function create(): void
@@ -69,7 +72,7 @@ class PostController extends Controller
             'post' => (object) [
                 'id' => 0, 'title' => '', 'slug' => '', 'excerpt' => '', 'body' => '',
                 'status' => 'draft', 'category_id' => null, 'featured_image_id' => null, 'content_layout' => null,
-                'blocks_json' => null, 'meta_title' => '', 'meta_description' => '', 'llm_summary' => '', 'robots_noindex' => 0,
+                'blocks_json' => null, 'meta_title' => '', 'meta_description' => '', 'llm_summary' => '', 'citation_snippet' => '', 'faq_json' => '', 'robots_noindex' => 0,
             ],
             'categories' => Category::all(),
             'mediaImages' => Media::listImages(),
@@ -103,6 +106,8 @@ class PostController extends Controller
             'meta_title' => $_POST['meta_title'] ?? '',
             'meta_description' => $_POST['meta_description'] ?? '',
             'llm_summary' => $_POST['llm_summary'] ?? '',
+            'citation_snippet' => $_POST['citation_snippet'] ?? '',
+            'faq_json' => $_POST['faq_json'] ?? null,
             'robots_noindex' => !empty($_POST['robots_noindex']),
         ]);
         if ($id <= 0) {
@@ -155,6 +160,8 @@ class PostController extends Controller
             'meta_title' => $_POST['meta_title'] ?? '',
             'meta_description' => $_POST['meta_description'] ?? '',
             'llm_summary' => $_POST['llm_summary'] ?? '',
+            'citation_snippet' => $_POST['citation_snippet'] ?? '',
+            'faq_json' => $_POST['faq_json'] ?? null,
             'robots_noindex' => !empty($_POST['robots_noindex']),
         ])) {
             $_SESSION['post_form_error'] = 'Could not update post. Slug may conflict with an existing page.';

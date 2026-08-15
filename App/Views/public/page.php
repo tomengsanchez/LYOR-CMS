@@ -13,8 +13,11 @@ if ($pageLayout !== null) {
     $publicLayout = $pageLayout;
 }
 $pageBreadcrumbs = $pageBreadcrumbs ?? [];
+$editBarType = 'page';
+$editBarId = (int) ($page->id ?? 0);
 ob_start();
 ?>
+<?php require __DIR__ . '/partials/edit_bar.php'; ?>
 <?php if (!$isHomepage && !empty($pageBreadcrumbs)): ?>
 <nav class="public-breadcrumbs" aria-label="Breadcrumb">
     <a href="/">Home</a>
@@ -26,49 +29,28 @@ ob_start();
     <span aria-current="page"><?= htmlspecialchars($page->title) ?></span>
 </nav>
 <?php endif; ?>
-<article class="public-article" aria-labelledby="page-title">
-<?php if ($isHomepage): ?>
-<div class="public-hero public-hero--home">
-    <h1 id="page-title"><?= htmlspecialchars($page->title) ?></h1>
-    <?php if (!empty($page->meta_description)): ?>
-    <p class="lead"><?= htmlspecialchars($page->meta_description) ?></p>
-    <?php endif; ?>
-</div>
-<div class="public-card">
+<article class="public-article">
     <?php if (Page::hasFeaturedImage($page)): ?>
     <figure class="public-featured-figure mb-4">
         <?= Media::responsiveImg((int) $page->featured_image_id, [
             'alt' => (string) ($page->featured_alt_text ?? $page->title),
             'class' => 'public-featured-img',
-            'sizes' => '(max-width: 768px) 100vw, min(960px, 100vw)',
+            'sizes' => '(max-width: 768px) 100vw, min(1320px, 100vw)',
             'preferred_width' => 1200,
             'loading' => 'eager',
         ]) ?>
     </figure>
     <?php endif; ?>
-    <?php if (!empty($page->updated_at)): ?>
+    <?php if (!$isHomepage && !empty($page->updated_at)): ?>
     <p class="text-muted small mb-3"><time datetime="<?= htmlspecialchars($page->updated_at) ?>">Updated <?= htmlspecialchars($page->updated_at) ?></time></p>
     <?php endif; ?>
-    <div class="cms-body"><?= $bodyHtml ?></div>
-</div>
-<?php else: ?>
-    <?php if (Page::hasFeaturedImage($page)): ?>
-    <figure class="public-featured-figure mb-4">
-        <?= Media::responsiveImg((int) $page->featured_image_id, [
-            'alt' => (string) ($page->featured_alt_text ?? $page->title),
-            'class' => 'public-featured-img',
-            'sizes' => '(max-width: 768px) 100vw, min(960px, 100vw)',
-            'preferred_width' => 1200,
-            'loading' => 'eager',
-        ]) ?>
-    </figure>
-    <?php endif; ?>
-    <h1 id="page-title"><?= htmlspecialchars($page->title) ?></h1>
-    <?php if (!empty($page->updated_at)): ?>
-    <p class="text-muted small mb-3"><time datetime="<?= htmlspecialchars($page->updated_at) ?>">Updated <?= htmlspecialchars($page->updated_at) ?></time></p>
+    <?php
+    $bluf = trim((string) ($page->citation_snippet ?? ''));
+    if ($bluf !== ''):
+    ?>
+    <p class="cms-ai-answer"><?= htmlspecialchars($bluf) ?></p>
     <?php endif; ?>
     <div class="cms-body"><?= $bodyHtml ?></div>
-<?php endif; ?>
 </article>
 <?php
 $content = ob_get_clean();

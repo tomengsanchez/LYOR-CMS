@@ -47,18 +47,21 @@ $helpFrom = $currentPage !== '' ? $currentPage : 'dashboard';
             <div class="nav-label">Content</div>
             <?php if (\Core\Auth::can('view_pages')): ?><a href="<?= admin_url('pages') ?>" class="nav-sub <?= $currentPage === 'pages' ? 'active' : '' ?>">Pages</a><?php endif; ?>
             <?php if (\Core\Auth::can('view_posts')): ?><a href="<?= admin_url('posts') ?>" class="nav-sub <?= $currentPage === 'posts' ? 'active' : '' ?>">Posts</a><?php endif; ?>
+            <?php if (\Core\Auth::canAny(['view_pages', 'view_posts', 'view_media'])): ?><a href="<?= admin_url('search') ?>" class="nav-sub <?= $currentPage === 'search' ? 'active' : '' ?>">Library search</a><?php endif; ?>
             <?php if (\Core\Auth::can('view_categories')): ?><a href="<?= admin_url('categories') ?>" class="nav-sub <?= $currentPage === 'categories' ? 'active' : '' ?>">Categories</a><?php endif; ?>
             <?php if (\Core\Auth::can('manage_categories')): ?><a href="<?= admin_url('tags') ?>" class="nav-sub <?= $currentPage === 'tags' ? 'active' : '' ?>">Tags</a><?php endif; ?>
             <?php if (\Core\Auth::isAdmin()): ?><a href="<?= admin_url('menus') ?>" class="nav-sub <?= $currentPage === 'menus' ? 'active' : '' ?>">Menus</a><?php endif; ?>
             <?php if (\Core\Auth::can('moderate_comments')): ?><a href="<?= admin_url('comments') ?>" class="nav-sub <?= $currentPage === 'comments' ? 'active' : '' ?>">Comments</a><?php endif; ?>
             <?php if (\Core\Auth::can('view_media')): ?><a href="<?= admin_url('media') ?>" class="nav-sub <?= $currentPage === 'media' ? 'active' : '' ?>">Media</a><?php endif; ?>
             <div class="nav-label">Appearance</div>
+            <?php if (\Core\Auth::isAdmin()): ?><a href="<?= admin_url('customize') ?>" class="nav-sub <?= $currentPage === 'customize' ? 'active' : '' ?>">Customize</a><?php endif; ?>
             <?php if (\Core\Auth::isAdmin()): ?><a href="<?= admin_url('widgets') ?>" class="nav-sub <?= $currentPage === 'widgets' ? 'active' : '' ?>">Widgets</a><?php endif; ?>
             <div class="nav-label">Settings</div>
             <?php if (\Core\Auth::can('view_settings')): ?><a href="<?= admin_url('settings') ?>" class="nav-sub <?= $currentPage === 'settings' ? 'active' : '' ?>">UI &amp; Notifications</a><?php endif; ?>
             <?php if (\Core\Auth::can('view_email_settings')): ?><a href="<?= admin_url('settings/email') ?>" class="nav-sub <?= $currentPage === 'email-settings' ? 'active' : '' ?>">Email</a><?php endif; ?>
             <?php if (\Core\Auth::can('view_security_settings')): ?><a href="<?= admin_url('settings/security') ?>" class="nav-sub <?= $currentPage === 'security-settings' ? 'active' : '' ?>">Security</a><?php endif; ?>
             <?php if (\Core\Auth::can('view_settings')): ?><a href="<?= admin_url('system/general') ?>" class="nav-sub <?= $currentPage === 'general' ? 'active' : '' ?>">General</a><?php endif; ?>
+            <?php if (\Core\Auth::can('manage_settings')): ?><a href="<?= admin_url('redirects') ?>" class="nav-sub <?= $currentPage === 'redirects' ? 'active' : '' ?>">Redirects</a><?php endif; ?>
             <div class="nav-label">System</div>
             <?php if (\Core\Auth::isAdmin()): ?>
             <a href="<?= admin_url('system/backup-restore') ?>" class="nav-sub <?= $currentPage === 'backup-restore' ? 'active' : '' ?>">Backup &amp; Restore</a>
@@ -76,6 +79,11 @@ $helpFrom = $currentPage !== '' ? $currentPage : 'dashboard';
             <div class="admin-header-start">
                 <button type="button" class="admin-sidebar-toggle" id="adminSidebarToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="adminSidebar">☰</button>
                 <span class="admin-user-chip d-none d-md-inline"><?= htmlspecialchars($user->username ?? '') ?></span>
+                <?php if (\Core\Auth::canAny(['view_pages', 'view_posts', 'view_media'])): ?>
+                <form method="get" action="<?= admin_url('search') ?>" class="admin-header-search d-none d-md-flex ms-2">
+                    <input type="search" name="q" class="form-control form-control-sm" placeholder="Search content…" aria-label="Search content" minlength="2" style="min-width:11rem">
+                </form>
+                <?php endif; ?>
             </div>
             <a href="<?= admin_url('notifications') ?>" class="btn btn-sm btn-outline-secondary">Notifications</a>
             <a href="<?= admin_url('account') ?>" class="btn btn-sm btn-outline-secondary">Account</a>

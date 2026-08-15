@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "WordPress-style theme Customizer",
+  "entries": [
+    {
+      "area": "Appearance",
+      "summary": "Added /admin/customize with sidebar controls and live public iframe preview."
+    },
+    {
+      "area": "PublicTheme",
+      "summary": "customizerFrameUrl, configForBridge, session preview helpers; postMessage bridge on preview pages."
+    },
+    {
+      "area": "Publish",
+      "summary": "Customizer Publish saves theme settings; Close clears unsaved preview session."
+    }
+  ]
+}

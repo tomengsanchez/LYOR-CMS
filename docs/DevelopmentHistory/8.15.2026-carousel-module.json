@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Carousel module for visual layout builder",
+  "entries": [
+    {
+      "area": "LayoutBuilder",
+      "summary": "Registered carousel module with normalize/render/plainText; slides use media_id/url/alt/caption/link; autoplay and controls."
+    },
+    {
+      "area": "Editor / public",
+      "summary": "editor.js multi-slide panel + upload; public/assets/js/public/carousel.js; site.css carousel styles; layout.php loads carousel.js."
+    },
+    {
+      "area": "Docs / tests",
+      "summary": "Help pages/posts, DEVELOPMENTGUIDE, CHANGES, smoke test updated."
+    }
+  ]
+}

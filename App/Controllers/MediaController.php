@@ -49,6 +49,29 @@ class MediaController extends Controller
         $this->redirect(AdminPath::url('media'));
     }
 
+    /** Register a free/external image by HTTPS URL without downloading/re-uploading. */
+    public function registerUrl(): void
+    {
+        $this->validateCsrf();
+        if (!$this->userCanUploadMedia()) {
+            $_SESSION['media_upload_error'] = 'You do not have permission to add media.';
+            $this->redirect(AdminPath::url('media'));
+            return;
+        }
+        $url = trim((string) ($_POST['source_url'] ?? ''));
+        $alt = trim((string) ($_POST['alt_text'] ?? ''));
+        $caption = trim((string) ($_POST['caption'] ?? ''));
+        $id = Media::createFromExternalUrl($url, $alt !== '' ? $alt : null, $caption !== '' ? $caption : null);
+        if (!$id) {
+            $_SESSION['media_upload_error'] = 'Could not register image URL. Use a valid http(s) link (max 500 characters).';
+            $this->redirect(AdminPath::url('media'));
+            return;
+        }
+        unset($_SESSION['media_upload_error']);
+        $_SESSION['media_upload_success'] = 'External image registered by URL (not downloaded). Caption/source stored for attribution.';
+        $this->redirect(AdminPath::url('media'));
+    }
+
     /**
      * AJAX upload for page/post forms and block builder (JSON).
      * Uses Csrf::check (no rotate) so the open content form stays valid.
@@ -123,6 +146,10 @@ class MediaController extends Controller
         $media = Media::find($id);
         if (!$media) {
             http_response_code(404);
+            exit;
+        }
+        if (Media::isExternal($media)) {
+            header('Location: ' . trim((string) $media->source_url), true, 302);
             exit;
         }
         $resolved = Media::resolveServePath($media, $size);

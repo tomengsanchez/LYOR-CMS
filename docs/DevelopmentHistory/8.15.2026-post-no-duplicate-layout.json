@@ -1,0 +1,10 @@
+{
+  "date": "2026-08-15",
+  "title": "Stop duplicating post title and featured image when layout exists",
+  "entries": [
+    {
+      "area": "Public posts",
+      "summary": "post.php hides automatic h1 and featured figure when LayoutBuilder::hasLayout; layout modules provide title/image once. Meta, tags, comments unchanged."
+    }
+  ]
+}

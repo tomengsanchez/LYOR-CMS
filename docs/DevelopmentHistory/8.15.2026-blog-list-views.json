@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Blog list grid/list views and customization",
+  "entries": [
+    {
+      "area": "PublicTheme",
+      "summary": "Blog styles list/grid/cards/magazine/compact; columns, image ratio, excerpt/read-more/category/view-switcher settings with html classes."
+    },
+    {
+      "area": "Public blog",
+      "summary": "blog.php view switcher UI; blog-view.js localStorage preference; themes.css layouts for grid/magazine/compact."
+    },
+    {
+      "area": "Customizer / General / Help",
+      "summary": "New controls and help/CONFIGURATION/CHANGES docs; preview bridge clears new pub-blog* classes."
+    }
+  ]
+}

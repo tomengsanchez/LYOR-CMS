@@ -1,0 +1,63 @@
+/**
+ * Play · Build · Sound — gaming, web development, music
+ * Additive styles only. Loaded after site.css when this pack is imported.
+ */
+
+/* Soft cyan atmosphere (gaming HUD / studio desk feel without full dark mode) */
+.public-site {
+  background-image:
+    radial-gradient(1200px 400px at 10% -10%, color-mix(in srgb, #22d3ee 18%, transparent), transparent 60%),
+    radial-gradient(900px 360px at 90% 0%, color-mix(in srgb, #34d399 14%, transparent), transparent 55%);
+  background-attachment: fixed;
+}
+
+.public-header {
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid color-mix(in srgb, var(--pub-accent, #0891b2) 22%, transparent);
+}
+
+.public-brand {
+  letter-spacing: -0.02em;
+}
+
+/* Dev console / HUD kicker */
+.public-blog-kicker,
+.pub-blog-kicker {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+}
+
+.public-nav a {
+  font-weight: 600;
+}
+
+/* Card posts: slight “panel” lift */
+.public-blog-list article,
+.pub-blog-cards article {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.public-blog-list article:hover,
+.pub-blog-cards article:hover {
+  transform: translateY(-2px);
+}
+
+/* Music + craft cues on article titles */
+.public-article h1 {
+  letter-spacing: -0.03em;
+}
+
+.public-article .cms-mod-heading {
+  text-wrap: balance;
+}
+
+/* Accent bar under featured media */
+.public-article .cms-mod-image img,
+.public-featured-img {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--pub-accent, #0891b2) 25%, transparent);
+}
+
+.public-footer {
+  border-top: 1px solid color-mix(in srgb, var(--pub-accent, #0891b2) 18%, transparent);
+}

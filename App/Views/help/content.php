@@ -12,7 +12,7 @@ $module = $module ?? 'general';
 <div class="card mb-3"><div class="card-body">
 <?php if ($module === 'general' || $module === 'dashboard'): ?>
 <h5>Getting started</h5>
-<p>Use the sidebar to manage content. Customize your admin appearance under <strong>Settings → UI &amp; Notifications</strong> (accent theme, <strong>light/dark/system</strong> color mode, sidebar layout). Set the public site accent color under <strong>System → General → Branding</strong>. Visitors can switch light/dark mode on the public site header; preference is saved in the browser.</p>
+<p>Use the sidebar to manage content. Customize your admin appearance under <strong>Settings → UI &amp; Notifications</strong> (accent theme, <strong>light/dark/system</strong> color mode, sidebar layout). Customize the <strong>public</strong> site under <strong>Appearance → Customize</strong> (live preview) or <strong>System → General → Public site theme</strong>. Visitors see the color mode you choose; there is no public light/dark toggle.</p>
 <ul>
 <li><strong>Pages</strong> — Static content (<code>/admin/pages</code>). Slug <code>welcome</code> or <code>home</code> powers the homepage at <code>/</code>.</li>
 <li><strong>Posts</strong> — Blog articles with optional category (<code>/admin/posts</code>)</li>

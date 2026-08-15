@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Hide page title in content; full width default",
+  "entries": [
+    {
+      "area": "Public pages",
+      "summary": "Removed automatic h1 page title from public/page.php (homepage and inner). Title still used for document title, SEO, nav, breadcrumbs; builder headings own the content."
+    },
+    {
+      "area": "Theme",
+      "summary": "Added full (1320px) content width; PublicTheme default and normalizeWidth fallback are full. Migration 019 sets pub_theme_width to full when missing or narrow."
+    },
+    {
+      "area": "Docs / help",
+      "summary": "pages.php, general.php, CONFIGURATION, DEVELOPMENTGUIDE, CHANGES updated."
+    }
+  ]
+}

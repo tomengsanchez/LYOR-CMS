@@ -57,6 +57,18 @@
   background: #2a2a2a;
 }
 
+.cms-builder-canvas-wrap[data-device="desktop"] .cms-builder-canvas {
+  max-width: 1100px;
+}
+
+.cms-builder-canvas-wrap[data-device="tablet"] .cms-builder-canvas {
+  max-width: 768px;
+}
+
+.cms-builder-canvas-wrap[data-device="mobile"] .cms-builder-canvas {
+  max-width: 390px;
+}
+
 .cms-builder-canvas {
   max-width: 1100px;
   margin: 0 auto;
@@ -64,6 +76,18 @@
   color: #111;
   min-height: 60vh;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  transition: max-width 0.2s ease;
+}
+
+.cms-builder-device-toggle {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.cms-builder-device-toggle .btn.is-active {
+  background: #fff;
+  color: #111;
+  border-color: #fff;
 }
 
 .cms-builder-panel {
@@ -336,4 +360,26 @@
     border-left: 0;
     border-top: 1px solid #dee2e6;
   }
+}
+
+.cms-lb-carousel-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  padding: 0.35rem;
+}
+
+.cms-lb-carousel-thumb {
+  width: 72px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #444;
+}
+
+.cms-lb-carousel-slide-edit .form-label {
+  margin-top: 0.35rem;
+  margin-bottom: 0.15rem;
+  font-size: 0.8rem;
 }

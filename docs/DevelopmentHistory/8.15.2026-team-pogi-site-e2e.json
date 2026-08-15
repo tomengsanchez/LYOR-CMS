@@ -1,0 +1,14 @@
+{
+  "date": "2026-08-15",
+  "title": "Team POGI website Playwright seed (5 pages, 5 posts, free images)",
+  "entries": [
+    {
+      "area": "E2E",
+      "summary": "cms-team-pogi-site.spec.ts downloads free Picsum images, uploads to media library, creates 5 Team POGI pages and 5 posts with builder layouts and featured images, rebuilds Primary Menu, sets app name and reading homepage."
+    },
+    {
+      "area": "Tooling",
+      "summary": "npm script test:e2e:cms-team-pogi-site; DEVELOPMENTGUIDE and help updated."
+    }
+  ]
+}

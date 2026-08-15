@@ -121,6 +121,15 @@ class GeneralController extends Controller
             'seo_allow_ai_crawlers' => !empty($_POST['seo_allow_ai_crawlers']),
             'seo_facebook_url' => $_POST['seo_facebook_url'] ?? '',
             'seo_linkedin_url' => $_POST['seo_linkedin_url'] ?? '',
+            'seo_reddit_url' => $_POST['seo_reddit_url'] ?? '',
+            'seo_youtube_url' => $_POST['seo_youtube_url'] ?? '',
+            'seo_publisher_expertise' => $_POST['seo_publisher_expertise'] ?? '',
+            'seo_preferred_citation' => $_POST['seo_preferred_citation'] ?? '',
+            'seo_citation_guidance' => $_POST['seo_citation_guidance'] ?? '',
+            'seo_pillar_topics' => $_POST['seo_pillar_topics'] ?? '',
+            'seo_enable_faq_schema' => !empty($_POST['seo_enable_faq_schema']),
+            'seo_enable_speakable' => !empty($_POST['seo_enable_speakable']),
+            'seo_show_ai_writing_tips' => !empty($_POST['seo_show_ai_writing_tips']),
         ]);
 
         $_SESSION['general_saved'] = true;

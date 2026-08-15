@@ -1,2 +1,4 @@
 <h5>Menus</h5>
 <p>WordPress-style navigation for the public site header (<strong>Primary Menu</strong>). Add links to pages, posts, categories, the homepage, blog, or custom URLs. Admin: <code>/admin/menus</code> (administrators).</p>
+<p><strong>Demo seed:</strong> To publish sample pages with different visual layouts (About, Services, Features, Team, Contact) and put them on this menu automatically, run <code>npm run test:e2e:cms-pages-layouts-menu</code> with <code>.env.playwright</code> pointing at your site. Re-running updates those pages and rebuilds the Primary Menu (Home, Blog, then the sample pages).</p>
+<p><strong>Team POGI site:</strong> <code>npm run test:e2e:cms-team-pogi-site</code> seeds a full Team POGI demo (5 pages, 5 posts, free stock photos in Media) and rebuilds this menu.</p>

@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Builder device preview, layout templates, pages/posts write API",
+  "entries": [
+    {
+      "area": "Database",
+      "summary": "Migration 018 adds cms_layout_templates for reusable visual layouts."
+    },
+    {
+      "area": "Visual builder",
+      "summary": "Desktop/Tablet/Mobile device preview; Templates menu to save, load, and delete shared layouts."
+    },
+    {
+      "area": "REST API",
+      "summary": "POST/PATCH/DELETE for /api/pages and /api/posts with optional layout_json; Router gains patch and delete methods."
+    }
+  ]
+}

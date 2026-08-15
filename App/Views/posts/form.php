@@ -119,11 +119,13 @@ require __DIR__ . '/../partials/featured_image_field.php';
         $jsonPreviewUrl = !empty($post->slug) ? '/blog/' . htmlspecialchars($post->slug) . '.json' : '';
     ?><?php if ($jsonPreviewUrl !== ''): ?><a href="<?= $jsonPreviewUrl ?>" target="_blank" rel="noopener"><code><?= $jsonPreviewUrl ?></code></a><?php else: ?>publish the post to preview<?php endif; ?></small>
 </div>
+<?php $entity = $post; require __DIR__ . '/../partials/ai_citation_fields.php'; ?>
 </div></div>
 
 <button type="submit" class="btn btn-primary">Save</button>
 </form></div></div>
 <script src="/public/assets/js/content/media-picker.js"></script>
 <script src="/public/assets/js/posts/form.js"></script>
+<script src="/public/assets/js/content/ai-seo-form.js"></script>
 <script src="/public/assets/js/content/blocks.js"></script>
 <?php $content = ob_get_clean(); $pageTitle = !empty($isCreate) ? 'Add Post' : 'Edit Post'; $currentPage = 'posts'; require __DIR__ . '/../layout/main.php';

@@ -16,4 +16,8 @@
 
     bindCounter('seoDefaultDescription', 'seoDefaultDescriptionCount');
     bindCounter('llmSiteSummary', 'llmSiteSummaryCount');
+    bindCounter('seoPublisherExpertise', 'seoPublisherExpertiseCount');
+    bindCounter('seoPreferredCitation', 'seoPreferredCitationCount');
+    bindCounter('seoCitationGuidance', 'seoCitationGuidanceCount');
+    bindCounter('seoPillarTopics', 'seoPillarTopicsCount');
 })();

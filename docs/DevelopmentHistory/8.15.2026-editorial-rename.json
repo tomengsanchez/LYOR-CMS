@@ -1,0 +1,14 @@
+{
+  "date": "2026-08-15",
+  "title": "Remove Good Men branding; keep editorial options",
+  "entries": [
+    {
+      "area": "Theme",
+      "summary": "Renamed goodmen preset/pack to editorial; kept chrome, kicker, date format, tagline, and editorialStylePack()."
+    },
+    {
+      "area": "Docs",
+      "summary": "Help, CONFIGURATION, CHANGES updated to drop Good Men Project naming."
+    }
+  ]
+}

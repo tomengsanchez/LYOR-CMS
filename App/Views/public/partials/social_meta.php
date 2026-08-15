@@ -21,10 +21,12 @@ $shareTags = is_array($publicShare['tags'] ?? null) ? $publicShare['tags'] : [];
 $robotsNoindex = !empty($publicRobotsNoindex);
 $jsonAlternateUrl = trim((string) ($publicJsonUrl ?? ''));
 $llmSummary = trim((string) ($publicLlmSummary ?? ''));
+$citationSnippet = trim((string) ($publicCitationSnippet ?? ''));
 $ogLocale = str_replace('_', '-', (string) ($siteSeo->locale ?? 'en_US'));
 $twitterHandle = trim((string) ($siteSeo->twitter_handle ?? ''));
 $googleVerify = trim((string) ($siteSeo->google_site_verification ?? ''));
 $siteKeywords = trim((string) ($siteSeo->site_keywords ?? ''));
+$preferredCitation = trim((string) ($siteSeo->preferred_citation ?? ''));
 if ($llmSummary === '' && trim((string) ($siteSeo->llm_site_summary ?? '')) !== '') {
     $llmSummary = trim((string) $siteSeo->llm_site_summary);
 }
@@ -33,6 +35,12 @@ if ($llmSummary === '' && trim((string) ($siteSeo->llm_site_summary ?? '')) !== 
 <meta name="robots" content="noindex, nofollow">
 <?php else: ?>
 <meta name="robots" content="index, follow, max-image-preview:large">
+<?php endif; ?>
+<?php if ($citationSnippet !== ''): ?>
+<meta name="citation" content="<?= htmlspecialchars($citationSnippet) ?>">
+<?php endif; ?>
+<?php if ($preferredCitation !== ''): ?>
+<meta name="citation_format" content="<?= htmlspecialchars($preferredCitation) ?>">
 <?php endif; ?>
 <?php if ($llmSummary !== ''): ?>
 <meta name="abstract" content="<?= htmlspecialchars($llmSummary) ?>">

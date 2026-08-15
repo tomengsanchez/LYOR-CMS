@@ -27,4 +27,10 @@
 <div class="card"><div class="card-body">
 <div class="cms-preview border rounded p-3"><?= $page->body ?></div>
 </div></div>
+<?php
+$entityType = 'page';
+$entityId = (int) $page->id;
+$revisions = $revisions ?? [];
+require __DIR__ . '/../partials/content_revisions.php';
+?>
 <?php $content = ob_get_clean(); $pageTitle = $page->title; $currentPage = 'pages'; require __DIR__ . '/../layout/main.php';

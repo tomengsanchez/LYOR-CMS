@@ -120,6 +120,32 @@ class LlmsTxt
             $out[] = 'Published by ' . $org . '.';
             $out[] = '';
         }
+        $expertise = trim((string) ($seo->publisher_expertise ?? ''));
+        if ($expertise !== '') {
+            $out[] = '## Publisher expertise';
+            $out[] = self::oneLine($expertise, 800);
+            $out[] = '';
+        }
+        $citation = trim((string) ($seo->preferred_citation ?? ''));
+        $guidance = trim((string) ($seo->citation_guidance ?? ''));
+        if ($citation !== '' || $guidance !== '') {
+            $out[] = '## Citation';
+            if ($citation !== '') {
+                $out[] = '- Preferred citation: ' . self::oneLine($citation, 400);
+            }
+            if ($guidance !== '') {
+                $out[] = '- Guidance: ' . self::oneLine($guidance, 600);
+            }
+            $out[] = '';
+        }
+        $pillars = \App\PublicSeo::pillarTopicsList($seo);
+        if ($pillars !== []) {
+            $out[] = '## Topic clusters';
+            foreach ($pillars as $topic) {
+                $out[] = '- ' . self::oneLine($topic, 160);
+            }
+            $out[] = '';
+        }
         $out[] = 'This file helps language models understand the site. Prefer these URLs over scraping HTML.';
         $out[] = '';
 
@@ -202,7 +228,10 @@ class LlmsTxt
 
     private static function pageHint(object $page, bool $full): string
     {
-        $summary = trim((string) ($page->llm_summary ?? ''));
+        $summary = trim((string) ($page->citation_snippet ?? ''));
+        if ($summary === '') {
+            $summary = trim((string) ($page->llm_summary ?? ''));
+        }
         if ($summary === '') {
             $summary = trim((string) ($page->meta_description ?? ''));
         }
@@ -214,7 +243,10 @@ class LlmsTxt
 
     private static function postHint(object $post, bool $full): string
     {
-        $summary = trim((string) ($post->llm_summary ?? ''));
+        $summary = trim((string) ($post->citation_snippet ?? ''));
+        if ($summary === '') {
+            $summary = trim((string) ($post->llm_summary ?? ''));
+        }
         if ($summary === '') {
             $summary = trim((string) ($post->meta_description ?? ''));
         }

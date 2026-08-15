@@ -32,7 +32,21 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
         <span class="badge text-bg-secondary"><?= $entityType === 'page' ? 'Page' : 'Post' ?></span>
     </div>
     <div class="cms-builder-toolbar-actions">
+        <div class="cms-builder-device-toggle" role="group" aria-label="Preview width">
+            <button type="button" class="btn btn-sm btn-outline-light is-active" data-device="desktop" title="Desktop">Desktop</button>
+            <button type="button" class="btn btn-sm btn-outline-light" data-device="tablet" title="Tablet">Tablet</button>
+            <button type="button" class="btn btn-sm btn-outline-light" data-device="mobile" title="Mobile">Mobile</button>
+        </div>
         <button type="button" class="btn btn-sm btn-outline-light" id="cmsBuilderAddSection">+ Section</button>
+        <div class="dropdown">
+            <button type="button" class="btn btn-sm btn-outline-light dropdown-toggle" id="cmsBuilderTemplatesBtn" data-bs-toggle="dropdown" aria-expanded="false">Templates</button>
+            <ul class="dropdown-menu dropdown-menu-end" id="cmsBuilderTemplatesMenu">
+                <li><h6 class="dropdown-header">Load template</h6></li>
+                <li id="cmsBuilderTemplatesEmpty" class="dropdown-item-text small text-muted">No saved templates</li>
+                <li><hr class="dropdown-divider"></li>
+                <li><button type="button" class="dropdown-item" id="cmsBuilderSaveTemplate">Save current as template…</button></li>
+            </ul>
+        </div>
         <?php if ($previewUrl !== ''): ?>
         <a href="<?= htmlspecialchars($previewUrl) ?>" class="btn btn-sm btn-outline-light" target="_blank" rel="noopener">Preview</a>
         <?php endif; ?>
@@ -42,7 +56,7 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
 </header>
 
 <div class="cms-builder-shell">
-    <main class="cms-builder-canvas-wrap">
+    <main class="cms-builder-canvas-wrap" id="cmsBuilderCanvasWrap" data-device="desktop">
         <div class="cms-builder-canvas public-site" id="cmsBuilderCanvas"></div>
     </main>
     <aside class="cms-builder-panel" id="cmsBuilderPanel" hidden>
@@ -62,14 +76,17 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
 <div id="cmsBuilderConfig"
     class="d-none"
     data-save-url="<?= htmlspecialchars($saveUrl) ?>"
+    data-templates-url="<?= htmlspecialchars($templatesUrl ?? '') ?>"
     data-upload-url="<?= htmlspecialchars($uploadUrl) ?>"
     data-can-upload="<?= !empty($canUploadMedia) ? '1' : '0' ?>"
     data-layout="<?= htmlspecialchars($layoutJson) ?>"
     data-modules="<?= htmlspecialchars($moduleTypesJson) ?>"
     data-media="<?= htmlspecialchars($mediaJson) ?>"
+    data-templates="<?= htmlspecialchars($templatesJson ?? '[]') ?>"
     data-entity-type="<?= htmlspecialchars($entityType) ?>"
     data-csrf="<?= htmlspecialchars(\Core\Csrf::token()) ?>"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/public/assets/js/content/media-picker.js"></script>
 <script src="/public/assets/js/builder/editor.js"></script>
 </body>

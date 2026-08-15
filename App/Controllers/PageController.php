@@ -56,7 +56,10 @@ class PageController extends Controller
             $this->redirect(AdminPath::url('pages'));
             return;
         }
-        $this->view('pages/view', ['page' => $page]);
+        $this->view('pages/view', [
+            'page' => $page,
+            'revisions' => \App\ContentRevision::listFor('page', $id),
+        ]);
     }
 
     public function create(): void
@@ -66,7 +69,7 @@ class PageController extends Controller
             'page' => (object) [
                 'id' => 0, 'title' => '', 'slug' => '', 'body' => '', 'status' => 'draft',
                 'meta_title' => '', 'meta_description' => '', 'featured_image_id' => null,
-                'llm_summary' => '', 'robots_noindex' => 0, 'content_layout' => null, 'parent_id' => null,
+                'llm_summary' => '', 'citation_snippet' => '', 'faq_json' => '', 'robots_noindex' => 0, 'content_layout' => null, 'parent_id' => null,
                 'blocks_json' => null,
             ],
             'mediaImages' => Media::listImages(),
@@ -148,6 +151,8 @@ class PageController extends Controller
             'meta_description' => $_POST['meta_description'] ?? '',
             'featured_image_id' => $_POST['featured_image_id'] ?? null,
             'llm_summary' => $_POST['llm_summary'] ?? '',
+            'citation_snippet' => $_POST['citation_snippet'] ?? '',
+            'faq_json' => $_POST['faq_json'] ?? null,
             'robots_noindex' => !empty($_POST['robots_noindex']),
             'content_layout' => $_POST['content_layout'] ?? '',
             'parent_id' => $_POST['parent_id'] ?? null,

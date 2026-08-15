@@ -1,0 +1,10 @@
+{
+  "date": "2026-08-15",
+  "title": "Fix blog/page .json route matching",
+  "entries": [
+    {
+      "area": "Router / public routes",
+      "summary": "Register /blog/{slug}.json and /p/{slug}.json before HTML slug routes; escape static dots in pathToRegex."
+    }
+  ]
+}

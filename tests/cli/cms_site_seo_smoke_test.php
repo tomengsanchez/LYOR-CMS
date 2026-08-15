@@ -17,8 +17,11 @@ assert(AppSettings::normalizeTwitterHandle('@brand') === 'brand', 'twitter handl
 $doc = PublicSeo::siteJsonDocument();
 assert($doc['type'] === 'site', 'site json document');
 assert(isset($doc['endpoints']['sitemap']), 'sitemap endpoint in site json');
+assert(array_key_exists('publisher_expertise', $doc), 'site json includes publisher_expertise');
+assert(array_key_exists('pillar_topics', $doc), 'site json includes pillar_topics');
 
 $ctx = PublicSeo::siteContext();
 assert(!empty($ctx['share']['title']), 'site context share title');
+assert(array_key_exists('citation_snippet', $ctx), 'site context citation_snippet');
 
 echo "cms_site_seo_smoke_test: OK\n";

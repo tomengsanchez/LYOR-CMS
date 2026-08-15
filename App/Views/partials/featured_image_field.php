@@ -11,13 +11,17 @@ $canUploadMedia = $canUploadMedia ?? \Core\Auth::can('upload_media')
     <label class="form-label" for="featuredImageSelect"><?= htmlspecialchars($featuredLabel) ?></label>
     <select name="featured_image_id" id="featuredImageSelect" class="form-select">
         <option value="">— None —</option>
-        <?php foreach ($mediaImages as $m): ?>
+        <?php foreach ($mediaImages as $m):
+            $extPreview = trim((string) ($m->file_path ?? '')) === 'external' && trim((string) ($m->source_url ?? '')) !== ''
+                ? trim((string) $m->source_url)
+                : '/serve/media/' . (int) $m->id . '/medium';
+        ?>
         <option value="<?= (int)$m->id ?>"
-            data-preview="/serve/media/<?= (int)$m->id ?>/medium"
+            data-preview="<?= htmlspecialchars($extPreview) ?>"
             data-width="<?= (int)($m->width ?? 0) ?>"
             data-height="<?= (int)($m->height ?? 0) ?>"
             <?= $selectedFeatured === (int)$m->id ? 'selected' : '' ?>>
-            <?= htmlspecialchars($m->original_name) ?><?php if (!empty($m->width) && !empty($m->height)): ?> (<?= (int)$m->width ?>×<?= (int)$m->height ?>)<?php endif; ?>
+            <?= htmlspecialchars($m->original_name) ?><?php if (!empty($m->width) && !empty($m->height)): ?> (<?= (int)$m->width ?>×<?= (int)$m->height ?>)<?php elseif (trim((string) ($m->file_path ?? '')) === 'external'): ?> (external)<?php endif; ?>
         </option>
         <?php endforeach; ?>
     </select>

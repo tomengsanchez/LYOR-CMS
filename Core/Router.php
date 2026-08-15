@@ -18,6 +18,18 @@ class Router
         return $this;
     }
 
+    public function patch(string $path, string $controllerAction, array $middlewares = []): self
+    {
+        $this->addRoute('PATCH', $path, $controllerAction, $middlewares);
+        return $this;
+    }
+
+    public function delete(string $path, string $controllerAction, array $middlewares = []): self
+    {
+        $this->addRoute('DELETE', $path, $controllerAction, $middlewares);
+        return $this;
+    }
+
     private function addRoute(string $method, string $path, string $controllerAction, array $middlewares): void
     {
         $this->routes[] = [
@@ -58,7 +70,15 @@ class Router
 
     private function pathToRegex(string $path): string
     {
-        $path = preg_replace('/\{(\w+)\}/', '([^/]+)', $path);
-        return '#^' . $path . '$#';
+        $parts = preg_split('/(\{\w+\})/', $path, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        $regex = '';
+        foreach ($parts as $part) {
+            if (preg_match('/^\{(\w+)\}$/', $part)) {
+                $regex .= '([^/]+)';
+            } else {
+                $regex .= preg_quote($part, '#');
+            }
+        }
+        return '#^' . $regex . '$#';
     }
 }

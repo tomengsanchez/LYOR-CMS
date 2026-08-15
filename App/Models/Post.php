@@ -4,6 +4,7 @@ namespace App\Models;
 use App\AuditLog;
 use App\CmsSlug;
 use App\ContentBlocks;
+use App\ContentRevision;
 use App\LayoutBuilder;
 use App\PublicSeo;
 use App\PublicTheme;
@@ -144,8 +145,8 @@ class Post
             !empty($data['featured_image_id']) ? (int) $data['featured_image_id'] : null
         );
         $stmt = $db->prepare('
-            INSERT INTO cms_posts (title, slug, excerpt, body, blocks_json, category_id, featured_image_id, meta_title, meta_description, llm_summary, robots_noindex, content_layout, status, published_at, author_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO cms_posts (title, slug, excerpt, body, blocks_json, category_id, featured_image_id, meta_title, meta_description, llm_summary, citation_snippet, faq_json, robots_noindex, content_layout, status, published_at, author_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $catId = !empty($data['category_id']) ? (int) $data['category_id'] : null;
         $stmt->execute([
@@ -159,6 +160,8 @@ class Post
             PublicSeo::normalizeMetaTitle($data['meta_title'] ?? ''),
             PublicSeo::normalizeMetaDescription($data['meta_description'] ?? ''),
             PublicSeo::normalizeLlmSummary($data['llm_summary'] ?? ''),
+            PublicSeo::normalizeCitationSnippet($data['citation_snippet'] ?? ''),
+            PublicSeo::normalizeFaqJson($data['faq_json'] ?? null),
             !empty($data['robots_noindex']) ? 1 : 0,
             PublicTheme::normalizeContentLayout($data['content_layout'] ?? null),
             $status,
@@ -186,6 +189,7 @@ class Post
         if (CmsSlug::conflictsWithOtherContent($db, 'cms_posts', $slug, $id)) {
             return false;
         }
+        ContentRevision::recordPost($existing, 'Before update');
         $status = in_array($data['status'] ?? '', ['published', 'draft'], true) ? $data['status'] : 'draft';
         $publishedAt = $existing->published_at;
         if ($status === 'published' && !$publishedAt) {
@@ -199,7 +203,7 @@ class Post
         );
         $stmt = $db->prepare('
             UPDATE cms_posts SET title = ?, slug = ?, excerpt = ?, body = ?, blocks_json = ?, category_id = ?, featured_image_id = ?,
-                meta_title = ?, meta_description = ?, llm_summary = ?, robots_noindex = ?, content_layout = ?, status = ?, published_at = ?
+                meta_title = ?, meta_description = ?, llm_summary = ?, citation_snippet = ?, faq_json = ?, robots_noindex = ?, content_layout = ?, status = ?, published_at = ?
             WHERE id = ? AND deleted_at IS NULL
         ');
         $catId = !empty($data['category_id']) ? (int) $data['category_id'] : null;
@@ -214,6 +218,8 @@ class Post
             PublicSeo::normalizeMetaTitle($data['meta_title'] ?? ''),
             PublicSeo::normalizeMetaDescription($data['meta_description'] ?? ''),
             PublicSeo::normalizeLlmSummary($data['llm_summary'] ?? ''),
+            PublicSeo::normalizeCitationSnippet($data['citation_snippet'] ?? ''),
+            PublicSeo::normalizeFaqJson($data['faq_json'] ?? null),
             !empty($data['robots_noindex']) ? 1 : 0,
             PublicTheme::normalizeContentLayout($data['content_layout'] ?? null),
             $status,
@@ -227,15 +233,91 @@ class Post
 
     public static function saveLayoutJson(int $id, ?string $json): bool
     {
-        if (!self::find($id)) {
+        $existing = self::find($id);
+        if (!$existing) {
             return false;
         }
+        ContentRevision::recordPost($existing, 'Before layout save');
         $normalized = LayoutBuilder::normalizeJson($json);
         $stmt = Database::getInstance()->prepare('
             UPDATE cms_posts SET layout_json = ? WHERE id = ? AND deleted_at IS NULL
         ');
         $stmt->execute([$normalized, $id]);
         AuditLog::record('post', $id, 'layout_updated');
+        return true;
+    }
+
+    public static function restoreRevision(int $id, int $revisionId): bool
+    {
+        $existing = self::find($id);
+        $rev = ContentRevision::find($revisionId);
+        if (!$existing || !$rev || (string) $rev->entity_type !== 'post' || (int) $rev->entity_id !== $id) {
+            return false;
+        }
+        $snap = ContentRevision::decodeSnapshot($rev);
+        if ($snap === null) {
+            return false;
+        }
+        ContentRevision::recordPost($existing, 'Before restore to #' . (int) $rev->revision_no);
+
+        $slug = trim((string) ($snap['slug'] ?? $existing->slug));
+        if ($slug === '') {
+            $slug = CmsSlug::from((string) ($snap['title'] ?? $existing->title), 'post');
+        }
+        $db = Database::getInstance();
+        $slug = CmsSlug::unique($db, 'cms_posts', $slug, $id);
+        if (CmsSlug::conflictsWithOtherContent($db, 'cms_posts', $slug, $id)) {
+            return false;
+        }
+        $status = in_array((string) ($snap['status'] ?? ''), ['published', 'draft'], true) ? (string) $snap['status'] : 'draft';
+        $publishedAt = $snap['published_at'] ?? null;
+        if ($status === 'published' && !$publishedAt) {
+            $publishedAt = UserTime::nowSql();
+        }
+        if ($status === 'draft') {
+            $publishedAt = null;
+        }
+        $layout = $snap['layout_json'] ?? null;
+        if (is_array($layout)) {
+            $layout = json_encode($layout, JSON_UNESCAPED_UNICODE);
+        }
+        $layout = LayoutBuilder::normalizeJson(is_string($layout) ? $layout : null);
+        $blocks = $snap['blocks_json'] ?? null;
+        if (is_array($blocks)) {
+            $blocks = json_encode($blocks, JSON_UNESCAPED_UNICODE);
+        }
+        $featuredId = Media::resolveImageId(
+            !empty($snap['featured_image_id']) ? (int) $snap['featured_image_id'] : null
+        );
+        $catId = !empty($snap['category_id']) ? (int) $snap['category_id'] : null;
+        $stmt = $db->prepare('
+            UPDATE cms_posts SET title = ?, slug = ?, excerpt = ?, body = ?, blocks_json = ?, layout_json = ?,
+                category_id = ?, featured_image_id = ?, meta_title = ?, meta_description = ?, llm_summary = ?,
+                citation_snippet = ?, faq_json = ?, robots_noindex = ?, content_layout = ?, status = ?, published_at = ?
+            WHERE id = ? AND deleted_at IS NULL
+        ');
+        $stmt->execute([
+            trim((string) ($snap['title'] ?? '')),
+            $slug,
+            trim((string) ($snap['excerpt'] ?? '')) ?: null,
+            (string) ($snap['body'] ?? ''),
+            ContentBlocks::normalizeJson(is_string($blocks) ? $blocks : null),
+            $layout,
+            $catId ?: null,
+            $featuredId,
+            PublicSeo::normalizeMetaTitle($snap['meta_title'] ?? ''),
+            PublicSeo::normalizeMetaDescription($snap['meta_description'] ?? ''),
+            PublicSeo::normalizeLlmSummary($snap['llm_summary'] ?? ''),
+            PublicSeo::normalizeCitationSnippet($snap['citation_snippet'] ?? ''),
+            PublicSeo::normalizeFaqJson($snap['faq_json'] ?? null),
+            !empty($snap['robots_noindex']) ? 1 : 0,
+            PublicTheme::normalizeContentLayout($snap['content_layout'] ?? null),
+            $status,
+            $publishedAt,
+            $id,
+        ]);
+        Tag::syncPostTags($id, (string) ($snap['tags'] ?? ''));
+        AuditLog::record('post', $id, 'restored', ['revision_id' => $revisionId, 'revision_no' => (int) $rev->revision_no]);
         return true;
     }
 

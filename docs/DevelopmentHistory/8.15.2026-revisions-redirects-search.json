@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-15",
+  "title": "Content revisions, redirects, library search",
+  "entries": [
+    {
+      "area": "Database",
+      "summary": "Migration 017 adds cms_content_revisions and cms_redirects."
+    },
+    {
+      "area": "Versioning",
+      "summary": "Snapshots before page/post update and layout save; restore UI on view screens."
+    },
+    {
+      "area": "SEO redirects",
+      "summary": "Admin redirect manager; public apply on 404 and missing page/post paths."
+    },
+    {
+      "area": "Content library",
+      "summary": "Cross-module admin search for pages, posts, and media with header entry."
+    }
+  ]
+}

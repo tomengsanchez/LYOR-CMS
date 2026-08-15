@@ -3,9 +3,10 @@
 ?>
 <div class="pub-theme-live-banner" role="status">
     <div class="container d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <span><strong>Theme preview</strong> — unsaved changes. Save in General settings to apply site-wide.</span>
+        <span><strong>Theme preview</strong> — unsaved changes. Open the Customizer to edit and publish.</span>
         <span class="d-flex flex-wrap gap-2 align-items-center">
-            <a href="<?= admin_url('system/general') ?>" class="btn btn-sm btn-light">Back to General</a>
+            <a href="<?= admin_url('customize') ?>" class="btn btn-sm btn-light">Open Customizer</a>
+            <a href="<?= admin_url('system/general') ?>" class="btn btn-sm btn-outline-light">General</a>
             <form method="post" action="<?= admin_url('system/general/theme-preview-clear') ?>" class="d-inline mb-0">
                 <?= \Core\Csrf::field() ?>
                 <button type="submit" class="btn btn-sm btn-outline-light">Exit preview</button>

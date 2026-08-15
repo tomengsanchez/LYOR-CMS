@@ -53,4 +53,4 @@ Grievance progress levels and escalation (latest):
   - php database/seeders/seed_projects_users_field_team.php [--profiles=N] (demo projects, Field Team role, demo user, optional SEED-DEMO profiles; see script header)
   - php database/seeders/seed_grievances.php [N|--count=N|--grievances=N|-n N] (bulk demo grievances; default 1000; needs projects)
 - Staff PDF exports (list/detail) need composer dependencies: run composer install (mPDF in composer.json); see App\PdfExport
-- Fresh DB reset (destructive): php cli/truncate_fresh_install.php [--yes] — keeps migrations, roles/capabilities, admin user; see DEVELOPMENTGUIDE.md §6
+- Fresh DB reset (destructive): php cli/truncate_fresh_install.php [--yes] [--no-reseed] [--keep-uploads] — keeps migrations, roles/capabilities, admin user; clears cms_* content and re-seeds Welcome/Hello World/Primary Menu by default; see DEVELOPMENTGUIDE.md (Fresh-install truncate)

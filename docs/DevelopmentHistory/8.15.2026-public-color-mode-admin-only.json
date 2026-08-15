@@ -1,0 +1,14 @@
+{
+  "date": "2026-08-15",
+  "title": "Public color mode admin-only",
+  "entries": [
+    {
+      "area": "Public site",
+      "summary": "Removed visitor light/dark header toggle and localStorage preference."
+    },
+    {
+      "area": "Admin",
+      "summary": "System → General default color mode is the sole control for public and auth pages."
+    }
+  ]
+}

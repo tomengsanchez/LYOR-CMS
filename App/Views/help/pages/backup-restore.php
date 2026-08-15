@@ -52,6 +52,8 @@
     <ul>
         <li><strong>Why can’t I restore in the browser?</strong> – Restore replaces the live database; it is restricted to CLI on purpose.</li>
         <li><strong>Restore says app/dbname mismatch.</strong> – Confirm the ZIP is a Simple CMS backup. For a renamed database on the same product, add <code>--force</code>.</li>
+        <li><strong>Local content reset (not restore).</strong> – To wipe CMS content back to Welcome / Hello World without importing a ZIP, use
+            <code>php cli/truncate_fresh_install.php</code> (never on production). See DEVELOPMENTGUIDE → Fresh-install truncate.</li>
         <li><strong>More detail for operators</strong> – See the
             <a href="<?= admin_url('admin-guide') ?>">Administrator Guide</a> and README § Backup and restore.</li>
     </ul>

@@ -26,6 +26,7 @@ class LayoutBuilder
             'divider' => 'Divider',
             'html' => 'Custom HTML',
             'blurb' => 'Blurb',
+            'carousel' => 'Carousel',
         ];
     }
 
@@ -201,6 +202,7 @@ class LayoutBuilder
                     'media_id' => $mediaId > 0 ? $mediaId : null,
                     'url' => self::safeUrl((string) ($data['url'] ?? '')),
                     'alt' => mb_substr(trim((string) ($data['alt'] ?? '')), 0, 255),
+                    'caption' => mb_substr(trim((string) ($data['caption'] ?? '')), 0, 1000),
                     'link' => self::safeUrl((string) ($data['link'] ?? '')),
                 ];
             case 'button':
@@ -239,9 +241,64 @@ class LayoutBuilder
                     'media_id' => ((int) ($data['media_id'] ?? 0)) > 0 ? (int) $data['media_id'] : null,
                     'url' => self::safeUrl((string) ($data['url'] ?? '')),
                 ];
+            case 'carousel':
+                return self::normalizeCarouselData($data);
             default:
                 return [];
         }
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function normalizeCarouselData(array $data): array
+    {
+        $interval = (int) ($data['interval_ms'] ?? 5000);
+        if ($interval < 2000) {
+            $interval = 2000;
+        }
+        if ($interval > 30000) {
+            $interval = 30000;
+        }
+        $rawSlides = is_array($data['slides'] ?? null) ? $data['slides'] : [];
+        $slides = [];
+        foreach ($rawSlides as $slide) {
+            if (!is_array($slide)) {
+                continue;
+            }
+            $mediaId = (int) ($slide['media_id'] ?? 0);
+            $url = self::safeUrl((string) ($slide['url'] ?? ''));
+            $alt = mb_substr(trim((string) ($slide['alt'] ?? '')), 0, 255);
+            $caption = mb_substr(trim((string) ($slide['caption'] ?? '')), 0, 500);
+            $link = self::safeUrl((string) ($slide['link'] ?? ''));
+            if ($mediaId <= 0 && $url === '' && $caption === '') {
+                continue;
+            }
+            $slides[] = [
+                'media_id' => $mediaId > 0 ? $mediaId : null,
+                'url' => $url,
+                'alt' => $alt,
+                'caption' => $caption,
+                'link' => $link,
+            ];
+            if (count($slides) >= 12) {
+                break;
+            }
+        }
+        if ($slides === []) {
+            $slides[] = [
+                'media_id' => null,
+                'url' => '',
+                'alt' => '',
+                'caption' => '',
+                'link' => '',
+            ];
+        }
+        return [
+            'autoplay' => !empty($data['autoplay']),
+            'interval_ms' => $interval,
+            'show_arrows' => array_key_exists('show_arrows', $data) ? !empty($data['show_arrows']) : true,
+            'show_dots' => array_key_exists('show_dots', $data) ? !empty($data['show_dots']) : true,
+            'slides' => $slides,
+        ];
     }
 
     /** @param array<string, mixed> $design */
@@ -383,7 +440,7 @@ class LayoutBuilder
             $classes[] = 'd-md-none';
         }
         $style = self::styleFromDesign($design);
-        $inner = self::renderModuleInner($type, $data);
+        $inner = self::renderModuleInner($type, $data, (string) ($mod['id'] ?? ''));
         if ($inner === '') {
             return '';
         }
@@ -391,7 +448,7 @@ class LayoutBuilder
     }
 
     /** @param array<string, mixed> $data */
-    private static function renderModuleInner(string $type, array $data): string
+    private static function renderModuleInner(string $type, array $data, string $moduleId = ''): string
     {
         switch ($type) {
             case 'heading':
@@ -405,6 +462,7 @@ class LayoutBuilder
                 $mediaId = (int) ($data['media_id'] ?? 0);
                 $alt = (string) ($data['alt'] ?? '');
                 $link = (string) ($data['link'] ?? '');
+                $caption = trim((string) ($data['caption'] ?? ''));
                 $img = '';
                 if ($mediaId > 0) {
                     $img = Media::responsiveImg($mediaId, [
@@ -422,9 +480,13 @@ class LayoutBuilder
                     $img = '<img src="' . $url . '" alt="' . htmlspecialchars($alt, ENT_QUOTES, 'UTF-8') . '" class="img-fluid" loading="lazy" decoding="async">';
                 }
                 if ($link !== '') {
-                    return '<a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '" class="cms-mod-image-link">' . $img . '</a>';
+                    $img = '<a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '" class="cms-mod-image-link">' . $img . '</a>';
                 }
-                return '<figure class="cms-mod-image">' . $img . '</figure>';
+                $capHtml = '';
+                if ($caption !== '') {
+                    $capHtml = '<figcaption class="cms-mod-image-caption">' . nl2br(htmlspecialchars($caption, ENT_QUOTES, 'UTF-8')) . '</figcaption>';
+                }
+                return '<figure class="cms-mod-image">' . $img . $capHtml . '</figure>';
             case 'button':
                 $label = htmlspecialchars((string) ($data['label'] ?? 'Learn more'), ENT_QUOTES, 'UTF-8');
                 $url = htmlspecialchars((string) ($data['url'] ?? '#'), ENT_QUOTES, 'UTF-8');
@@ -486,9 +548,99 @@ class LayoutBuilder
                 }
                 $html .= '</div>';
                 return $html;
+            case 'carousel':
+                return self::renderCarousel($data, $moduleId);
             default:
                 return '';
         }
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function renderCarousel(array $data, string $moduleId = ''): string
+    {
+        $slides = is_array($data['slides'] ?? null) ? $data['slides'] : [];
+        $renderedSlides = [];
+        foreach ($slides as $slide) {
+            if (!is_array($slide)) {
+                continue;
+            }
+            $mediaId = (int) ($slide['media_id'] ?? 0);
+            $alt = (string) ($slide['alt'] ?? '');
+            $caption = (string) ($slide['caption'] ?? '');
+            $link = (string) ($slide['link'] ?? '');
+            $img = '';
+            if ($mediaId > 0) {
+                $img = Media::responsiveImg($mediaId, [
+                    'alt' => $alt,
+                    'class' => 'cms-carousel-img img-fluid',
+                    'sizes' => '(max-width: 768px) 100vw, min(1320px, 100vw)',
+                    'preferred_width' => 1200,
+                ]);
+            }
+            if ($img === '') {
+                $url = htmlspecialchars((string) ($slide['url'] ?? ''), ENT_QUOTES, 'UTF-8');
+                if ($url === '') {
+                    continue;
+                }
+                $img = '<img src="' . $url . '" alt="' . htmlspecialchars($alt, ENT_QUOTES, 'UTF-8')
+                    . '" class="cms-carousel-img img-fluid" loading="lazy" decoding="async">';
+            }
+            if ($link !== '') {
+                $img = '<a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '" class="cms-carousel-link">' . $img . '</a>';
+            }
+            $slideHtml = '<div class="cms-carousel-slide" role="group" aria-roledescription="slide">';
+            $slideHtml .= $img;
+            if ($caption !== '') {
+                $slideHtml .= '<div class="cms-carousel-caption">' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</div>';
+            }
+            $slideHtml .= '</div>';
+            $renderedSlides[] = $slideHtml;
+        }
+        if ($renderedSlides === []) {
+            return '';
+        }
+        $id = 'cms-carousel-' . preg_replace('/[^a-zA-Z0-9_\-]/', '', $moduleId !== '' ? $moduleId : uniqid('c', true));
+        $autoplay = !empty($data['autoplay']) ? '1' : '0';
+        $interval = (int) ($data['interval_ms'] ?? 5000);
+        $showArrows = array_key_exists('show_arrows', $data) ? !empty($data['show_arrows']) : true;
+        $showDots = array_key_exists('show_dots', $data) ? !empty($data['show_dots']) : true;
+        $count = count($renderedSlides);
+
+        $html = '<div class="cms-carousel" id="' . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '"'
+            . ' data-cms-carousel'
+            . ' data-autoplay="' . $autoplay . '"'
+            . ' data-interval="' . $interval . '"'
+            . ' aria-roledescription="carousel"'
+            . ' aria-label="Image carousel">';
+        $html .= '<div class="cms-carousel-viewport"><div class="cms-carousel-track">';
+        foreach ($renderedSlides as $i => $slideHtml) {
+            $active = $i === 0 ? ' is-active' : '';
+            $html .= preg_replace(
+                '/class="cms-carousel-slide"/',
+                'class="cms-carousel-slide' . $active . '" aria-hidden="' . ($i === 0 ? 'false' : 'true') . '"',
+                $slideHtml,
+                1
+            );
+        }
+        $html .= '</div></div>';
+
+        if ($showArrows && $count > 1) {
+            $html .= '<button type="button" class="cms-carousel-btn cms-carousel-prev" data-carousel-prev aria-label="Previous slide">&lsaquo;</button>';
+            $html .= '<button type="button" class="cms-carousel-btn cms-carousel-next" data-carousel-next aria-label="Next slide">&rsaquo;</button>';
+        }
+        if ($showDots && $count > 1) {
+            $html .= '<div class="cms-carousel-dots" role="tablist" aria-label="Slides">';
+            for ($i = 0; $i < $count; $i++) {
+                $html .= '<button type="button" class="cms-carousel-dot' . ($i === 0 ? ' is-active' : '') . '"'
+                    . ' data-carousel-dot="' . $i . '"'
+                    . ' aria-label="Go to slide ' . ($i + 1) . '"'
+                    . ($i === 0 ? ' aria-current="true"' : '')
+                    . '></button>';
+            }
+            $html .= '</div>';
+        }
+        $html .= '</div>';
+        return $html;
     }
 
     public static function plainTextFromEntity(?object $entity): string
@@ -536,6 +688,18 @@ class LayoutBuilder
                             case 'html':
                                 if (!empty($data['html'])) {
                                     $parts[] = trim(strip_tags((string) $data['html']));
+                                }
+                                break;
+                            case 'carousel':
+                                foreach (is_array($data['slides'] ?? null) ? $data['slides'] : [] as $slide) {
+                                    if (!is_array($slide)) {
+                                        continue;
+                                    }
+                                    if (!empty($slide['caption'])) {
+                                        $parts[] = (string) $slide['caption'];
+                                    } elseif (!empty($slide['alt'])) {
+                                        $parts[] = (string) $slide['alt'];
+                                    }
                                 }
                                 break;
                             default:

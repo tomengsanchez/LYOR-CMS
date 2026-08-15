@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\AdminPath;
 use App\LayoutBuilder;
+use App\Models\LayoutTemplate;
 use App\Models\Media;
 use App\Models\Page;
 use App\Models\Post;
@@ -50,6 +51,139 @@ class BuilderController extends Controller
         $this->saveLayout('post', $id);
     }
 
+    public function listTemplates(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if (!$this->canUseBuilderTemplates()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => ['message' => 'Permission denied.']]);
+            return;
+        }
+        $items = [];
+        foreach (LayoutTemplate::all() as $row) {
+            $items[] = [
+                'id' => (int) $row->id,
+                'name' => (string) $row->name,
+                'created_by_name' => (string) ($row->created_by_name ?? ''),
+                'updated_at' => (string) ($row->updated_at ?? ''),
+            ];
+        }
+        echo json_encode(['success' => true, 'data' => ['items' => $items]], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getTemplate(int $id): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if (!$this->canUseBuilderTemplates()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => ['message' => 'Permission denied.']]);
+            return;
+        }
+        $row = LayoutTemplate::find($id);
+        if (!$row) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => ['message' => 'Template not found.']]);
+            return;
+        }
+        $layout = LayoutTemplate::layoutArray($row);
+        if ($layout === null) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => ['message' => 'Template has no layout.']]);
+            return;
+        }
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'id' => (int) $row->id,
+                'name' => (string) $row->name,
+                'layout' => $layout,
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function saveTemplate(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if (!$this->canUseBuilderTemplates()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => ['message' => 'Permission denied.']]);
+            return;
+        }
+        $payload = $this->readJsonOrPost();
+        if (!$this->checkCsrfFromPayload($payload)) {
+            return;
+        }
+        $name = trim((string) ($payload['name'] ?? ''));
+        $raw = $payload['layout_json'] ?? null;
+        if (is_array($payload['layout'] ?? null)) {
+            $raw = json_encode($payload['layout'], JSON_UNESCAPED_UNICODE);
+        }
+        $id = LayoutTemplate::create($name, is_string($raw) ? $raw : null);
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => ['message' => 'Could not save template. Provide a name and valid layout.']]);
+            return;
+        }
+        $row = LayoutTemplate::find($id);
+        echo json_encode([
+            'success' => true,
+            'data' => [
+                'id' => $id,
+                'name' => (string) ($row->name ?? $name),
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function deleteTemplate(int $id): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        if (!$this->canUseBuilderTemplates()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => ['message' => 'Permission denied.']]);
+            return;
+        }
+        $payload = $this->readJsonOrPost();
+        if (!$this->checkCsrfFromPayload($payload)) {
+            return;
+        }
+        if (!LayoutTemplate::delete($id)) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => ['message' => 'Template not found.']]);
+            return;
+        }
+        echo json_encode(['success' => true, 'data' => ['deleted' => true]]);
+    }
+
+    private function canUseBuilderTemplates(): bool
+    {
+        return Auth::isAdmin() || Auth::canAny([
+            'edit_pages', 'edit_posts', 'add_pages', 'add_posts',
+        ]);
+    }
+
+    /** @return array<string, mixed> */
+    private function readJsonOrPost(): array
+    {
+        $ct = (string) ($_SERVER['CONTENT_TYPE'] ?? '');
+        if (str_contains($ct, 'application/json')) {
+            $decoded = json_decode((string) file_get_contents('php://input'), true);
+            return is_array($decoded) ? $decoded : [];
+        }
+        return $_POST;
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function checkCsrfFromPayload(array $payload): bool
+    {
+        $token = $payload['csrf_token'] ?? $_POST['csrf_token'] ?? null;
+        if (!Csrf::check($token)) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => ['message' => 'Invalid security token. Refresh and try again.']]);
+            return false;
+        }
+        return true;
+    }
+
     private function renderEditor(string $entityType, object $entity): void
     {
         $layout = LayoutBuilder::parse($entity->layout_json ?? null);
@@ -71,14 +205,24 @@ class BuilderController extends Controller
                 : Permalink::urlForPost($entity);
         }
 
+        $templates = [];
+        foreach (LayoutTemplate::all() as $row) {
+            $templates[] = [
+                'id' => (int) $row->id,
+                'name' => (string) $row->name,
+            ];
+        }
+
         $this->view('builder/editor', [
             'entityType' => $entityType,
             'entity' => $entity,
             'layoutJson' => json_encode($layout, JSON_UNESCAPED_UNICODE),
             'moduleTypesJson' => json_encode(LayoutBuilder::moduleTypes(), JSON_UNESCAPED_UNICODE),
             'mediaJson' => json_encode(Media::listImagesForPicker(), JSON_UNESCAPED_UNICODE),
+            'templatesJson' => json_encode($templates, JSON_UNESCAPED_UNICODE),
             'backUrl' => $backUrl,
             'saveUrl' => $saveUrl,
+            'templatesUrl' => AdminPath::url('builder/templates'),
             'previewUrl' => $previewUrl,
             'canUploadMedia' => $canUpload,
             'uploadUrl' => AdminPath::url('media/upload-json'),

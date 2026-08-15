@@ -25,6 +25,7 @@ class PublicSeo
             'json_url' => $seo->enable_json_export && $baseUrl !== '' ? $baseUrl . '/site.json' : '',
             'robots_noindex' => false,
             'llm_summary' => trim((string) ($seo->llm_site_summary ?? '')),
+            'citation_snippet' => '',
             'llms_url' => LlmsTxt::isEnabled() && $baseUrl !== '' ? $baseUrl . '/llms.txt' : '',
         ];
     }
@@ -57,6 +58,10 @@ class PublicSeo
             'summary' => trim((string) ($seo->llm_site_summary ?? '')) ?: (string) ($share['description'] ?? ''),
             'site_name' => trim((string) ($branding->app_name ?? 'Simple CMS')),
             'organization' => trim((string) ($branding->company_name ?? '')),
+            'publisher_expertise' => trim((string) ($seo->publisher_expertise ?? '')),
+            'preferred_citation' => trim((string) ($seo->preferred_citation ?? '')),
+            'citation_guidance' => trim((string) ($seo->citation_guidance ?? '')),
+            'pillar_topics' => self::pillarTopicsList($seo),
             'endpoints' => [
                 'sitemap' => !empty($seo->enable_sitemap) ? $baseUrl . '/sitemap.xml' : null,
                 'robots' => $baseUrl . '/robots.txt',
@@ -86,6 +91,7 @@ class PublicSeo
             'json_url' => $seo->enable_json_export && $baseUrl !== '' ? $baseUrl . $jsonPath : '',
             'robots_noindex' => !empty($page->robots_noindex),
             'llm_summary' => $pageLlm !== '' ? $pageLlm : ($isHomepage ? $siteLlm : ''),
+            'citation_snippet' => trim((string) ($page->citation_snippet ?? '')),
         ];
     }
 
@@ -160,15 +166,24 @@ class PublicSeo
         if ($isHomepage) {
             $data['potentialAction'] = self::searchAction();
         }
+        self::attachSpeakable($data, $page, $seo);
 
         $crumb = self::breadcrumbList($breadcrumbs, $page, $share);
-        if ($crumb === null) {
+        $faqNode = self::faqPageNode($page, $share);
+        $graph = [$data];
+        if ($crumb !== null) {
+            $graph[] = $crumb;
+        }
+        if ($faqNode !== null) {
+            $graph[] = $faqNode;
+        }
+        if (count($graph) === 1) {
             $data['@context'] = 'https://schema.org';
             return $data;
         }
         return [
             '@context' => 'https://schema.org',
-            '@graph' => [$data, $crumb],
+            '@graph' => $graph,
         ];
     }
 
@@ -273,7 +288,7 @@ class PublicSeo
         if ($twitter !== '') {
             $links[] = 'https://x.com/' . $twitter;
         }
-        foreach (['facebook_url', 'linkedin_url'] as $key) {
+        foreach (['facebook_url', 'linkedin_url', 'reddit_url', 'youtube_url'] as $key) {
             $url = trim((string) ($seo->$key ?? ''));
             if ($url !== '') {
                 $links[] = $url;
@@ -291,6 +306,15 @@ class PublicSeo
             'name' => trim((string) ($branding->company_name ?? '')) ?: trim((string) ($branding->app_name ?? 'Simple CMS')),
             'url' => SocialShare::baseUrl() . '/',
         ];
+        $seo = AppSettings::getSiteSeoConfig();
+        $expertise = trim((string) ($seo->publisher_expertise ?? ''));
+        if ($expertise !== '') {
+            $org['description'] = $expertise;
+        }
+        $knows = self::pillarTopicsList($seo);
+        if ($knows !== []) {
+            $org['knowsAbout'] = $knows;
+        }
         $logo = SocialShare::fallbackImage($branding);
         if (!empty($logo['url'])) {
             $org['logo'] = $logo['url'];
@@ -335,6 +359,8 @@ class PublicSeo
                 'robots' => !empty($page->robots_noindex) ? 'noindex, nofollow' : 'index, follow',
             ],
             'summary' => $summary !== '' ? $summary : (string) ($share['description'] ?? ''),
+            'citation_snippet' => trim((string) ($page->citation_snippet ?? '')),
+            'faq' => self::parseFaqItems($page->faq_json ?? null),
             'content_text' => $bodyText,
             'layout' => $layout,
             'blocks' => $blocks !== [] ? $blocks : null,
@@ -370,6 +396,7 @@ class PublicSeo
             'json_url' => $jsonUrl,
             'robots_noindex' => !empty($post->robots_noindex),
             'llm_summary' => $llm,
+            'citation_snippet' => trim((string) ($post->citation_snippet ?? '')),
         ];
     }
 
@@ -412,7 +439,16 @@ class PublicSeo
         if ($tagNames !== []) {
             $data['keywords'] = implode(', ', $tagNames);
         }
-        return $data;
+        self::attachSpeakable($data, $post, $seo);
+        $faqNode = self::faqPageNode($post, $share);
+        if ($faqNode === null) {
+            return $data;
+        }
+        unset($data['@context']);
+        return [
+            '@context' => 'https://schema.org',
+            '@graph' => [$data, $faqNode],
+        ];
     }
 
     public static function archiveContext(string $title, string $description, string $path, string $schemaType = 'CollectionPage', ?object $branding = null): array
@@ -441,6 +477,7 @@ class PublicSeo
             'json_url' => $jsonUrl,
             'robots_noindex' => false,
             'llm_summary' => trim((string) ($seo->llm_site_summary ?? '')),
+            'citation_snippet' => '',
         ];
     }
 
@@ -463,6 +500,7 @@ class PublicSeo
                 'url' => (string) ($share['url'] ?? ''),
                 'json_url' => $base !== '' && !empty($post->slug) ? $base . '/blog/' . rawurlencode((string) $post->slug) . '.json' : null,
                 'summary' => $summary,
+                'citation_snippet' => trim((string) ($post->citation_snippet ?? '')) ?: null,
                 'category' => !empty($post->category_name) ? (string) $post->category_name : null,
                 'published_at' => !empty($post->published_at) ? (string) $post->published_at : null,
             ];
@@ -510,6 +548,8 @@ class PublicSeo
                 'robots' => !empty($post->robots_noindex) ? 'noindex, nofollow' : 'index, follow',
             ],
             'summary' => trim((string) ($post->llm_summary ?? '')) ?: (string) ($share['description'] ?? ''),
+            'citation_snippet' => trim((string) ($post->citation_snippet ?? '')),
+            'faq' => self::parseFaqItems($post->faq_json ?? null),
             'content_text' => $bodyText,
             'layout' => $layout,
             'blocks' => $blocks !== [] ? $blocks : null,
@@ -576,5 +616,141 @@ class PublicSeo
             $value = mb_substr($value, 0, 255);
         }
         return $value;
+    }
+
+    public static function normalizeCitationSnippet(string $value): ?string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+        if (mb_strlen($value) > 500) {
+            $value = mb_substr($value, 0, 500);
+        }
+        return $value;
+    }
+
+    /** @return list<array{question: string, answer: string}> */
+    public static function parseFaqItems(mixed $raw): array
+    {
+        if (is_string($raw)) {
+            $raw = trim($raw);
+            if ($raw === '') {
+                return [];
+            }
+            $decoded = json_decode($raw, true);
+        } elseif (is_array($raw)) {
+            $decoded = $raw;
+        } else {
+            return [];
+        }
+        if (!is_array($decoded)) {
+            return [];
+        }
+        $items = [];
+        foreach ($decoded as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $q = trim((string) ($row['question'] ?? $row['q'] ?? ''));
+            $a = trim((string) ($row['answer'] ?? $row['a'] ?? ''));
+            if ($q === '' || $a === '') {
+                continue;
+            }
+            if (mb_strlen($q) > 300) {
+                $q = mb_substr($q, 0, 300);
+            }
+            if (mb_strlen($a) > 2000) {
+                $a = mb_substr($a, 0, 2000);
+            }
+            $items[] = ['question' => $q, 'answer' => $a];
+            if (count($items) >= 20) {
+                break;
+            }
+        }
+        return $items;
+    }
+
+    /** @param list<array{question?: string, answer?: string}>|string|null $raw */
+    public static function normalizeFaqJson(mixed $raw): ?string
+    {
+        $items = self::parseFaqItems($raw);
+        if ($items === []) {
+            return null;
+        }
+        $json = json_encode($items, JSON_UNESCAPED_UNICODE);
+        return $json === false ? null : $json;
+    }
+
+    /** @return list<string> */
+    public static function pillarTopicsList(?object $seo = null): array
+    {
+        $seo = $seo ?? AppSettings::getSiteSeoConfig();
+        $raw = trim((string) ($seo->pillar_topics ?? ''));
+        if ($raw === '') {
+            return [];
+        }
+        $parts = preg_split('/\r\n|\r|\n|,/', $raw) ?: [];
+        $out = [];
+        foreach ($parts as $part) {
+            $part = trim((string) $part);
+            if ($part === '') {
+                continue;
+            }
+            if (mb_strlen($part) > 120) {
+                $part = mb_substr($part, 0, 120);
+            }
+            $out[] = $part;
+            if (count($out) >= 40) {
+                break;
+            }
+        }
+        return array_values(array_unique($out));
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function attachSpeakable(array &$data, object $entity, object $seo): void
+    {
+        if (empty($seo->enable_speakable)) {
+            return;
+        }
+        $snippet = trim((string) ($entity->citation_snippet ?? ''));
+        if ($snippet === '') {
+            return;
+        }
+        $data['speakable'] = [
+            '@type' => 'SpeakableSpecification',
+            'cssSelector' => ['.cms-ai-answer', 'meta[name="citation"]'],
+        ];
+        $data['abstract'] = $snippet;
+    }
+
+    /** @return array<string, mixed>|null */
+    private static function faqPageNode(object $entity, array $share): ?array
+    {
+        $seo = AppSettings::getSiteSeoConfig();
+        if (empty($seo->enable_faq_schema)) {
+            return null;
+        }
+        $items = self::parseFaqItems($entity->faq_json ?? null);
+        if ($items === []) {
+            return null;
+        }
+        $entities = [];
+        foreach ($items as $item) {
+            $entities[] = [
+                '@type' => 'Question',
+                'name' => $item['question'],
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => $item['answer'],
+                ],
+            ];
+        }
+        return [
+            '@type' => 'FAQPage',
+            'url' => (string) ($share['url'] ?? ''),
+            'mainEntity' => $entities,
+        ];
     }
 }

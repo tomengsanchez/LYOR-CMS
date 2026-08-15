@@ -209,6 +209,15 @@ class AppSettings
             'allow_ai_crawlers' => self::get('seo_allow_ai_crawlers', '1') === '1',
             'facebook_url' => self::normalizeHttpUrl(self::get('seo_facebook_url', '')),
             'linkedin_url' => self::normalizeHttpUrl(self::get('seo_linkedin_url', '')),
+            'reddit_url' => self::normalizeHttpUrl(self::get('seo_reddit_url', '')),
+            'youtube_url' => self::normalizeHttpUrl(self::get('seo_youtube_url', '')),
+            'publisher_expertise' => trim(self::get('seo_publisher_expertise', '')),
+            'preferred_citation' => trim(self::get('seo_preferred_citation', '')),
+            'citation_guidance' => trim(self::get('seo_citation_guidance', '')),
+            'pillar_topics' => trim(self::get('seo_pillar_topics', '')),
+            'enable_faq_schema' => self::get('seo_enable_faq_schema', '1') === '1',
+            'enable_speakable' => self::get('seo_enable_speakable', '1') === '1',
+            'show_ai_writing_tips' => self::get('seo_show_ai_writing_tips', '1') === '1',
         ];
     }
 
@@ -263,6 +272,46 @@ class AppSettings
         }
         if (array_key_exists('seo_linkedin_url', $data)) {
             self::set('seo_linkedin_url', self::normalizeHttpUrl((string) $data['seo_linkedin_url']));
+        }
+        if (array_key_exists('seo_reddit_url', $data)) {
+            self::set('seo_reddit_url', self::normalizeHttpUrl((string) $data['seo_reddit_url']));
+        }
+        if (array_key_exists('seo_youtube_url', $data)) {
+            self::set('seo_youtube_url', self::normalizeHttpUrl((string) $data['seo_youtube_url']));
+        }
+
+        $expertise = trim((string) ($data['seo_publisher_expertise'] ?? ''));
+        if (mb_strlen($expertise) > 1000) {
+            $expertise = mb_substr($expertise, 0, 1000);
+        }
+        self::set('seo_publisher_expertise', $expertise);
+
+        $citation = trim((string) ($data['seo_preferred_citation'] ?? ''));
+        if (mb_strlen($citation) > 500) {
+            $citation = mb_substr($citation, 0, 500);
+        }
+        self::set('seo_preferred_citation', $citation);
+
+        $guidance = trim((string) ($data['seo_citation_guidance'] ?? ''));
+        if (mb_strlen($guidance) > 1000) {
+            $guidance = mb_substr($guidance, 0, 1000);
+        }
+        self::set('seo_citation_guidance', $guidance);
+
+        $pillars = trim((string) ($data['seo_pillar_topics'] ?? ''));
+        if (mb_strlen($pillars) > 2000) {
+            $pillars = mb_substr($pillars, 0, 2000);
+        }
+        self::set('seo_pillar_topics', $pillars);
+
+        if (array_key_exists('seo_enable_faq_schema', $data)) {
+            self::set('seo_enable_faq_schema', !empty($data['seo_enable_faq_schema']) ? '1' : '0');
+        }
+        if (array_key_exists('seo_enable_speakable', $data)) {
+            self::set('seo_enable_speakable', !empty($data['seo_enable_speakable']) ? '1' : '0');
+        }
+        if (array_key_exists('seo_show_ai_writing_tips', $data)) {
+            self::set('seo_show_ai_writing_tips', !empty($data['seo_show_ai_writing_tips']) ? '1' : '0');
         }
     }
 

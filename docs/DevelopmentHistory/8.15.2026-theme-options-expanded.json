@@ -1,0 +1,14 @@
+{
+  "date": "2026-08-15",
+  "title": "Expanded public theme Customizer options",
+  "entries": [
+    {
+      "area": "PublicTheme",
+      "summary": "New app_settings keys for font size, line height, buttons, footer, shadow, spacing, links, sticky header, admin link visibility; Amber/Indigo presets."
+    },
+    {
+      "area": "Customizer / General",
+      "summary": "UI controls for all new options; live preview bridge applies extra html classes."
+    }
+  ]
+}

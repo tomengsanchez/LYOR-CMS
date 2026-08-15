@@ -9,14 +9,19 @@
  * - admin user account
  *
  * Clears:
- * - transactional/module data
- * - lookup/seeded grievance option data
- * - app_settings
- * - non-admin users and related links
+ * - all Simple CMS content (pages, posts, media, menus, …)
+ * - app_settings, notifications, audit/email/API session tables
+ * - media files under public/uploads/media/ (unless --keep-uploads)
+ * - any leftover legacy PAPeR tables if still present
+ *
+ * By default re-seeds Welcome page, General category, Hello World post,
+ * and Primary Menu (Home + Blog) so the site is usable again.
  *
  * Usage:
  *   php cli/truncate_fresh_install.php
  *   php cli/truncate_fresh_install.php --yes
+ *   php cli/truncate_fresh_install.php --yes --no-reseed
+ *   php cli/truncate_fresh_install.php --yes --keep-uploads
  */
 
 $isCli = php_sapi_name() === 'cli';
@@ -30,9 +35,11 @@ use Core\Database;
 
 $argv = $argv ?? [];
 $assumeYes = in_array('--yes', $argv, true);
+$noReseed = in_array('--no-reseed', $argv, true);
+$keepUploads = in_array('--keep-uploads', $argv, true);
 
 if (!$assumeYes) {
-    fwrite(STDOUT, "WARNING: This will remove most app data and keep only baseline auth/migrations.\n");
+    fwrite(STDOUT, "WARNING: This will remove CMS content and most app data; keeps migrations, roles, and admin.\n");
     fwrite(STDOUT, "Type YES to continue: ");
     $confirm = trim((string) fgets(STDIN));
     if ($confirm !== 'YES') {
@@ -63,9 +70,41 @@ if ($exists('users') && $exists('roles')) {
 
 $truncated = [];
 $deleted = [];
+$reseeded = [];
 
+/**
+ * Child → parent order for clarity; FOREIGN_KEY_CHECKS=0 makes order safe.
+ *
+ * @var list<string>
+ */
 $tablesToTruncate = [
-    // Core app/module data
+    // Simple CMS content
+    'cms_content_revisions',
+    'cms_layout_templates',
+    'cms_redirects',
+    'cms_menu_items',
+    'cms_menus',
+    'cms_post_tags',
+    'cms_tags',
+    'cms_comments',
+    'cms_widgets',
+    'cms_media_sizes',
+    'cms_posts',
+    'cms_pages',
+    'cms_categories',
+    'cms_media',
+    // Auth / ops (keep users/roles separately)
+    'notifications',
+    'audit_log',
+    'email_queue',
+    'api_tokens',
+    'api_2fa_challenges',
+    'user_sessions',
+    'user_password_history',
+    'user_dashboard_config',
+    'user_list_columns',
+    'backup_archives',
+    // Legacy PAPeR (no-op when tables were never migrated)
     'project_phases',
     'projects',
     'municipalities',
@@ -78,25 +117,18 @@ $tablesToTruncate = [
     'grievance_status_log',
     'grievance_attachments',
     'grievance_respondents',
-    'notifications',
-    'audit_log',
     'socio_import_batch_projects',
     'profile_socio_version_sections',
     'profile_socio_versions',
     'profile_socio_sections',
     'socio_import_batches',
     'ses_rap_column_maps',
-    'email_queue',
-    'api_tokens',
+    'rap_field_definitions',
     'api_client_events',
-    'user_sessions',
     'traffic_events',
     'traffic_ip_blocks',
     'traffic_geo_cache',
     'user_projects',
-    'user_list_columns',
-    'user_dashboard_config',
-    // Lookup/seeded option tables (seed_grievance_options / seed_structure_options will re-seed)
     'grievance_vulnerabilities',
     'grievance_respondent_types',
     'grievance_grm_channels',
@@ -107,7 +139,40 @@ $tablesToTruncate = [
     'structure_tagging_statuses',
     'structure_actual_usages',
     'holidays',
+    'profile_structure_tags',
+    'profile_attachments',
+    'contacts',
+    'api_idempotency_keys',
 ];
+
+/**
+ * Remove files under a directory but keep the directory (and .htaccess if present).
+ */
+$clearDirFiles = static function (string $dir): int {
+    if (!is_dir($dir)) {
+        return 0;
+    }
+    $removed = 0;
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($iterator as $item) {
+        /** @var SplFileInfo $item */
+        $name = $item->getFilename();
+        if ($name === '.htaccess' || $name === '.gitkeep') {
+            continue;
+        }
+        if ($item->isDir()) {
+            @rmdir($item->getPathname());
+            continue;
+        }
+        if (@unlink($item->getPathname())) {
+            $removed++;
+        }
+    }
+    return $removed;
+};
 
 try {
     $db->exec('SET FOREIGN_KEY_CHECKS=0');
@@ -120,26 +185,22 @@ try {
         $truncated[] = $table;
     }
 
-    // Reset app-wide settings to fresh baseline.
     if ($exists('app_settings')) {
         $db->exec('TRUNCATE TABLE `app_settings`');
         $truncated[] = 'app_settings';
     }
 
-    // Keep admin; delete all other users.
     if ($exists('users')) {
         if ($adminId > 0) {
             $stmt = $db->prepare('DELETE FROM users WHERE id <> ?');
             $stmt->execute([$adminId]);
             $deleted[] = 'users(non-admin)';
         } else {
-            // If admin account is missing, keep table but clear rows.
             $db->exec('TRUNCATE TABLE `users`');
             $truncated[] = 'users';
         }
     }
 
-    // Legacy table cleanup: keep only row tied to admin (if exists).
     if ($exists('user_profiles')) {
         if ($adminId > 0) {
             $stmt = $db->prepare('DELETE FROM user_profiles WHERE user_id <> ? OR user_id IS NULL');
@@ -148,6 +209,62 @@ try {
         } else {
             $db->exec('TRUNCATE TABLE `user_profiles`');
             $truncated[] = 'user_profiles';
+        }
+    }
+
+    if (!$noReseed) {
+        $authorId = $adminId > 0 ? $adminId : null;
+
+        if ($exists('cms_pages')) {
+            $stmt = $db->prepare("
+                INSERT INTO cms_pages (title, slug, body, status, meta_title, author_id)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([
+                'Welcome',
+                'welcome',
+                '<p>Welcome to Simple CMS. Edit this page from <a href="/admin/pages">Admin → Pages</a>.</p>',
+                'published',
+                'Welcome — Simple CMS',
+                $authorId,
+            ]);
+            $reseeded[] = 'cms_pages(welcome)';
+        }
+
+        $catId = null;
+        if ($exists('cms_categories')) {
+            $db->prepare("
+                INSERT INTO cms_categories (name, slug, description)
+                VALUES (?, ?, ?)
+            ")->execute(['General', 'general', 'General news and updates']);
+            $catId = (int) $db->query("SELECT id FROM cms_categories WHERE slug = 'general' LIMIT 1")->fetchColumn();
+            $reseeded[] = 'cms_categories(general)';
+        }
+
+        if ($exists('cms_posts')) {
+            $db->prepare("
+                INSERT INTO cms_posts (title, slug, excerpt, body, category_id, status, published_at, author_id)
+                VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
+            ")->execute([
+                'Hello World',
+                'hello-world',
+                'Your first blog post.',
+                '<p>This is a sample post. Create more from Content → Posts.</p>',
+                $catId ?: null,
+                'published',
+                $authorId,
+            ]);
+            $reseeded[] = 'cms_posts(hello-world)';
+        }
+
+        if ($exists('cms_menus') && $exists('cms_menu_items')) {
+            $db->exec("INSERT INTO cms_menus (id, name, location) VALUES (1, 'Primary Menu', 'primary')");
+            $db->exec("
+                INSERT INTO cms_menu_items (menu_id, label, item_type, custom_url, sort_order) VALUES
+                (1, 'Home', 'home', '/', 10),
+                (1, 'Blog', 'blog', '/blog', 20)
+            ");
+            $reseeded[] = 'cms_menus(primary)';
         }
     }
 
@@ -161,6 +278,12 @@ try {
     exit(1);
 }
 
+$uploadsRemoved = 0;
+if (!$keepUploads) {
+    $mediaDir = dirname(__DIR__) . '/public/uploads/media';
+    $uploadsRemoved = $clearDirFiles($mediaDir);
+}
+
 fwrite(STDOUT, "Fresh-install-style reset complete.\n");
 if (!empty($truncated)) {
     fwrite(STDOUT, "Truncated tables (" . count($truncated) . "): " . implode(', ', $truncated) . "\n");
@@ -168,5 +291,15 @@ if (!empty($truncated)) {
 if (!empty($deleted)) {
     fwrite(STDOUT, "Deleted rows: " . implode(', ', $deleted) . "\n");
 }
-fwrite(STDOUT, "Next step: php database/seeders/seed_grievance_options.php && php database/seeders/seed_structure_options.php\n");
-
+if (!empty($reseeded)) {
+    fwrite(STDOUT, "Reseeded: " . implode(', ', $reseeded) . "\n");
+} elseif ($noReseed) {
+    fwrite(STDOUT, "Skipped CMS baseline reseed (--no-reseed).\n");
+}
+if (!$keepUploads) {
+    fwrite(STDOUT, "Cleared media upload files: {$uploadsRemoved}\n");
+} else {
+    fwrite(STDOUT, "Kept upload files (--keep-uploads).\n");
+}
+fwrite(STDOUT, "Kept: migrations, roles, role_capabilities, admin user.\n");
+fwrite(STDOUT, "Log in at /admin/login (default admin / admin123 unless changed).\n");

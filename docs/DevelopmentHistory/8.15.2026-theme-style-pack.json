@@ -1,0 +1,38 @@
+{
+  "date": "2026-08-15",
+  "summary": "Theme style-pack zip import/export (CMS cms-theme.json + best-effort WordPress theme.zip colors).",
+  "changes": [
+    {
+      "area": "theme",
+      "notes": [
+        "App\\ThemeStylePack: validate zip, sanitize CSS, apply settings, export, clear",
+        "Customize + General upload UI; public layout links active extra.css",
+        "WP zips: Theme Name + theme.json palette only; PHP never executed"
+      ]
+    },
+    {
+      "area": "routes",
+      "notes": [
+        "POST /admin/customize/import-style-pack",
+        "POST /admin/customize/clear-style-pack",
+        "GET /admin/customize/export-style-pack"
+      ]
+    },
+    {
+      "area": "backup-restore",
+      "notes": ["theme-packs under public/uploads; app_settings keys for pack name/source/css path"]
+    },
+    {
+      "area": "tests",
+      "notes": ["tests/cli/cms_theme_style_pack_smoke_test.php", "cli/build_sample_style_pack.php → cms-style-pack-example.zip"]
+    }
+  ],
+  "help_docs": [
+    "App/Views/help/pages/customize.php",
+    "docs/samples/cms-style-pack-example/",
+    "docs/samples/cms-style-pack-example.zip",
+    "public/assets/theme-packs/cms-style-pack-example.zip",
+    "docs/changes/2026-08/CHANGES.md"
+  ],
+  "compatibility": "MySQL/MariaDB via app_settings only (no schema migration)"
+}

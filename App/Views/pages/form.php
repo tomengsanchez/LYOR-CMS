@@ -75,7 +75,6 @@ ob_start();
 </div>
 </div></div>
 <div class="mb-3"><label class="form-label">Body (HTML)</label><textarea name="body" class="form-control" rows="12"><?= htmlspecialchars($page->body ?? '') ?></textarea><small class="text-muted">Fallback when no visual layout and no blocks are saved.</small></div>
-</div></div>
 
 <div class="card mb-4"><div class="card-header"><h5 class="mb-0">SEO &amp; social sharing</h5></div><div class="card-body">
 <div class="mb-3">
@@ -105,11 +104,13 @@ require __DIR__ . '/../partials/featured_image_field.php';
     <textarea name="llm_summary" id="llmSummary" class="form-control" rows="4" maxlength="2000" placeholder="Concise summary for AI assistants and crawlers (also used in JSON export &amp; Schema.org)"><?= htmlspecialchars($page->llm_summary ?? '') ?></textarea>
     <small class="text-muted"><span id="llmSummaryCount">0</span>/2000 · Machine-readable export: <?php if ($jsonPreviewUrl !== ''): ?><a href="<?= htmlspecialchars($jsonPreviewUrl) ?>" target="_blank" rel="noopener"><code><?= htmlspecialchars($jsonPreviewUrl) ?></code></a><?php else: ?>publish the page to preview<?php endif; ?></small>
 </div>
+<?php $entity = $page; require __DIR__ . '/../partials/ai_citation_fields.php'; ?>
 </div></div>
 
 <button type="submit" class="btn btn-primary">Save</button>
-</form>
+</form></div></div>
 <script src="/public/assets/js/content/media-picker.js"></script>
 <script src="/public/assets/js/pages/form.js"></script>
+<script src="/public/assets/js/content/ai-seo-form.js"></script>
 <script src="/public/assets/js/content/blocks.js"></script>
 <?php $content = ob_get_clean(); $pageTitle = !empty($isCreate) ? 'Add Page' : 'Edit Page'; $currentPage = 'pages'; require __DIR__ . '/../layout/main.php';

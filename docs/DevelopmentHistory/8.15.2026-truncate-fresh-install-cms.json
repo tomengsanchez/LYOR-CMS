@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Fresh-install truncator updated for Simple CMS",
+  "entries": [
+    {
+      "area": "CLI",
+      "summary": "truncate_fresh_install.php truncates cms_* tables (pages, posts, media, menus, revisions, redirects, templates, …), ops tables, and leftover legacy PAPeR tables when present."
+    },
+    {
+      "area": "Reseed",
+      "summary": "Default reseed Welcome / General / Hello World / Primary Menu; --no-reseed and --keep-uploads flags; clears public/uploads/media files unless kept."
+    },
+    {
+      "area": "Docs / help",
+      "summary": "DEVELOPMENTGUIDE, RUNBOOK, FrameworksGuide, dev-help, backup-restore help updated; obsolete grievance seeder next-steps removed."
+    }
+  ]
+}

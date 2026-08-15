@@ -82,6 +82,64 @@ class Media
         return $id;
     }
 
+    /**
+     * Register a free/external image by URL without downloading (hotlink reference).
+     * Stores source_url + caption for attribution.
+     */
+    public static function createFromExternalUrl(string $url, ?string $altText = null, ?string $caption = null): ?int
+    {
+        $url = trim($url);
+        if ($url === '' || !preg_match('#^https?://#i', $url) || filter_var($url, FILTER_VALIDATE_URL) === false) {
+            return null;
+        }
+        if (mb_strlen($url) > 500) {
+            $url = mb_substr($url, 0, 500);
+        }
+        $alt = $altText !== null ? trim($altText) : '';
+        if (mb_strlen($alt) > 255) {
+            $alt = mb_substr($alt, 0, 255);
+        }
+        $cap = $caption !== null ? trim($caption) : '';
+        if ($cap === '') {
+            $cap = 'Source: ' . $url;
+        }
+        if (mb_strlen($cap) > 1000) {
+            $cap = mb_substr($cap, 0, 1000);
+        }
+        $name = basename(parse_url($url, PHP_URL_PATH) ?: 'external-image');
+        if ($name === '' || $name === '/') {
+            $name = 'external-image';
+        }
+        if (mb_strlen($name) > 255) {
+            $name = mb_substr($name, 0, 255);
+        }
+        $filename = 'ext_' . bin2hex(random_bytes(8));
+        $db = Database::getInstance();
+        $stmt = $db->prepare('
+            INSERT INTO cms_media (filename, original_name, file_path, mime_type, file_size, width, height, alt_text, source_url, caption, uploaded_by)
+            VALUES (?, ?, ?, ?, 0, NULL, NULL, ?, ?, ?, ?)
+        ');
+        $stmt->execute([
+            $filename,
+            $name,
+            'external',
+            'image/jpeg',
+            $alt !== '' ? $alt : null,
+            $url,
+            $cap,
+            Auth::id(),
+        ]);
+        $id = (int) $db->lastInsertId();
+        AuditLog::record('media', $id, 'created_external');
+        return $id;
+    }
+
+    public static function isExternal(object $media): bool
+    {
+        return trim((string) ($media->file_path ?? '')) === 'external'
+            && trim((string) ($media->source_url ?? '')) !== '';
+    }
+
     public static function softDelete(int $id): bool
     {
         $media = self::find($id);
@@ -111,7 +169,7 @@ class Media
     public static function listImages(): array
     {
         $rows = Database::getInstance()->query("
-            SELECT id, original_name, mime_type, alt_text, width, height
+            SELECT id, original_name, mime_type, alt_text, width, height, source_url, caption, file_path
             FROM cms_media
             WHERE deleted_at IS NULL
               AND mime_type LIKE 'image/%'
@@ -123,6 +181,10 @@ class Media
 
     public static function publicShareUrl(int $id, string $size = MediaImageSizes::SIZE_FULL): string
     {
+        $media = self::find($id);
+        if ($media && self::isExternal($media)) {
+            return trim((string) $media->source_url);
+        }
         return MediaImageSizes::publicUrl($id, $size);
     }
 
@@ -150,6 +212,9 @@ class Media
      */
     public static function resolveServePath(object $media, string $size = MediaImageSizes::SIZE_FULL): ?array
     {
+        if (self::isExternal($media)) {
+            return null;
+        }
         $size = strtolower(trim($size));
         if ($size !== '' && $size !== MediaImageSizes::SIZE_FULL && MediaImageSizes::isValidSizeName($size)) {
             $row = MediaImageSizes::findSize((int) $media->id, $size);
@@ -188,6 +253,19 @@ class Media
         if (!$media || !self::isImageMime((string) ($media->mime_type ?? ''))) {
             return '';
         }
+        if (self::isExternal($media)) {
+            $src = htmlspecialchars(trim((string) $media->source_url), ENT_QUOTES, 'UTF-8');
+            $alt = htmlspecialchars((string) ($opts['alt'] ?? $media->alt_text ?? ''), ENT_QUOTES, 'UTF-8');
+            $class = htmlspecialchars((string) ($opts['class'] ?? 'img-fluid'), ENT_QUOTES, 'UTF-8');
+            $loading = htmlspecialchars((string) ($opts['loading'] ?? 'lazy'), ENT_QUOTES, 'UTF-8');
+            $img = '<img src="' . $src . '" alt="' . $alt . '" class="' . $class . '" loading="' . $loading . '" decoding="async">';
+            $caption = trim((string) ($media->caption ?? ''));
+            if ($caption !== '' && !empty($opts['with_caption'])) {
+                $img = '<figure class="cms-media-external">' . $img
+                    . '<figcaption class="cms-mod-image-caption">' . nl2br(htmlspecialchars($caption, ENT_QUOTES, 'UTF-8')) . '</figcaption></figure>';
+            }
+            return $img;
+        }
         $opts['public'] = true;
         return MediaImageSizes::imgTag($media, $opts);
     }
@@ -196,17 +274,22 @@ class Media
     public static function toPickerItem(object $media): array
     {
         $id = (int) ($media->id ?? 0);
+        $external = self::isExternal($media);
+        $src = $external ? trim((string) $media->source_url) : '/serve/media/' . $id;
         return [
             'id' => $id,
             'name' => (string) ($media->original_name ?? ''),
             'alt_text' => (string) ($media->alt_text ?? ''),
+            'caption' => (string) ($media->caption ?? ''),
+            'source_url' => (string) ($media->source_url ?? ''),
             'mime_type' => (string) ($media->mime_type ?? ''),
             'width' => !empty($media->width) ? (int) $media->width : null,
             'height' => !empty($media->height) ? (int) $media->height : null,
-            'url' => '/serve/media/' . $id,
-            'preview' => '/serve/media/' . $id . '/medium',
-            'thumb' => '/serve/media/' . $id . '/thumbnail',
+            'url' => $src,
+            'preview' => $external ? $src : '/serve/media/' . $id . '/medium',
+            'thumb' => $external ? $src : '/serve/media/' . $id . '/thumbnail',
             'share_url' => self::publicShareUrl($id),
+            'is_external' => $external,
         ];
     }
 

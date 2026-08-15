@@ -2,10 +2,10 @@
   "info": {
     "name": "Simple CMS API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "REST API and public JSON endpoints for Simple CMS. Set baseUrl (e.g. http://eco.local). Login stores token for Bearer auth."
+    "description": "REST API and public JSON endpoints for Simple CMS. Set baseUrl (e.g. http://cms.local). Login stores token for Bearer auth."
   },
   "variable": [
-    {"key": "baseUrl", "value": "http://eco.local"},
+    {"key": "baseUrl", "value": "http://cms.local"},
     {"key": "token", "value": ""}
   ],
   "item": [
@@ -59,6 +59,41 @@
           }
         },
         {
+          "name": "Create Page",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Page\",\n  \"status\": \"draft\",\n  \"body\": \"<p>Hello</p>\"\n}"},
+            "url": "{{baseUrl}}/api/pages"
+          },
+          "description": "Requires add_pages. Optional layout or layout_json."
+        },
+        {
+          "name": "Update Page",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Page Updated\",\n  \"status\": \"draft\"\n}"},
+            "url": "{{baseUrl}}/api/pages/1"
+          },
+          "description": "Requires edit_pages. Partial merge with existing row."
+        },
+        {
+          "name": "Delete Page",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/pages/1"
+          },
+          "description": "Soft-delete. Requires delete_pages."
+        },
+        {
           "name": "List Posts",
           "request": {
             "method": "GET",
@@ -74,6 +109,41 @@
             "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
             "url": "{{baseUrl}}/api/posts/1"
           }
+        },
+        {
+          "name": "Create Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Post\",\n  \"status\": \"draft\",\n  \"excerpt\": \"Short\",\n  \"body\": \"<p>Hello</p>\",\n  \"tags\": \"news,api\"\n}"},
+            "url": "{{baseUrl}}/api/posts"
+          },
+          "description": "Requires add_posts. Optional layout or layout_json."
+        },
+        {
+          "name": "Update Post",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Post Updated\",\n  \"status\": \"draft\"\n}"},
+            "url": "{{baseUrl}}/api/posts/1"
+          },
+          "description": "Requires edit_posts. Omitting tags keeps existing tags."
+        },
+        {
+          "name": "Delete Post",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": "{{baseUrl}}/api/posts/1"
+          },
+          "description": "Soft-delete. Requires delete_posts."
         },
         {
           "name": "List Media",
@@ -125,7 +195,8 @@
           "request": {
             "method": "GET",
             "url": "{{baseUrl}}/site.json"
-          }
+          },
+          "description": "Machine-readable site document for LLM/AI search. Includes summary, publisher_expertise, preferred_citation, citation_guidance, pillar_topics, and discovery endpoints."
         },
         {
           "name": "Post JSON",
@@ -262,6 +333,14 @@
             "url": "{{baseUrl}}/admin/builder/post/1/save"
           },
           "description": "Requires session cookie + edit_posts. Replace 1 with a real post id."
+        },
+        {
+          "name": "Content library search",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/search?q=tomeng"
+          },
+          "description": "Session cookie required. Searches pages, posts, and media."
         }
       ]
     }

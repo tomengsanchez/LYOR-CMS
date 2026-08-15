@@ -168,6 +168,38 @@ ob_start();
             <p class="text-muted small">Colors, typography, layout, and default light/dark mode for the public site and auth pages.</p>
             <div class="row g-3">
                 <div class="col-12">
+                    <div class="border rounded p-3">
+                        <h6 class="fw-semibold mb-2">Style packs</h6>
+                        <p class="small text-muted">Upload into the library, then activate the pack you want. WordPress zips map colors only. <a href="<?= admin_url('customize') ?>">Open Customizer</a> for live preview.</p>
+                        <?php
+                        $stylePackFlash = $_SESSION['style_pack_flash'] ?? null;
+                        unset($_SESSION['style_pack_flash']);
+                        ?>
+                        <?php if (!empty($stylePackFlash) && is_array($stylePackFlash)): ?>
+                        <div class="alert alert-<?= !empty($stylePackFlash['ok']) ? 'success' : 'danger' ?> py-2"><?= htmlspecialchars((string) ($stylePackFlash['message'] ?? '')) ?></div>
+                        <?php endif; ?>
+                        <?php $returnTarget = 'general'; require __DIR__ . '/../partials/theme_style_pack_library.php'; ?>
+                        <form method="post" action="<?= admin_url('customize/import-style-pack') ?>" enctype="multipart/form-data" class="row g-2 align-items-end">
+                            <?= \Core\Csrf::field() ?>
+                            <input type="hidden" name="return" value="general">
+                            <div class="col-md-6">
+                                <label class="form-label">Upload zip to library</label>
+                                <input type="file" name="style_pack" class="form-control" accept=".zip,application/zip" required>
+                            </div>
+                            <div class="col-md-6 d-flex flex-wrap gap-2">
+                                <button type="submit" class="btn btn-primary">Upload &amp; activate</button>
+                                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/export-style-pack') ?>">Export current</a>
+                                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/sample-style-pack') ?>">Download template</a>
+                            </div>
+                        </form>
+                        <form method="post" action="<?= admin_url('customize/clear-style-pack') ?>" class="mt-2">
+                            <?= \Core\Csrf::field() ?>
+                            <input type="hidden" name="return" value="general">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Clear active pack</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-12">
                     <label class="form-label fw-semibold d-block">Color preset</label>
                     <div class="pub-theme-swatch-grid">
                         <?php foreach ($themePresets as $key => $label): ?>
@@ -185,6 +217,47 @@ ob_start();
                     <input type="color" name="public_accent_color" class="form-control form-control-color"
                         value="<?= htmlspecialchars($publicTheme->accent_color ?? '#2563eb') ?>" title="Accent color">
                     <small class="text-muted d-block mt-1">Overrides the preset accent on links and buttons.</small>
+                </div>
+                <div class="col-12">
+                    <div class="border rounded p-3 bg-light">
+                        <h6 class="fw-semibold mb-2">Editorial magazine</h6>
+                        <div class="form-check mb-2">
+                            <input type="hidden" name="pub_theme_apply_editorial_pack" value="0">
+                            <input type="checkbox" class="form-check-input" name="pub_theme_apply_editorial_pack" value="1" id="pubApplyEditorialPack">
+                            <label class="form-check-label" for="pubApplyEditorialPack">Apply editorial style pack on save (colors, magazine layout, chrome, kicker)</label>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Site chrome</label>
+                                <select name="pub_theme_chrome" class="form-select">
+                                    <?php foreach (\App\PublicTheme::chromeStyles() as $key => $label): ?>
+                                    <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->chrome ?? 'default') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Blog section kicker</label>
+                                <input type="text" name="pub_theme_blog_kicker" class="form-control" maxlength="80"
+                                    value="<?= htmlspecialchars($publicTheme->blog_kicker ?? '') ?>" placeholder="HERE'S WHAT'S NEW">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Public date format</label>
+                                <select name="pub_theme_date_format" class="form-select">
+                                    <?php foreach (\App\PublicTheme::dateFormats() as $key => $label): ?>
+                                    <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->date_format ?? 'human') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input type="hidden" name="pub_theme_show_site_tagline" value="0">
+                                    <input type="checkbox" class="form-check-input" name="pub_theme_show_site_tagline" value="1" id="pubShowTagline"
+                                        <?= !empty($publicTheme->show_site_tagline) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="pubShowTagline">Show company name as header tagline</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Typography</label>
@@ -206,7 +279,7 @@ ob_start();
                     <label class="form-label fw-semibold">Content width</label>
                     <select name="pub_theme_width" class="form-select">
                         <?php foreach (\App\PublicTheme::contentWidths() as $key => $label): ?>
-                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->content_width ?? 'narrow') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->content_width ?? 'full') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -226,7 +299,7 @@ ob_start();
                         <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->default_color_mode ?? 'system') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <small class="text-muted d-block mt-1">Visitors can still override with the header toggle when enabled.</small>
+                    <small class="text-muted d-block mt-1">Applies site-wide to the public site and auth pages. Visitors cannot change this.</small>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Header style</label>
@@ -236,11 +309,264 @@ ob_start();
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Footer style</label>
+                    <select name="pub_theme_footer_style" class="form-select">
+                        <?php foreach (\App\PublicTheme::footerStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->footer_style ?? 'solid') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Base font size</label>
+                    <select name="pub_theme_font_size" class="form-select">
+                        <?php foreach (\App\PublicTheme::fontSizes() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->font_size ?? 'md') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Line height</label>
+                    <select name="pub_theme_line_height" class="form-select">
+                        <?php foreach (\App\PublicTheme::lineHeights() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->line_height ?? 'normal') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Content spacing</label>
+                    <select name="pub_theme_content_spacing" class="form-select">
+                        <?php foreach (\App\PublicTheme::contentSpacings() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->content_spacing ?? 'comfortable') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Button style</label>
+                    <select name="pub_theme_button_style" class="form-select">
+                        <?php foreach (\App\PublicTheme::buttonStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->button_style ?? 'solid') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Card shadow</label>
+                    <select name="pub_theme_card_shadow" class="form-select">
+                        <?php foreach (\App\PublicTheme::cardShadows() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->card_shadow ?? 'soft') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Link style</label>
+                    <select name="pub_theme_link_style" class="form-select">
+                        <?php foreach (\App\PublicTheme::linkStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->link_style ?? 'accent') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Navigation style</label>
+                    <select name="pub_theme_nav_style" class="form-select">
+                        <?php foreach (\App\PublicTheme::navStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->nav_style ?? 'inline') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Brand weight</label>
+                    <select name="pub_theme_brand_weight" class="form-select">
+                        <?php foreach (\App\PublicTheme::brandWeights() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->brand_weight ?? 'bold') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Heading scale</label>
+                    <select name="pub_theme_heading_scale" class="form-select">
+                        <?php foreach (\App\PublicTheme::headingScales() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->heading_scale ?? 'normal') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Blog list style</label>
+                    <select name="pub_theme_blog_list_style" class="form-select">
+                        <?php foreach (\App\PublicTheme::blogListStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->blog_list_style ?? 'list') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Blog grid columns</label>
+                    <select name="pub_theme_blog_grid_columns" class="form-select">
+                        <?php foreach (\App\PublicTheme::blogGridColumns() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->blog_grid_columns ?? '3') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Blog image ratio</label>
+                    <select name="pub_theme_blog_image_ratio" class="form-select">
+                        <?php foreach (\App\PublicTheme::blogImageRatios() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->blog_image_ratio ?? 'landscape') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Featured image style</label>
+                    <select name="pub_theme_image_style" class="form-select">
+                        <?php foreach (\App\PublicTheme::imageStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->image_style ?? 'soft') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Card / article borders</label>
+                    <select name="pub_theme_border_style" class="form-select">
+                        <?php foreach (\App\PublicTheme::borderStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->border_style ?? 'subtle') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Header height</label>
+                    <select name="pub_theme_header_height" class="form-select">
+                        <?php foreach (\App\PublicTheme::headerHeights() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->header_height ?? 'comfortable') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div class="col-md-6">
                     <div class="form-check mt-2">
-                        <input type="checkbox" class="form-check-input" name="pub_theme_show_toggle" value="1" id="pubThemeShowToggle"
-                            <?= !empty($publicTheme->show_color_toggle) ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="pubThemeShowToggle">Show light/dark toggle in public header</label>
+                        <input type="hidden" name="pub_theme_sticky_header" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_sticky_header" value="1" id="pubThemeSticky"
+                            <?= !empty($publicTheme->sticky_header) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeSticky">Sticky header on public site</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_show_admin_link" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_show_admin_link" value="1" id="pubThemeAdminLink"
+                            <?= !empty($publicTheme->show_admin_link) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeAdminLink">Show Admin login links publicly</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_show_site_title" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_show_site_title" value="1" id="pubThemeSiteTitle"
+                            <?= !empty($publicTheme->show_site_title) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeSiteTitle">Show site title next to logo</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_show_breadcrumbs" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_show_breadcrumbs" value="1" id="pubThemeCrumbs"
+                            <?= !empty($publicTheme->show_breadcrumbs) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeCrumbs">Show breadcrumbs</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_nav_uppercase" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_nav_uppercase" value="1" id="pubThemeNavUpper"
+                            <?= !empty($publicTheme->nav_uppercase) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeNavUpper">Uppercase navigation</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Button size</label>
+                    <select name="pub_theme_button_size" class="form-select">
+                        <?php foreach (\App\PublicTheme::buttonSizes() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->button_size ?? 'md') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Sidebar style</label>
+                    <select name="pub_theme_sidebar_style" class="form-select">
+                        <?php foreach (\App\PublicTheme::sidebarStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->sidebar_style ?? 'card') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Footer alignment</label>
+                    <select name="pub_theme_footer_align" class="form-select">
+                        <?php foreach (\App\PublicTheme::footerAlignments() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->footer_align ?? 'split') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Article text align</label>
+                    <select name="pub_theme_prose_align" class="form-select">
+                        <?php foreach (\App\PublicTheme::proseAlignments() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->prose_align ?? 'left') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Logo size</label>
+                    <select name="pub_theme_logo_size" class="form-select">
+                        <?php foreach (\App\PublicTheme::logoSizes() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->logo_size ?? 'md') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Motion</label>
+                    <select name="pub_theme_transition" class="form-select">
+                        <?php foreach (\App\PublicTheme::transitionStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->transition_style ?? 'subtle') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Focus ring</label>
+                    <select name="pub_theme_focus" class="form-select">
+                        <?php foreach (\App\PublicTheme::focusStyles() as $key => $label): ?>
+                        <option value="<?= htmlspecialchars($key) ?>" <?= ($publicTheme->focus_style ?? 'accent') === $key ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_show_blog_search" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_show_blog_search" value="1" id="pubThemeBlogSearch"
+                            <?= !empty($publicTheme->show_blog_search) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeBlogSearch">Show blog search box</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_show_post_dates" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_show_post_dates" value="1" id="pubThemeDates"
+                            <?= !empty($publicTheme->show_post_dates) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeDates">Show post dates</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_show_list_featured" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_show_list_featured" value="1" id="pubThemeListFeat"
+                            <?= !empty($publicTheme->show_list_featured) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeListFeat">Show featured images on blog list</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_blog_show_excerpt" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_blog_show_excerpt" value="1" id="pubThemeBlogExcerpt"
+                            <?= !empty($publicTheme->blog_show_excerpt) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeBlogExcerpt">Show excerpts on blog list</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_blog_show_read_more" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_blog_show_read_more" value="1" id="pubThemeBlogMore"
+                            <?= !empty($publicTheme->blog_show_read_more) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeBlogMore">Show “Read more” links</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_blog_show_category" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_blog_show_category" value="1" id="pubThemeBlogCat"
+                            <?= !empty($publicTheme->blog_show_category) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeBlogCat">Show categories on blog list</label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="hidden" name="pub_theme_blog_view_switcher" value="0">
+                        <input type="checkbox" class="form-check-input" name="pub_theme_blog_view_switcher" value="1" id="pubThemeBlogSwitch"
+                            <?= !empty($publicTheme->blog_view_switcher) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="pubThemeBlogSwitch">Allow visitors to switch list/grid view</label>
                     </div>
                 </div>
                 <div id="pubThemeCustomColors" class="col-12 pub-theme-custom-colors <?= ($publicTheme->preset ?? '') === 'custom' ? '' : 'd-none' ?>">
@@ -278,8 +604,9 @@ ob_start();
                         </div>
                     </div>
                     <div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
+                        <a href="<?= admin_url('customize') ?>" class="btn btn-primary btn-sm">Open Customizer</a>
                         <button type="button" class="btn btn-outline-primary btn-sm" id="pubThemePreviewSite">Preview on live site</button>
-                        <small class="text-muted">Opens the homepage with unsaved theme settings (admin only).</small>
+                        <small class="text-muted">Customizer: live iframe + Publish. Preview opens homepage with unsaved settings.</small>
                     </div>
                 </div>
             </div>
@@ -385,6 +712,71 @@ ob_start();
                     <label class="form-label fw-semibold">LinkedIn URL</label>
                     <input type="url" name="seo_linkedin_url" class="form-control" maxlength="255"
                         value="<?= htmlspecialchars($siteSeo->linkedin_url ?? '') ?>" placeholder="https://www.linkedin.com/company/yourorg">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Reddit community URL</label>
+                    <input type="url" name="seo_reddit_url" class="form-control" maxlength="255"
+                        value="<?= htmlspecialchars($siteSeo->reddit_url ?? '') ?>" placeholder="https://www.reddit.com/r/yourcommunity">
+                    <small class="text-muted d-block mt-1">Third-party authority signal for Schema.org <code>sameAs</code> (AI systems often cite Reddit/LinkedIn).</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">YouTube channel URL</label>
+                    <input type="url" name="seo_youtube_url" class="form-control" maxlength="255"
+                        value="<?= htmlspecialchars($siteSeo->youtube_url ?? '') ?>" placeholder="https://www.youtube.com/@yourbrand">
+                </div>
+            </div>
+            <hr class="my-4">
+            <h6 class="mb-3">AI search &amp; citation</h6>
+            <p class="text-muted small mb-3">
+                Helps AI search (ChatGPT Search, Perplexity, Google AI Overviews) extract passage-level answers and cite your site with clear E-E-A-T signals.
+                Pair with per-page/post <strong>citation snippet (BLUF)</strong> and optional FAQ pairs.
+            </p>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label fw-semibold" for="seoPublisherExpertise">Publisher expertise (E-E-A-T)</label>
+                    <textarea name="seo_publisher_expertise" id="seoPublisherExpertise" class="form-control" rows="3" maxlength="1000"
+                        placeholder="Who you are, firsthand experience, credentials, and what original reporting or case studies this site publishes"><?= htmlspecialchars($siteSeo->publisher_expertise ?? '') ?></textarea>
+                    <small class="text-muted"><span id="seoPublisherExpertiseCount">0</span>/1000 · Used in Schema.org Organization and <code>/llms.txt</code>.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="seoPreferredCitation">Preferred citation</label>
+                    <input type="text" name="seo_preferred_citation" id="seoPreferredCitation" class="form-control" maxlength="500"
+                        value="<?= htmlspecialchars($siteSeo->preferred_citation ?? '') ?>"
+                        placeholder="e.g. Cite as: Site Name (Year). Article title. URL">
+                    <small class="text-muted"><span id="seoPreferredCitationCount">0</span>/500 · Short how-to-cite line for assistants.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="seoCitationGuidance">Citation guidance</label>
+                    <textarea name="seo_citation_guidance" id="seoCitationGuidance" class="form-control" rows="2" maxlength="1000"
+                        placeholder="Optional policy for AI: prefer citing primary pages, quote citation snippets, attribute authors"><?= htmlspecialchars($siteSeo->citation_guidance ?? '') ?></textarea>
+                    <small class="text-muted"><span id="seoCitationGuidanceCount">0</span>/1000 · Appears in <code>/llms.txt</code> and <code>/site.json</code>.</small>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold" for="seoPillarTopics">Topic clusters / pillar subjects</label>
+                    <textarea name="seo_pillar_topics" id="seoPillarTopics" class="form-control" rows="3" maxlength="2000"
+                        placeholder="One subject per line (pillar pages and related clusters). Example:&#10;CMS SEO for AI search&#10;Backup and restore&#10;Public theme customization"><?= htmlspecialchars($siteSeo->pillar_topics ?? '') ?></textarea>
+                    <small class="text-muted"><span id="seoPillarTopicsCount">0</span>/2000 · Signals comprehensive topic coverage to LLM indexes.</small>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" name="seo_enable_faq_schema" value="1" id="seoEnableFaq"
+                            <?= !empty($siteSeo->enable_faq_schema) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="seoEnableFaq">Emit FAQPage Schema.org when a page/post has FAQ pairs</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" name="seo_enable_speakable" value="1" id="seoEnableSpeakable"
+                            <?= !empty($siteSeo->enable_speakable) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="seoEnableSpeakable">Mark citation snippets as speakable / answer passages</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" name="seo_show_ai_writing_tips" value="1" id="seoShowAiTips"
+                            <?= !empty($siteSeo->show_ai_writing_tips) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="seoShowAiTips">Show AI writing tips on page/post editors (structure, BLUF, Q&amp;A)</label>
+                    </div>
                 </div>
             </div>
             <hr class="my-4">

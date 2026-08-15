@@ -1,0 +1,10 @@
+{
+  "date": "2026-08-15",
+  "title": "Public edit bar with Frontend editor link",
+  "entries": [
+    {
+      "area": "Public UX",
+      "summary": "edit_bar.php on page/post views for edit_pages/edit_posts: primary Edit via Frontend editor + Edit in admin; site.css styles."
+    }
+  ]
+}

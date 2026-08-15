@@ -4,6 +4,179 @@ Part of the [changes index](../CHANGES.md). Newest entries first within this mon
 
 ---
 
+## Theme style-pack upload (WP-inspired) (2026-08-15)
+
+- Admins can upload a **CMS style pack** zip (`cms-theme.json` + optional `extra.css`) or a WordPress theme zip (colors/metadata only; PHP ignored).
+- **Pack library:** uploads are stored under `public/uploads/theme-packs/library/{id}/`; select & **Activate** from Customize / General. Bundled packs install into the library. Clear active keeps installed packs.
+- Settings map into existing `pub_theme_*` / accent via `PublicTheme::saveConfig`; active CSS linked from the public layout.
+- UI: Appearance → Customize and System → General; export current pack; clear active / remove from library.
+- Backup/restore: CSS via uploads tree; metadata via `app_settings` (`pub_theme_pack_library`, active id). **Bundled zips:** `cms-style-pack-example.zip` and `cms-style-pack-play-build-sound.zip`. Rebuild: `php cli/build_style_pack.php`. Smoke: `tests/cli/cms_theme_style_pack_smoke_test.php`.
+
+---
+
+## Media external URL + caption; Manhood Exclusive Rooms post (2026-08-15)
+
+- Migration **022**: `cms_media.source_url` and `cms_media.caption` for free/external images without re-upload.
+- Media library: **Register URL** form; `/serve/media` and `/share/media` redirect external items to the source URL.
+- Layout Builder image modules already support `url` + `caption` (figcaption); public CSS for `.cms-mod-image-caption`.
+- CSP default `img-src` includes `https:` so hotlinked free images (e.g. Unsplash) are not blocked.
+- Playwright: `tests/e2e/cms-manhood-exclusive-rooms.spec.ts` publishes a short Recovering Biblical Manhood post using an Unsplash URL (no download).
+- Backup/restore: new columns included in SQL dump of `cms_media`. Help updated.
+
+---
+
+## Editorial magazine options (no brand lock-in) (2026-08-15)
+
+- Removed Good Men Project branding from preset/pack labels. Reusable options kept: **Editorial (crimson)** preset, editorial chrome, blog kicker, readable dates, company tagline, and **Apply editorial style pack**.
+- Legacy stored preset `goodmen` maps to `editorial`. Legacy POST key `pub_theme_apply_goodmen_pack` still accepted.
+
+---
+
+## Good Men Project–style editorial theme (2026-08-15)
+
+- *(Superseded)* Originally introduced editorial magazine features under Good Men naming; see entry above for the generic rename.
+
+---
+
+## AI search & citation settings (2026-08-15)
+
+- **General → SEO:** New **AI search & citation** block — publisher expertise (E-E-A-T), preferred citation, citation guidance, topic clusters/pillar subjects, Reddit/YouTube `sameAs` URLs, FAQPage/speakable toggles, and editor writing tips.
+- **Pages & posts:** `citation_snippet` (BLUF) and `faq_json` (migration **021**); public lead paragraph `.cms-ai-answer`; `meta name="citation"`; Schema.org speakable/abstract + optional FAQPage; JSON exports and llms.txt prefer citation snippets.
+- **Backup/restore:** Covered via `app_settings` + new CMS columns in SQL dump. Help, CONFIGURATION, DEVELOPMENTGUIDE, Postman site.json notes, smoke test updated.
+
+---
+
+## Fix `/blog/{slug}.json` routing (2026-08-15)
+
+- Registered `.json` page/post routes **before** `/p/{slug}` and `/blog/{slug}` so they are not swallowed as HTML slugs.
+- Router `pathToRegex` now `preg_quote`s static path segments (literal `.json`).
+
+---
+
+## Blog list grid / list + customization (2026-08-15)
+
+- Blog listing layouts: **list**, **grid**, **cards**, **magazine**, **compact** (legacy `stacked` maps to list).
+- Extra options: grid columns (2/3/4), image ratio, show excerpt / read more / category, optional **visitor view switcher** (localStorage).
+- Controls in Appearance → Customize and System → General; public CSS classes + `blog-view.js`.
+
+---
+
+## Public edit bar for editors (2026-08-15)
+
+- Logged-in users with `edit_pages` / `edit_posts` see a public edit bar: **Edit via Frontend editor** + **Edit in admin**.
+
+---
+
+## No duplicate title/image on layout posts (2026-08-15)
+
+- Public post view skips automatic `<h1>` and featured image when a visual `layout_json` is present (builder content owns title/media). Featured image still used on blog list, SEO, and social cards.
+
+---
+
+## Carousel layout-builder module (2026-08-15)
+
+- New visual builder module **Carousel**: up to 12 slides (media library or URL), captions, optional links, autoplay / interval / arrows / dots.
+- Public: `carousel.js` + `.cms-carousel*` styles; respects `prefers-reduced-motion`.
+- Editor: multi-slide side panel with upload per slide. Smoke test covers normalize/render/plain text.
+
+---
+
+## Hide public Admin button by default (2026-08-15)
+
+- Public header/footer **Admin** login links are off by default (`pub_theme_show_admin_link`). Migration **020** turns the setting off for existing sites. Can still be enabled under Appearance → Customize or System → General.
+
+---
+
+## Page title not in content + full width default (2026-08-15)
+
+- Public pages no longer render an automatic `<h1>` for the page title in the body (title remains in browser tab, SEO, menus, breadcrumbs). Headings come from the visual builder.
+- Added **Full width (1320px)** content width; site default is now **full** (was narrow). Migration **019** upgrades stored `pub_theme_width` from empty/narrow to `full`.
+
+---
+
+## Team POGI site Playwright seed (2026-08-15)
+
+- Added `tests/e2e/cms-team-pogi-site.spec.ts`: downloads free Lorem Picsum photos, uploads to Media, publishes **5 pages** + **5 posts** with visual layouts/featured images, rebuilds Primary Menu, sets site name and homepage to Team POGI.
+- Run: `npm run test:e2e:cms-team-pogi-site`.
+
+---
+
+## Fresh-install truncator for Simple CMS (2026-08-15)
+
+- `cli/truncate_fresh_install.php` now clears all `cms_*` content tables (plus ops tables), optional media files under `public/uploads/media/`, and still skips missing legacy PAPeR tables.
+- Default reseed: Welcome page, General category, Hello World post, Primary Menu (Home + Blog). Flags: `--no-reseed`, `--keep-uploads`.
+- Docs: DEVELOPMENTGUIDE, RUNBOOK, FrameworksGuide, dev-help, backup-restore help.
+
+---
+
+## Playwright sample pages + Primary Menu (2026-08-15)
+
+- Added `tests/e2e/cms-pages-layouts-menu.spec.ts`: publishes About / Services / Features / Team / Contact with distinct visual builder layouts and content widths, then rebuilds the Primary Menu (Home, Blog, those pages).
+- Run: `npm run test:e2e:cms-pages-layouts-menu` (headed; uses `.env.playwright` `BASE_URL`).
+- **Bugfix:** Page create/edit form closed the Content card before SEO/LLM/Save, so browsers ended the `<form>` early and **Save did nothing**. Outer card now wraps the full form (same pattern as posts).
+
+---
+
+## More Customizer options (round 3) (2026-08-15)
+
+- Presets: Coral, Mint.
+- Button size, sidebar style, footer alignment, prose align, logo size, motion, focus ring.
+- Blog toggles: search box, post dates, list featured images.
+
+---
+
+## More Customizer options (round 2) (2026-08-15)
+
+- Presets: Teal, Charcoal.
+- Nav style (inline/pills/underline), brand weight, heading scale, blog list (stacked/cards/compact).
+- Featured image style, card borders, header height.
+- Toggles: site title beside logo, breadcrumbs, uppercase nav.
+
+---
+
+## More Customizer / theme options (2026-08-15)
+
+- Added Amber & Indigo presets; Readable & Display fonts; square & XL radius.
+- New controls: font size, line height, footer style, button style, card shadow, content spacing, link style, sticky header, show/hide Admin login links.
+- Available in Appearance → Customize and System → General; CSS classes on public `<html>`.
+
+---
+
+## Theme Customizer (live preview) (2026-08-15)
+
+- **Appearance → Customize** (`/admin/customize`): WordPress-style sidebar + public iframe.
+- Live updates via `postMessage` (`theme-preview-bridge.js`) and session sync (`POST /admin/customize/preview`).
+- **Publish** writes `PublicTheme` settings; **Close** clears unsaved preview.
+- General still has the same fields plus an **Open Customizer** entry point.
+
+---
+
+## Public color mode admin-only (2026-08-15)
+
+- **Removed** the public header light/dark toggle and browser `localStorage` override.
+- **Color mode** (light / dark / system) is set only under **System → General → Public site theme**.
+- Updated help, E2E smoke, and `theme.js`.
+
+---
+
+## Builder device preview, layout templates, write API (2026-08-15)
+
+- **Device preview:** Visual builder toolbar Desktop / Tablet / Mobile canvas widths.
+- **Layout templates:** Migration **018** `cms_layout_templates`; save/load/delete from builder Templates menu (`App\Models\LayoutTemplate`).
+- **Write REST API:** `POST` / `PATCH` / `DELETE` on `/api/pages` and `/api/posts` (Bearer + add/edit/delete capabilities); optional `layout` / `layout_json`.
+- **Test:** `tests/cli/cms_builder_templates_write_api_smoke_test.php` (`npm run test:cms-builder-templates-write-api`).
+
+---
+
+## Revisions, redirects, content library search (2026-08-15)
+
+- **Versioning:** `cms_content_revisions` snapshots on page/post update and layout save (max 50); restore from page/post view.
+- **Redirects:** Admin CRUD at `/admin/redirects` (301/302); applied on public 404 / missing page/post slugs.
+- **Library search:** `/admin/search` + header box across pages, posts, and media.
+- **Migration 017**; smoke `tests/cli/cms_revisions_redirects_search_smoke_test.php`.
+
+---
+
 ## Divi-style frontend visual builder (2026-08-15)
 
 - **layout_json:** Migration **016** adds `layout_json` on `cms_pages` / `cms_posts` (keeps existing `blocks_json` block builder).

@@ -3,7 +3,7 @@
 /** @var string $content Main HTML */
 /** @var object|null $branding App branding config */
 /** @var string $publicNavActive home|blog|none */
-/** @var string|null $publicLayout narrow|normal|wide — overrides theme content width */
+/** @var string|null $publicLayout narrow|normal|wide|full — overrides theme content width */
 /** @var bool $publicUseBlogWidth when true, use blog width from theme settings */
 $branding = $branding ?? \App\Models\AppSettings::getBrandingConfig();
 $pubTheme = \App\PublicTheme::getConfig();
@@ -18,10 +18,10 @@ if (!empty($publicUseBlogWidth)) {
     $layoutClass = \App\PublicTheme::contentWidthClass($pubTheme);
 }
 $themePreviewActive = \App\PublicTheme::isPreviewActive();
+$customizerFrame = \App\PublicTheme::isCustomizerFrame();
 $baseUrl = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
 $logoPath = $branding->logo_path ?? '';
 $logoUrl = $logoPath !== '' ? $baseUrl . '/serve/app-logo' : '';
-$showThemeToggle = \App\PublicTheme::showColorToggle($pubTheme);
 $showSidebar = \App\DiscussionSettings::get()->show_sidebar && \App\Models\Widget::areaHasWidgets(\App\Models\Widget::AREA_SIDEBAR);
 $sidebarHtml = $showSidebar ? \App\Models\Widget::renderArea(\App\Models\Widget::AREA_SIDEBAR) : '';
 $footerWidgetsHtml = \App\Models\Widget::renderArea(\App\Models\Widget::AREA_FOOTER);
@@ -29,13 +29,16 @@ $siteSeo = \App\Models\AppSettings::getSiteSeoConfig();
 $rssFeedUrl = !empty($siteSeo->enable_rss_feed) ? $baseUrl . '/feed.xml' : '';
 $htmlLang = \App\PublicSeo::localeLanguage($siteSeo->locale ?? 'en_US');
 $llmsUrl = !empty($siteSeo->enable_llms_txt) && $baseUrl !== '' ? $baseUrl . '/llms.txt' : '';
+$showSiteTitle = \App\PublicTheme::showSiteTitle($pubTheme) || $logoUrl === '';
+$showTagline = \App\PublicTheme::showSiteTagline($pubTheme);
+$siteTagline = trim((string) ($branding->company_name ?? ''));
+$isEditorial = \App\PublicTheme::isEditorialChrome($pubTheme);
 ?>
 <!DOCTYPE html>
 <html lang="<?= htmlspecialchars($htmlLang) ?>"
     class="<?= htmlspecialchars(\App\PublicTheme::htmlClasses($pubTheme)) ?>"
     style="<?= htmlspecialchars(\App\PublicTheme::inlineStyle($pubTheme)) ?>"
-    data-default-color-mode="<?= htmlspecialchars(\App\PublicTheme::defaultColorMode($pubTheme)) ?>"
-    data-show-color-toggle="<?= $showThemeToggle ? '1' : '0' ?>">
+    data-default-color-mode="<?= htmlspecialchars(\App\PublicTheme::defaultColorMode($pubTheme)) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -60,19 +63,33 @@ $llmsUrl = !empty($siteSeo->enable_llms_txt) && $baseUrl !== '' ? $baseUrl . '/l
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/public/assets/css/public/themes.css" rel="stylesheet">
     <link href="/public/assets/css/public/site.css" rel="stylesheet">
+    <?php
+    $stylePackCss = \App\ThemeStylePack::activeCssPublicUrl();
+    if ($stylePackCss):
+    ?>
+    <link href="<?= htmlspecialchars($stylePackCss) ?>" rel="stylesheet">
+    <?php endif; ?>
     <script src="/public/assets/js/public/theme.js"></script>
-</head>
-<body class="public-site<?= $themePreviewActive ? ' public-site--theme-preview' : '' ?>">
     <?php if ($themePreviewActive): ?>
+    <script src="/public/assets/js/public/theme-preview-bridge.js"></script>
+    <?php endif; ?>
+</head>
+<body class="public-site<?= $themePreviewActive ? ' public-site--theme-preview' : '' ?><?= $customizerFrame ? ' public-site--customizer-frame' : '' ?>">
+    <?php if ($themePreviewActive && !$customizerFrame): ?>
     <?php require __DIR__ . '/partials/theme_preview_banner.php'; ?>
     <?php endif; ?>
-    <header class="public-header">
+    <header class="public-header<?= $isEditorial ? ' public-header--editorial' : '' ?>">
         <div class="container">
             <a class="public-brand" href="/">
                 <?php if ($logoUrl !== ''): ?>
                 <img src="<?= htmlspecialchars($logoUrl) ?>" alt="" class="public-brand-logo" width="32" height="32">
                 <?php endif; ?>
-                <span><?= $appName ?></span>
+                <span class="public-brand-text">
+                    <?php if ($showSiteTitle): ?><span class="public-brand-name"><?= $appName ?></span><?php endif; ?>
+                    <?php if ($showTagline && $siteTagline !== ''): ?>
+                    <span class="public-brand-tagline"><?= htmlspecialchars($siteTagline) ?></span>
+                    <?php endif; ?>
+                </span>
             </a>
             <nav class="public-nav" aria-label="Public">
                 <?php foreach (\App\PublicNav::primaryItems() as $navItem): ?>
@@ -86,10 +103,9 @@ $llmsUrl = !empty($siteSeo->enable_llms_txt) && $baseUrl !== '' ? $baseUrl . '/l
                     <?= htmlspecialchars($navItem->label ?? '') ?>
                 </a>
                 <?php endforeach; ?>
-                <?php if ($showThemeToggle): ?>
-                <button type="button" class="public-theme-toggle" id="publicThemeToggle" aria-pressed="false">Dark</button>
-                <?php endif; ?>
+                <?php if (\App\PublicTheme::showAdminLink($pubTheme)): ?>
                 <a href="<?= admin_url('login') ?>" class="btn-admin">Admin</a>
+                <?php endif; ?>
             </nav>
         </div>
     </header>
@@ -121,8 +137,12 @@ $llmsUrl = !empty($siteSeo->enable_llms_txt) && $baseUrl !== '' ? $baseUrl . '/l
         <?php endif; ?>
         <div class="container d-flex flex-wrap justify-content-between gap-2">
             <span>&copy; <?= date('Y') ?> <?= $appName ?></span>
-            <a href="<?= admin_url('login') ?>">Admin login</a>
+            <?php if (\App\PublicTheme::showAdminLink($pubTheme)): ?>
+            <a class="public-admin-login" href="<?= admin_url('login') ?>">Admin login</a>
+            <?php endif; ?>
         </div>
     </footer>
+    <script src="/public/assets/js/public/carousel.js"></script>
+    <script src="/public/assets/js/public/blog-view.js"></script>
 </body>
 </html>

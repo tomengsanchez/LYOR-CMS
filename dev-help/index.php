@@ -294,12 +294,12 @@ $pageTitle = 'PAPeR · Developer guide';
                 </p>
                 <p class="cmd">php cli/migrate.php</p>
                 <p>
-                    A <strong>fresh reset</strong> script wipes most transactional data and keeps migrations, roles, and the admin user pattern documented in the guide.
-                    It is destructive; use only on local or disposable databases.
+                    A <strong>fresh reset</strong> script clears Simple CMS content and most ops data while keeping migrations, roles, and the admin user.
+                    By default it re-seeds Welcome, Hello World, and the Primary Menu. It is destructive; use only on local or disposable databases.
                 </p>
                 <p class="cmd">php cli/truncate_fresh_install.php --yes</p>
                 <p>
-                    After a reset, run PHP seeders under <code>database/seeders/</code> as needed (grievance options, demo projects, profiles, etc.—each script documents flags).
+                    Flags: <code>--no-reseed</code> (empty content), <code>--keep-uploads</code> (leave <code>public/uploads/media</code> files). Details: DEVELOPMENTGUIDE → Fresh-install truncate.
                 </p>
                 <p>
                     Install PHP libraries (mPDF, etc.) with Composer from the project root:
