@@ -32,4 +32,4 @@ test-results/
 !docs/test-results/
 !docs/test-results/**
 
-.env.playwright
+env.playwright
