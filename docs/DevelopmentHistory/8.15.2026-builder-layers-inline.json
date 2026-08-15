@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Visual builder layers copy paste inline autosave",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Layers tree with hover-to-canvas preview and close control; in-place heading/text edit; Copy/Paste toolbar plus Ctrl/Cmd+C/X/V; insert-after module; picker filter; Alt+arrow nudge; canvas zoom; 12s autosave that waits while typing and skips a canvas rebuild."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Autosave writes the same layout_json already included in SQL dumps."
+    },
+    {
+      "area": "Playwright",
+      "summary": "cms-builder-drag-column-size.spec.ts opens Layers, selects Module A from the tree, and asserts Copy then Paste enable."
+    }
+  ]
+}

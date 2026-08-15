@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Visual builder JS split shortcuts context menu",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Split editor.js into ns/history/model/canvas/layers/dnd/actions/panel/save/ui plus boot. Added shortcuts overlay, canvas context menu, layers filter, and sessionStorage for zoom/device/Layers."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. sessionStorage prefs are tab-local and not in ZIP backups. Layouts still live in layout_json."
+    },
+    {
+      "area": "Playwright",
+      "summary": "cms-builder-drag-column-size.spec.ts opens the shortcuts dialog via the ? toolbar button."
+    }
+  ]
+}

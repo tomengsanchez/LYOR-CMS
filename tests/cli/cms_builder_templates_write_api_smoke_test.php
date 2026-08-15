@@ -15,7 +15,11 @@ $db = Database::getInstance();
 
 assert($db->query("SHOW TABLES LIKE 'cms_layout_templates'")->fetchAll() !== [], 'cms_layout_templates exists');
 
-$editorJs = file_get_contents(dirname(__DIR__, 2) . '/public/assets/js/builder/editor.js');
+$editorDir = dirname(__DIR__, 2) . '/public/assets/js/builder';
+$editorJs = '';
+foreach (['editor.js', 'save.js', 'ns.js'] as $builderFile) {
+    $editorJs .= (string) file_get_contents($editorDir . '/' . $builderFile);
+}
 assert(str_contains($editorJs, 'setDevice'), 'editor setDevice');
 assert(str_contains($editorJs, 'saveAsTemplate'), 'editor saveAsTemplate');
 assert(str_contains($editorJs, 'data-device'), 'device attribute usage');

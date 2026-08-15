@@ -1,0 +1,14 @@
+{
+  "date": "2026-08-15",
+  "title": "Manly bundled theme style pack",
+  "entries": [
+    {
+      "area": "Theme",
+      "summary": "Added bundled Manly style pack (dark oak/leather, copper accent, serif, editorial magazine). Install from Customize / General or php cli/build_style_pack.php manly."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "Installed pack files remain under public/uploads/theme-packs/library/; starter zip ships in public/assets/theme-packs and docs/samples."
+    }
+  ]
+}

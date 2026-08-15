@@ -118,6 +118,7 @@ assert(str_contains($index, 'import-style-pack'), 'import route');
 assert(str_contains($index, 'export-style-pack'), 'export route');
 assert(str_contains($index, 'activate-style-pack'), 'activate route');
 assert(str_contains($index, 'install-bundled-style-pack'), 'install bundled route');
+assert(isset(ThemeStylePack::bundledPackLabels()['manly']), 'manly bundled label');
 
 // Ensure default developer template zip exists and imports.
 $build = dirname(__DIR__, 2) . '/cli/build_sample_style_pack.php';
@@ -128,6 +129,13 @@ assert($sample !== null && is_file($sample), 'sample zip path');
 $sampleImport = ThemeStylePack::importFromPath($sample);
 assert(!empty($sampleImport['ok']), 'sample zip imports: ' . ($sampleImport['message'] ?? ''));
 assert(ThemeStylePack::packSource() === 'cms', 'sample is cms pack');
+ThemeStylePack::clearActivePack();
+
+$manly = ThemeStylePack::samplePackAbsolutePath('manly');
+assert($manly !== null && is_file($manly), 'manly zip path');
+$manlyImport = ThemeStylePack::importFromPath($manly);
+assert(!empty($manlyImport['ok']), 'manly zip imports: ' . ($manlyImport['message'] ?? ''));
+assert(stripos(ThemeStylePack::packName(), 'Manly') !== false, 'manly pack name');
 ThemeStylePack::clearActivePack();
 PublicTheme::saveConfig(array_merge(PublicTheme::configToPostFields(), [
     'pub_theme_preset' => $beforePreset,

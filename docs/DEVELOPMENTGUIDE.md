@@ -175,7 +175,7 @@ Format: PHP file returning `name`, `up`, `down` callables. DDL steps should be i
 | Public theme | `PublicTheme` / `ThemeStylePack` | presets, fonts, widths, color mode; style-pack zip import/export |
 | Site SEO | `AppSettings::getSiteSeoConfig()` | sitemap, RSS, JSON export, llms.txt, AI crawlers, OG defaults, AI citation/E-E-A-T/topic clusters |
 
-Preview unsaved theme: `/?theme_preview=1` (admin only). **Customizer:** `/admin/customize` — sidebar controls + iframe (`customize_frame=1`), session sync via `POST /admin/customize/preview`, publish via `POST /admin/customize/publish` (`CustomizeController`, `theme-preview-bridge.js`). **Style packs:** library at `public/uploads/theme-packs/library/{id}/`; activate/delete/install-bundled + import/export/sample routes on `/admin/customize/*-style-pack`. Rebuild zips: `php cli/build_style_pack.php`.
+Preview unsaved theme: `/?theme_preview=1` (admin only). **Customizer:** `/admin/customize` — sidebar controls + iframe (`customize_frame=1`), session sync via `POST /admin/customize/preview`, publish via `POST /admin/customize/publish` (`CustomizeController`, `theme-preview-bridge.js`). **Style packs:** library at `public/uploads/theme-packs/library/{id}/`; activate/delete/install-bundled + import/export/sample routes on `/admin/customize/*-style-pack`. Bundled zips: example, Play · Build · Sound, **Manly**. Rebuild zips: `php cli/build_style_pack.php`.
 
 ---
 
@@ -191,7 +191,7 @@ Key CMS capabilities: `view_pages`, `view_posts`, `moderate_comments`, `manage_c
 
 **External files only** under `public/assets/js/`. Views may output JSON config blocks for JS; no inline `onclick` / behavior scripts.
 
-Examples: `public/assets/js/content/blocks.js`, `public/assets/js/builder/editor.js`, `public/assets/js/widgets/form.js`, `public/assets/js/public/comments.js`.
+Examples: `public/assets/js/content/blocks.js`, `public/assets/js/builder/*.js` (boot `editor.js` plus `ns.js`, `history.js`, `model.js`, `canvas.js`, `layers.js`, `dnd.js`, `actions.js`, `panel.js`, `save.js`, `ui.js`), `public/assets/js/widgets/form.js`, `public/assets/js/public/comments.js`.
 
 ### Content revisions
 
@@ -213,9 +213,9 @@ JSON stored in `layout_json` on pages/posts (migration **016**). Structure: Sect
 - **Entry:** “Edit via Frontend editor” on page/post forms (after the entity is saved).
 - **Device preview:** Desktop / Tablet / Mobile toolbar toggles set canvas `max-width` (1100 / 768 / 390).
 - **Templates:** Shared library in `cms_layout_templates` (migration **018**). Toolbar **Templates** → load / save current / delete. Endpoints: `GET|POST /admin/builder/templates`, `GET /admin/builder/templates/{id}`, `POST .../{id}/delete`.
-- **Row columns:** Content panel layout picker (1–4 equal + common splits); row chrome **Columns** opens it. Modules are preserved when the layout changes.
-- **Modules:** Side-panel type picker (no `prompt`); empty-column **+ Add module**; ↑ ↓ / Dup on modules; ↑ ↓ on sections and rows; Ctrl/Cmd+S to save.
-- **PHP:** `App\LayoutBuilder` parse/normalize/render; `App\Models\LayoutTemplate`; assets `public/assets/js/builder/editor.js`, `public/assets/css/admin/builder.css`.
+- **Row columns:** Content panel layout picker (1–4 equal + common splits); row chrome **Columns** opens it. Individual columns: **1–12** width slider + **min height** / vertical align. Drag the edge between two columns to split widths. Modules are preserved when the row layout changes.
+- **Modules:** Side-panel type picker with short descriptions and a filter box; empty-column **+ Add module** or **+** after a module; Content / Design / Advanced inspector; drag **⋮⋮** to reorder; **Layers** tree (search box; hover previews on the canvas); click heading/text on canvas to type in place; **Copy** / **Paste** toolbar, right-click menu, and Ctrl/Cmd+C/V/X (in-memory only); **?** for shortcuts; Alt+arrows to nudge; 85/100/115% zoom; **Undo / Redo**; autosave about every 12s when dirty (deferred while typing; does not rebuild the canvas). Zoom / device / Layers stay for the browser tab (`sessionStorage`). Confirm before delete. Button and CTA support `style` (`primary|secondary|outline`) and `new_tab`. Column settings `min_height` and `valign` live in `layout_json` (backup via SQL dump).
+- **PHP:** `App\LayoutBuilder` parse/normalize/render; `App\Models\LayoutTemplate`; assets `public/assets/js/builder/` (split modules, boot `editor.js`) and `public/assets/css/admin/builder.css`.
 - **Public precedence** (`ContentBlocks::renderEntity`): `layout_json` → `blocks_json` → HTML `body`.
 - **Backup:** `layout_json` and `cms_layout_templates` included in full DB dump; no special restore steps.
 
@@ -300,7 +300,7 @@ Or: `npm run test:cms-wp-features`, `npm run test:cms-wp-extended`, `npm run tes
 
 ### Playwright E2E
 
-Copy `.env.playwright.example` → `.env.playwright`:
+Copy `.env.playwright.example` → `.env.playwright` (gitignored). If that file is missing, Playwright also reads `env.playwright`.
 
 ```env
 BASE_URL=http://cms.local
@@ -312,8 +312,11 @@ ADMIN_PASS=admin123
 npm run test:e2e:cms          # headless
 npm run test:e2e:cms:headed # watch mode
 npm run test:e2e:cms-builder-tomeng       # sample post with all column layouts
+npm run test:e2e:cms-builder-drag-column-size  # headed: drag reorder, width 1–12, edge resize, min-height
 npm run test:e2e:cms-pages-layouts-menu   # sample pages (distinct layouts) + Primary Menu
 npm run test:e2e:cms-team-pogi-site       # Team POGI site: 5 pages + 5 posts + free Picsum images + menu
+npm run test:e2e:cms-tomeng-site          # Tomeng sample site (BASE_URL, skip migrate)
+npm run test:e2e:cms-manhood-exclusive-rooms  # sample post with external image URL
 ```
 
 ---

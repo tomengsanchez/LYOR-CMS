@@ -4,13 +4,64 @@ Part of the [changes index](../CHANGES.md). Newest entries first within this mon
 
 ---
 
+## Visual builder JS split + shortcuts (2026-08-15)
+
+- Frontend editor JS is split under `public/assets/js/builder/` (`ns`, `history`, `model`, `canvas`, `layers`, `dnd`, `actions`, `panel`, `save`, `ui`, boot `editor.js`) so each area stays readable. Still external files only; `CmsBuilderApi` unchanged for Playwright.
+- **?** (toolbar) lists shortcuts. Right-click a canvas block for Copy / Paste / Dup / Delete. Layers has a filter box. Zoom, device, and Layers stay for this browser tab (`sessionStorage` — not part of backup).
+- Backup still `layout_json`. Help: Pages / Posts. Playwright opens the shortcuts dialog in `cms-builder-drag-column-size`.
+
+---
+
+## Visual builder layers, copy/paste, inline, autosave (2026-08-15)
+
+- **Layers** tree (toolbar) jumps to any section/row/column/module; hover highlights the matching canvas block; × closes the tree. Click a heading or text module on the canvas to edit in place.
+- **Copy** / **Paste** toolbar plus Ctrl/Cmd+C / X / V (in-memory only — not the OS clipboard). **+** after a module inserts into that column; filter the module picker. Alt+arrows nudge order. Canvas zoom 85/100/115%. Autosave ~12s when dirty (same Save POST); deferred while typing and does not rebuild the canvas.
+- In-memory clipboard only. No schema change; backup still `layout_json`. Help: Pages / Posts. Playwright layers + Copy/Paste enable in `cms-builder-drag-column-size`.
+
+---
+
+## Visual builder editor UX (2026-08-15)
+
+- Undo / Redo in the frontend editor toolbar (Ctrl/Cmd+Z, Ctrl/Cmd+Y, Ctrl/Cmd+Shift+Z). History is layout JSON only — not a schema change; backup still dumps `layout_json`.
+- Inspector **Section / Row / Col** crumbs, always-visible dashed outlines, chrome padding on hover (does not cover headings), duplicate row/column, unsaved **Save •**, keyboard: Ctrl/Cmd+S, Ctrl/Cmd+D, Escape, Delete.
+- Help: Pages / Posts. Playwright `cms-builder-drag-column-size` covers undo/redo of the width slider.
+
+---
+
+## Visual builder drag reorder + column size (2026-08-15)
+
+- Drag the **⋮⋮** handle to reorder sections, rows, columns, and modules (including moving a module into another column). Arrow buttons remain.
+- Column width is the full Bootstrap **1–12** grid (slider in the inspector). Drag the edge between two columns to split their widths without changing the pair total.
+- Column **min height** (`px` / `rem` / `%` / `vh`) and vertical align (top / middle / bottom). Stored in existing `layout_json` settings — included in backup SQL.
+- Smoke: `tests/cli/cms_layout_builder_smoke_test.php` (width 5, min-height, valign). Playwright headed demo: `npm run test:e2e:cms-builder-drag-column-size` (`tests/e2e/cms-builder-drag-column-size.spec.ts`). Help: Pages / Posts.
+
+---
+
+## Visual builder module designers (2026-08-15)
+
+- Layout builder inspector improved: module picker descriptions, Content/Design/Advanced hints, `#hex` color pickers, spacing/font presets, media thumbnails, live Custom HTML preview, unique field IDs, checkbox labels, tab ARIA.
+- Canvas: links do not navigate away, chrome buttons have accessible names, confirm before delete, unsaved-change warning, typing does not rebuild the canvas on every key, Device preview dims hide-on-mobile / hide-on-desktop modules.
+- Button and CTA: shared styles (primary / secondary / outline) and optional **Open in new tab** (`target=_blank` + `rel=noopener`). Existing CTA modules without `style` stay primary. Blurb canvas preview now shows the library image like the public site. Divider uses `currentColor` so Design → Text color tints the line.
+- Backup/restore: still `layout_json` in the SQL dump; extra keys are optional JSON. Smoke: `tests/cli/cms_layout_builder_smoke_test.php`. Help: Pages / Posts.
+
+---
+
+## Manly bundled style pack (2026-08-15)
+
+- New bundled CMS style pack **Manly** (dark oak / leather, copper accent, serif, magazine chrome).
+- Install from Customize / General: **Manly (oak, iron, leather)**. Download: `/admin/customize/sample-style-pack?pack=manly`.
+- Source: `docs/samples/cms-style-pack-manly/`. Zip: `cms-style-pack-manly.zip` in `docs/samples/` and `public/assets/theme-packs/`. Rebuild: `php cli/build_style_pack.php manly`.
+- Backup/restore: installed CSS under `public/uploads/theme-packs/library/`; bundled starter zip is committed with assets (not the live library copy).
+
+---
+
 ## Theme style-pack upload (WP-inspired) (2026-08-15)
 
 - Admins can upload a **CMS style pack** zip (`cms-theme.json` + optional `extra.css`) or a WordPress theme zip (colors/metadata only; PHP ignored).
 - **Pack library:** uploads are stored under `public/uploads/theme-packs/library/{id}/`; select & **Activate** from Customize / General. Bundled packs install into the library. Clear active keeps installed packs.
 - Settings map into existing `pub_theme_*` / accent via `PublicTheme::saveConfig`; active CSS linked from the public layout.
 - UI: Appearance → Customize and System → General; export current pack; clear active / remove from library.
-- Backup/restore: CSS via uploads tree; metadata via `app_settings` (`pub_theme_pack_library`, active id). **Bundled zips:** `cms-style-pack-example.zip` and `cms-style-pack-play-build-sound.zip`. Rebuild: `php cli/build_style_pack.php`. Smoke: `tests/cli/cms_theme_style_pack_smoke_test.php`.
+- Backup/restore: CSS via uploads tree; metadata via `app_settings` (`pub_theme_pack_library`, active id). **Bundled zips:** `cms-style-pack-example.zip`, `cms-style-pack-play-build-sound.zip`, and `cms-style-pack-manly.zip`. Rebuild: `php cli/build_style_pack.php`. Smoke: `tests/cli/cms_theme_style_pack_smoke_test.php`.
 
 ---
 

@@ -147,4 +147,97 @@ $carouselPlain = LayoutBuilder::plainText($carouselParsed);
 assert(str_contains($carouselPlain, 'First slide'), 'carousel plain caption');
 assert(str_contains($carouselPlain, 'Beta'), 'carousel plain alt fallback');
 
+$ctaRaw = json_encode([
+    'version' => 1,
+    'sections' => [[
+        'id' => 'sec-cta',
+        'type' => 'regular',
+        'settings' => [],
+        'rows' => [[
+            'id' => 'row-cta',
+            'settings' => [],
+            'columns' => [[
+                'id' => 'col-cta',
+                'width' => 12,
+                'settings' => [],
+                'modules' => [
+                    [
+                        'id' => 'm-cta',
+                        'type' => 'cta',
+                        'data' => [
+                            'title' => 'Join us',
+                            'text' => 'Details',
+                            'label' => 'Sign up',
+                            'url' => 'https://example.com',
+                            'style' => 'outline',
+                            'new_tab' => true,
+                        ],
+                        'design' => [],
+                        'advanced' => [],
+                    ],
+                    [
+                        'id' => 'm-btn',
+                        'type' => 'button',
+                        'data' => [
+                            'label' => 'Docs',
+                            'url' => 'https://example.com/docs',
+                            'style' => 'secondary',
+                            'new_tab' => true,
+                        ],
+                        'design' => [],
+                        'advanced' => [],
+                    ],
+                ],
+            ]],
+        ]],
+    ]],
+], JSON_UNESCAPED_UNICODE);
+$ctaHtml = LayoutBuilder::render(LayoutBuilder::parse(LayoutBuilder::normalizeJson($ctaRaw)));
+assert(str_contains($ctaHtml, 'btn-outline-primary'), 'cta outline style');
+assert(str_contains($ctaHtml, 'cms-mod-cta-btn'), 'cta button class');
+assert(str_contains($ctaHtml, 'target="_blank"'), 'new tab on cta/button');
+assert(str_contains($ctaHtml, 'rel="noopener noreferrer"'), 'noopener on new tab');
+assert(str_contains($ctaHtml, 'btn-secondary'), 'button secondary style');
+
+$colSizeRaw = json_encode([
+    'version' => 1,
+    'sections' => [[
+        'id' => 'sec-w',
+        'type' => 'regular',
+        'settings' => [],
+        'rows' => [[
+            'id' => 'row-w',
+            'settings' => ['min_height' => '200px'],
+            'columns' => [
+                [
+                    'id' => 'col-5',
+                    'width' => 5,
+                    'settings' => ['min_height' => '240px', 'valign' => 'center'],
+                    'modules' => [[
+                        'id' => 'm-h',
+                        'type' => 'heading',
+                        'data' => ['text' => 'Five', 'level' => 2],
+                        'design' => [],
+                        'advanced' => [],
+                    ]],
+                ],
+                [
+                    'id' => 'col-7',
+                    'width' => 7,
+                    'settings' => [],
+                    'modules' => [],
+                ],
+            ],
+        ]],
+    ]],
+], JSON_UNESCAPED_UNICODE);
+$colParsed = LayoutBuilder::parse(LayoutBuilder::normalizeJson($colSizeRaw));
+assert((int) $colParsed['sections'][0]['rows'][0]['columns'][0]['width'] === 5, 'odd width 5 kept');
+assert($colParsed['sections'][0]['rows'][0]['columns'][0]['settings']['min_height'] === '240px', 'column min_height kept');
+$colHtml = LayoutBuilder::render($colParsed);
+assert(str_contains($colHtml, 'col-md-5'), 'public col-md-5');
+assert(str_contains($colHtml, 'min-height:240px'), 'public min-height');
+assert(str_contains($colHtml, 'cms-layout-column--valign-center'), 'valign class');
+assert(str_contains($colHtml, 'min-height:200px'), 'row min-height');
+
 echo "cms_layout_builder_smoke_test: OK\n";

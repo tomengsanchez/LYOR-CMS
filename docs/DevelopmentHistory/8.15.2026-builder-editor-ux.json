@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Visual builder editor UX",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Undo/Redo toolbar and shortcuts, selection crumbs, hover chrome padding, always-visible structure outlines, duplicate row/column, dirty Save •, keyboard duplicate/delete/escape."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. History is in-browser only; persisted layout remains layout_json in the SQL dump."
+    },
+    {
+      "area": "Playwright",
+      "summary": "cms-builder-drag-column-size.spec.ts asserts inspector crumbs and undo/redo of the 1–12 width slider."
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+/**
+ * Manly — oak, iron, leather
+ * Additive styles only. Loaded after site.css when this pack is imported.
+ */
+
+.public-site {
+  --manly-oak: #3d2e22;
+  --manly-leather: #1c1612;
+  --manly-copper: var(--pub-accent, #c27a3a);
+  background-color: var(--pub-bg, var(--manly-leather));
+  background-image:
+    linear-gradient(180deg, color-mix(in srgb, #3d2e22 28%, transparent), transparent 42%),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 47px,
+      color-mix(in srgb, #000 7%, transparent) 48px,
+      transparent 52px
+    );
+  background-attachment: fixed;
+}
+
+.public-header {
+  background: color-mix(in srgb, var(--manly-leather) 88%, #000) !important;
+  border-bottom: 3px solid var(--manly-copper) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"].pub-header-solid .public-header,
+html[data-theme="dark"].pub-header-accent .public-header {
+  background: color-mix(in srgb, var(--manly-leather) 88%, #000) !important;
+}
+
+.public-brand {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.public-brand-tagline {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.public-blog-kicker,
+.pub-blog-kicker,
+.public-blog-kicker-lead {
+  font-family: Georgia, "Times New Roman", Cambria, serif;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  color: var(--manly-copper);
+}
+
+.pub-chrome-editorial .public-blog-kicker::after {
+  background: var(--manly-copper);
+}
+
+.public-nav a {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.public-article h1,
+.pub-chrome-editorial .public-blog-item h2 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.public-article .cms-mod-image img,
+.public-featured-img,
+.public-blog-item img {
+  border: 1px solid color-mix(in srgb, var(--manly-copper) 35%, transparent);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+}
+
+.public-card,
+.public-blog-list article,
+.pub-blog-magazine .public-blog-item {
+  background: color-mix(in srgb, var(--pub-surface, #2a221c) 92%, #000);
+  border-left: 3px solid var(--manly-copper);
+}
+
+.public-site .btn-primary {
+  border-radius: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, #000 25%, transparent);
+}
+
+.public-footer {
+  background: color-mix(in srgb, var(--manly-leather) 94%, #000);
+  border-top: 3px solid var(--manly-copper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-site {
+    background-attachment: scroll;
+  }
+}

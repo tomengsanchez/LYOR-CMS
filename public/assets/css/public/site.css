@@ -673,8 +673,18 @@ body.public-site {
     padding-right: 0;
 }
 
-.cms-layout-module {
-    margin-bottom: 0.75rem;
+.cms-layout-column--valign-center,
+.cms-layout-column--valign-bottom {
+    display: flex;
+    flex-direction: column;
+}
+
+.cms-layout-column--valign-center {
+    justify-content: center;
+}
+
+.cms-layout-column--valign-bottom {
+    justify-content: flex-end;
 }
 
 .cms-mod-cta {
@@ -699,8 +709,22 @@ body.public-site {
 .cms-mod-spacer--lg { height: 3rem; }
 .cms-mod-spacer--xl { height: 4.5rem; }
 
+.cms-mod-divider {
+  border: 0;
+  border-top: 2px solid currentColor;
+  opacity: 0.45;
+  margin: 0.75rem 0;
+}
+
 .cms-mod-divider--dashed { border-style: dashed; }
 .cms-mod-divider--dotted { border-style: dotted; }
+
+.cms-mod-blurb-img {
+  max-width: 160px;
+  height: auto;
+  margin: 0 auto 0.5rem;
+  display: block;
+}
 
 /* Carousel module */
 .cms-carousel {

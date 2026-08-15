@@ -10,8 +10,8 @@ class LayoutBuilder
 {
     public const VERSION = 1;
 
-    /** Bootstrap column widths allowed. */
-    private const WIDTHS = [12, 6, 4, 3, 8, 9];
+    /** Bootstrap column widths allowed (1–12). */
+    private const WIDTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
     /** @return array<string, string> */
     public static function moduleTypes(): array
@@ -209,8 +209,8 @@ class LayoutBuilder
                 return [
                     'label' => mb_substr(trim((string) ($data['label'] ?? 'Learn more')), 0, 120),
                     'url' => self::safeUrl((string) ($data['url'] ?? '#')) ?: '#',
-                    'style' => in_array((string) ($data['style'] ?? 'primary'), ['primary', 'secondary', 'outline'], true)
-                        ? (string) $data['style'] : 'primary',
+                    'style' => self::normalizeButtonStyle((string) ($data['style'] ?? 'primary')),
+                    'new_tab' => !empty($data['new_tab']),
                 ];
             case 'cta':
                 return [
@@ -218,6 +218,8 @@ class LayoutBuilder
                     'text' => mb_substr(trim((string) ($data['text'] ?? '')), 0, 2000),
                     'label' => mb_substr(trim((string) ($data['label'] ?? 'Get started')), 0, 120),
                     'url' => self::safeUrl((string) ($data['url'] ?? '#')) ?: '#',
+                    'style' => self::normalizeButtonStyle((string) ($data['style'] ?? 'primary')),
+                    'new_tab' => !empty($data['new_tab']),
                 ];
             case 'spacer':
                 return [
@@ -333,6 +335,9 @@ class LayoutBuilder
         return [
             'bg_color' => self::safeColor((string) ($settings['bg_color'] ?? '')),
             'padding' => self::safeSpacing((string) ($settings['padding'] ?? '')),
+            'min_height' => self::safeHeight((string) ($settings['min_height'] ?? '')),
+            'valign' => in_array((string) ($settings['valign'] ?? ''), ['top', 'center', 'bottom'], true)
+                ? (string) $settings['valign'] : '',
             'css_class' => mb_substr(preg_replace('/[^a-zA-Z0-9_\-\s]/', '', (string) ($settings['css_class'] ?? '')) ?? '', 0, 120),
         ];
     }
@@ -407,6 +412,10 @@ class LayoutBuilder
         }
         $settings = is_array($col['settings'] ?? null) ? $col['settings'] : [];
         $classes = ['cms-layout-column', 'col-md-' . $width];
+        $valign = (string) ($settings['valign'] ?? '');
+        if (in_array($valign, ['center', 'bottom'], true)) {
+            $classes[] = 'cms-layout-column--valign-' . $valign;
+        }
         if (!empty($settings['css_class'])) {
             $classes[] = htmlspecialchars((string) $settings['css_class'], ENT_QUOTES, 'UTF-8');
         }
@@ -490,18 +499,14 @@ class LayoutBuilder
             case 'button':
                 $label = htmlspecialchars((string) ($data['label'] ?? 'Learn more'), ENT_QUOTES, 'UTF-8');
                 $url = htmlspecialchars((string) ($data['url'] ?? '#'), ENT_QUOTES, 'UTF-8');
-                $style = (string) ($data['style'] ?? 'primary');
-                $btnClass = match ($style) {
-                    'secondary' => 'btn btn-secondary',
-                    'outline' => 'btn btn-outline-primary',
-                    default => 'btn btn-primary',
-                };
-                return '<a href="' . $url . '" class="' . $btnClass . ' cms-mod-button">' . $label . '</a>';
+                $btnClass = self::buttonClass((string) ($data['style'] ?? 'primary'));
+                return '<a href="' . $url . '" class="' . $btnClass . ' cms-mod-button"' . self::linkTargetAttrs(!empty($data['new_tab'])) . '>' . $label . '</a>';
             case 'cta':
                 $title = htmlspecialchars((string) ($data['title'] ?? ''), ENT_QUOTES, 'UTF-8');
                 $text = nl2br(htmlspecialchars((string) ($data['text'] ?? ''), ENT_QUOTES, 'UTF-8'));
                 $label = htmlspecialchars((string) ($data['label'] ?? 'Get started'), ENT_QUOTES, 'UTF-8');
                 $url = htmlspecialchars((string) ($data['url'] ?? '#'), ENT_QUOTES, 'UTF-8');
+                $btnClass = self::buttonClass((string) ($data['style'] ?? 'primary'));
                 $html = '<div class="cms-mod-cta">';
                 if ($title !== '') {
                     $html .= '<h3 class="cms-mod-cta-title">' . $title . '</h3>';
@@ -509,7 +514,7 @@ class LayoutBuilder
                 if ($text !== '') {
                     $html .= '<div class="cms-mod-cta-text">' . $text . '</div>';
                 }
-                $html .= '<a href="' . $url . '" class="btn btn-primary">' . $label . '</a></div>';
+                $html .= '<a href="' . $url . '" class="' . $btnClass . ' cms-mod-cta-btn"' . self::linkTargetAttrs(!empty($data['new_tab'])) . '>' . $label . '</a></div>';
                 return $html;
             case 'spacer':
                 $size = (string) ($data['size'] ?? 'md');
@@ -785,6 +790,25 @@ class LayoutBuilder
         return '';
     }
 
+    private static function normalizeButtonStyle(string $style): string
+    {
+        return in_array($style, ['primary', 'secondary', 'outline'], true) ? $style : 'primary';
+    }
+
+    private static function buttonClass(string $style): string
+    {
+        return match (self::normalizeButtonStyle($style)) {
+            'secondary' => 'btn btn-secondary',
+            'outline' => 'btn btn-outline-primary',
+            default => 'btn btn-primary',
+        };
+    }
+
+    private static function linkTargetAttrs(bool $newTab): string
+    {
+        return $newTab ? ' target="_blank" rel="noopener noreferrer"' : '';
+    }
+
     private static function safeColor(string $color): string
     {
         $color = trim($color);
@@ -822,6 +846,18 @@ class LayoutBuilder
         return '';
     }
 
+    private static function safeHeight(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        if (preg_match('/^\d+(\.\d+)?(px|rem|em|%|vh|vw)$/', $value)) {
+            return mb_substr($value, 0, 20);
+        }
+        return '';
+    }
+
     /** @param array<string, mixed> $settings */
     private static function styleFromSettings(array $settings): string
     {
@@ -831,6 +867,9 @@ class LayoutBuilder
         }
         if (!empty($settings['padding'])) {
             $parts[] = 'padding:' . htmlspecialchars((string) $settings['padding'], ENT_QUOTES, 'UTF-8');
+        }
+        if (!empty($settings['min_height'])) {
+            $parts[] = 'min-height:' . htmlspecialchars((string) $settings['min_height'], ENT_QUOTES, 'UTF-8');
         }
         return implode(';', $parts);
     }

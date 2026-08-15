@@ -6,7 +6,7 @@ High-level feature and implementation history, split by **month** so each file s
 
 | Month | Entries | File |
 |-------|--------:|------|
-| August 2026 | 35 | [changes/2026-08/CHANGES.md](changes/2026-08/CHANGES.md) |
+| August 2026 | 41 | [changes/2026-08/CHANGES.md](changes/2026-08/CHANGES.md) |
 | July 2026 | 26 | [changes/2026-07/CHANGES.md](changes/2026-07/CHANGES.md) |
 | June 2026 | 34 | [changes/2026-06/CHANGES.md](changes/2026-06/CHANGES.md) |
 | May 2026 | 48 | [changes/2026-05/CHANGES.md](changes/2026-05/CHANGES.md) |

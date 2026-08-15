@@ -54,6 +54,7 @@ class CustomizeController extends Controller
             'exportStylePackUrl' => AdminPath::url('customize/export-style-pack'),
             'sampleStylePackUrl' => AdminPath::url('customize/sample-style-pack'),
             'playBuildSoundPackUrl' => AdminPath::url('customize/sample-style-pack') . '?pack=play-build-sound',
+            'manlyPackUrl' => AdminPath::url('customize/sample-style-pack') . '?pack=manly',
             'stylePackFlash' => $flash,
         ]);
     }

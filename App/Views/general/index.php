@@ -190,6 +190,7 @@ ob_start();
                                 <button type="submit" class="btn btn-primary">Upload &amp; activate</button>
                                 <a class="btn btn-outline-secondary" href="<?= admin_url('customize/export-style-pack') ?>">Export current</a>
                                 <a class="btn btn-outline-secondary" href="<?= admin_url('customize/sample-style-pack') ?>">Download template</a>
+                                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/sample-style-pack') ?>?pack=manly">Download Manly</a>
                             </div>
                         </form>
                         <form method="post" action="<?= admin_url('customize/clear-style-pack') ?>" class="mt-2">

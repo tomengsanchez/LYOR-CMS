@@ -120,6 +120,7 @@ class ThemeStylePack
         return [
             'example' => 'Sample template',
             'play-build-sound' => 'Play · Build · Sound (gaming / web / music)',
+            'manly' => 'Manly (oak, iron, leather)',
         ];
     }
 
@@ -132,6 +133,9 @@ class ThemeStylePack
         if ($slug === 'gaming' || $slug === 'music' || $slug === 'dev' || $slug === 'play') {
             return 'play-build-sound';
         }
+        if (in_array($slug, ['manhood', 'lodge', 'oak', 'iron', 'forge'], true)) {
+            return 'manly';
+        }
         $allowed = array_keys(self::bundledPackLabels());
         return in_array($slug, $allowed, true) ? $slug : 'example';
     }
@@ -139,8 +143,8 @@ class ThemeStylePack
     private static function packZipFilename(string $slug): string
     {
         return match ($slug) {
-            'play-build-sound' => 'cms-style-pack-play-build-sound.zip',
-            default => 'cms-style-pack-example.zip',
+            'example' => 'cms-style-pack-example.zip',
+            default => 'cms-style-pack-' . $slug . '.zip',
         };
     }
 

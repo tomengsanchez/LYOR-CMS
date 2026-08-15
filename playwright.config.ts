@@ -2,9 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { defineConfig } from "@playwright/test";
 
-/** Load gitignored `.env.playwright` into process.env when keys are unset. */
+/** Load gitignored `.env.playwright` (or `env.playwright`) into process.env when keys are unset. */
 function loadPlaywrightEnvFile(): void {
-  const envPath = path.resolve(__dirname, ".env.playwright");
+  const dotted = path.resolve(__dirname, ".env.playwright");
+  const undotted = path.resolve(__dirname, "env.playwright");
+  const envPath = existsSync(dotted) ? dotted : undotted;
   if (!existsSync(envPath)) {
     return;
   }

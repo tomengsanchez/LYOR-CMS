@@ -6,6 +6,7 @@
  *   php cli/build_style_pack.php                  # all known packs
  *   php cli/build_style_pack.php example
  *   php cli/build_style_pack.php play-build-sound
+ *   php cli/build_style_pack.php manly
  */
 $root = dirname(__DIR__);
 
@@ -24,6 +25,11 @@ $known = [
         'dir' => 'cms-style-pack-play-build-sound',
         'zip' => 'cms-style-pack-play-build-sound.zip',
         'readme' => "Play · Build · Sound\n====================\n\nGaming · web development · music theme pack.\n\n1. Edit cms-theme.json + extra.css as needed.\n2. Re-zip with files at the ARCHIVE ROOT.\n3. Import in Appearance → Customize.\n\nNot a WordPress PHP theme.\n",
+    ],
+    'manly' => [
+        'dir' => 'cms-style-pack-manly',
+        'zip' => 'cms-style-pack-manly.zip',
+        'readme' => "Manly\n=====\n\nOak, iron, leather theme pack (dark lodge / magazine).\n\n1. Edit cms-theme.json + extra.css as needed.\n2. Re-zip with files at the ARCHIVE ROOT.\n3. Import in Appearance → Customize.\n\nNot a WordPress PHP theme.\n",
     ],
 ];
 

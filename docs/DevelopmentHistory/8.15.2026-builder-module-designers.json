@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Visual builder module designers",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Improved module inspector (picker hints, color pickers, presets, HTML/media previews, a11y tabs/fields) and canvas (no link navigation, confirm delete, dirty warning, device hide preview)."
+    },
+    {
+      "area": "Modules",
+      "summary": "CTA gained button style; button and CTA gained new_tab. Blurb editor preview matches public image-over-icon. Divider color follows Design text color."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change; new keys live inside existing layout_json."
+    }
+  ]
+}

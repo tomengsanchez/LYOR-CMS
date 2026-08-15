@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-15",
+  "title": "Builder drag reorder and column size",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "HTML5 drag-and-drop reorder via ⋮⋮ handle for sections, rows, columns, and modules. Column widths 1–12 with slider and edge-resize; min_height and valign in column settings."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. New keys live in layout_json settings (min_height, valign) and column width."
+    },
+    {
+      "area": "Playwright",
+      "summary": "Headed spec cms-builder-drag-column-size.spec.ts demos ⋮⋮ reorder, 1–12 slider, edge resize, min-height/valign, and public render. npm run test:e2e:cms-builder-drag-column-size (BASE_URL from .env.playwright or env.playwright)."
+    }
+  ]
+}
