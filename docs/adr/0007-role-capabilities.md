@@ -6,7 +6,7 @@
 
 ## Context
 
-PAPeR has multiple roles (e.g. Administrator, Standard User, Coordinator) and many modules (profiles, structures, grievances, system tools, live traffic). Coarse role checks alone do not express “can view list but not delete” or menu visibility per feature.
+Simple CMS has roles (Administrator and custom) and many modules (pages, posts, media, settings). Coarse role checks alone do not express “can view list but not delete” or menu visibility per feature.
 
 **Diagrams:** [UML.md §8](../UML.md) (RBAC class + `Auth::can` / project-scope flow); live `/dev-help/#uml`.
 

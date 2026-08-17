@@ -10,6 +10,13 @@ use App\LayoutBuilder;
 $starter = LayoutBuilder::starterLayout();
 assert(!empty($starter['sections']), 'starter has sections');
 assert(isset(LayoutBuilder::moduleTypes()['heading']), 'heading module registered');
+assert(($catalog = LayoutBuilder::moduleCatalog()) && isset($catalog['heading']['hint']) && $catalog['heading']['hint'] !== '', 'module catalog hints');
+assert(LayoutBuilder::moduleTypes()['heading'] === 'Heading', 'types derived from catalog');
+assert(isset($catalog['heading']['fields']) && ($catalog['heading']['fields'][0]['name'] ?? '') === 'text', 'heading Content fields in catalog');
+assert(($catalog['heading']['defaults']['level'] ?? null) === 2, 'heading editor defaults');
+assert(($catalog['carousel']['custom'] ?? '') === 'carousel', 'carousel stays custom in catalog');
+$catalogJson = json_encode($catalog, JSON_UNESCAPED_UNICODE);
+assert(is_string($catalogJson) && json_decode($catalogJson, true)['text']['fields'][0]['name'] === 'text', 'catalog JSON for editor data-modules');
 
 $html = LayoutBuilder::render($starter);
 assert(str_contains($html, 'cms-layout'), 'render wraps cms-layout');
@@ -85,6 +92,10 @@ $entityLayout = (object) [
 ];
 $out = ContentBlocks::renderEntity($entityLayout, (string) $entityLayout->body);
 assert(str_contains($out, 'cms-layout'), 'layout preferred over body');
+assert(str_contains($out, 'cms-layout-css'), 'public stylesheet tag');
+assert(str_contains($out, 'cms-el-'), 'element CSS class');
+assert(str_contains($out, 'background-color:#ffffff'), 'section bg in stylesheet');
+assert(str_contains($out, 'text-align:center'), 'heading align in stylesheet');
 assert(!str_contains($out, 'Body only'), 'body not used when layout present');
 
 $entityBody = (object) [
@@ -213,6 +224,7 @@ $colSizeRaw = json_encode([
                     'id' => 'col-5',
                     'width' => 5,
                     'settings' => ['min_height' => '240px', 'valign' => 'center'],
+                    'settings_tablet' => ['min_height' => '160px'],
                     'modules' => [[
                         'id' => 'm-h',
                         'type' => 'heading',
@@ -234,10 +246,87 @@ $colSizeRaw = json_encode([
 $colParsed = LayoutBuilder::parse(LayoutBuilder::normalizeJson($colSizeRaw));
 assert((int) $colParsed['sections'][0]['rows'][0]['columns'][0]['width'] === 5, 'odd width 5 kept');
 assert($colParsed['sections'][0]['rows'][0]['columns'][0]['settings']['min_height'] === '240px', 'column min_height kept');
+assert(($colParsed['sections'][0]['rows'][0]['columns'][0]['settings_tablet']['min_height'] ?? '') === '160px', 'tablet min_height kept');
 $colHtml = LayoutBuilder::render($colParsed);
 assert(str_contains($colHtml, 'col-md-5'), 'public col-md-5');
+assert(str_contains($colHtml, 'cms-layout-css'), 'column size stylesheet');
 assert(str_contains($colHtml, 'min-height:240px'), 'public min-height');
+assert(str_contains($colHtml, 'min-height:160px'), 'tablet min-height');
+assert(str_contains($colHtml, '@media (max-width:' . LayoutBuilder::CSS_TABLET_MAX . ')'), 'tablet media query');
 assert(str_contains($colHtml, 'cms-layout-column--valign-center'), 'valign class');
 assert(str_contains($colHtml, 'min-height:200px'), 'row min-height');
+assert(!preg_match('/cms-layout-column[^>]*\sstyle=/', $colHtml), 'min-height not inline on column');
+
+$heroRaw = json_encode([
+    'version' => 1,
+    'sections' => [[
+        'id' => 'sec-h',
+        'type' => 'fullwidth',
+        'settings' => [
+            'bg_color' => 'accent',
+            'bg_image' => 'https://example.com/hero.jpg',
+            'bg_overlay' => '#000000',
+            'bg_overlay_opacity' => 40,
+        ],
+        'rows' => [[
+            'id' => 'row-h',
+            'settings' => [],
+            'columns' => [[
+                'id' => 'col-h',
+                'width' => 12,
+                'settings' => [],
+                'modules' => [[
+                    'id' => 'm-hx',
+                    'type' => 'heading',
+                    'data' => ['text' => 'Hero', 'level' => 2],
+                    'design' => [
+                        'text_color' => 'surface',
+                        'padding' => '1rem 0px 0px 2rem',
+                        'border_radius' => '8px',
+                        'box_shadow' => 'md',
+                        'font_weight' => '700',
+                        'border_color' => 'accent',
+                    ],
+                    'design_hover' => ['text_color' => 'accent'],
+                    'advanced' => [],
+                ]],
+            ]],
+        ]],
+    ]],
+], JSON_UNESCAPED_UNICODE);
+$hero = LayoutBuilder::parse(LayoutBuilder::normalizeJson($heroRaw));
+assert(($hero['sections'][0]['settings']['bg_color'] ?? '') === 'accent', 'accent token stored');
+assert(($hero['sections'][0]['rows'][0]['columns'][0]['modules'][0]['design']['text_color'] ?? '') === 'surface', 'surface token stored');
+assert(($hero['sections'][0]['rows'][0]['columns'][0]['modules'][0]['design_hover']['text_color'] ?? '') === 'accent', 'hover token stored');
+$heroHtml = LayoutBuilder::render($hero);
+assert(str_contains($heroHtml, 'var(--pub-accent)'), 'token compiles to CSS variable');
+assert(str_contains($heroHtml, 'var(--pub-surface)'), 'heading uses surface token');
+assert(str_contains($heroHtml, ':hover'), 'hover rule compiled');
+assert(str_contains($heroHtml, '.public-site .cms-el-m-hx:hover .btn'), 'hover beats public button styles');
+assert(str_contains($heroHtml, 'padding:1rem 0px 0px 2rem'), 'four-sided padding compiles');
+assert(str_contains($heroHtml, 'border-radius:8px'), 'radius compiles');
+assert(str_contains($heroHtml, 'box-shadow:0 4px 12px'), 'shadow preset compiles');
+assert(str_contains($heroHtml, 'font-weight:700'), 'font weight compiles');
+assert(str_contains($heroHtml, 'border-color:var(--pub-accent)'), 'border token compiles');
+assert(str_contains($heroHtml, 'url("https://example.com/hero.jpg")'), 'background image url');
+assert(str_contains($heroHtml, 'linear-gradient(rgba(0,0,0,0.4)'), 'overlay gradient');
+assert(!str_contains($heroHtml, 'javascript:'), 'no javascript in compiled CSS');
+
+$badHero = LayoutBuilder::parse(LayoutBuilder::normalizeJson(json_encode([
+    'sections' => [[
+        'id' => 'sec-x',
+        'type' => 'regular',
+        'settings' => ['bg_image' => 'https://example.com/x.jpg")foo', 'bg_color' => 'not-a-color', 'box_shadow' => 'foo);color:red'],
+        'rows' => [[
+            'id' => 'row-x',
+            'settings' => [],
+            'columns' => [['id' => 'col-x', 'width' => 12, 'settings' => [], 'modules' => []]],
+        ]],
+    ]],
+], JSON_UNESCAPED_UNICODE)));
+$badHtml = LayoutBuilder::render($badHero);
+assert(!str_contains($badHtml, 'foo'), 'quoted URL rejected');
+assert(!str_contains($badHtml, 'not-a-color'), 'invalid color dropped');
+assert(!str_contains($badHtml, 'color:red'), 'raw shadow CSS rejected');
 
 echo "cms_layout_builder_smoke_test: OK\n";

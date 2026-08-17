@@ -5,7 +5,7 @@
 
 ## Context
 
-PAPeR already documents **what** changed (`docs/changes/`, `DevelopmentHistory/`) and **how** the system works (`DEVELOPMENTGUIDE.md`, API docs). Binding “why we chose X” knowledge was scattered or only in chat history, which makes onboarding and revisiting trade-offs harder.
+The repo already documents **what** changed (`docs/changes/`, `DevelopmentHistory/`) and **how** the system works (`DEVELOPMENTGUIDE.md`, API docs). Binding “why we chose X” knowledge was scattered or only in chat history, which makes onboarding and revisiting trade-offs harder.
 
 ## Decision
 

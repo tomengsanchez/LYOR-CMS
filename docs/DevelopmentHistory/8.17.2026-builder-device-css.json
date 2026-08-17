@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder per-device design CSS",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Tablet/mobile Design overrides in layout_json (settings_tablet, design_mobile, …). Editor preview uses [data-device] CSS; public site uses @media max-width 1023.98px / 767.98px."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Device overrides are keys inside layout_json; compiled CSS is still derived at render."
+    },
+    {
+      "area": "Playwright",
+      "summary": "cms-builder-drag-column-size sets a tablet min-height of 160px and asserts it in #cmsBuilderLiveCss and public style.cms-layout-css media query."
+    }
+  ]
+}

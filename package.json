@@ -7,7 +7,6 @@
     "doc": "docs"
   },
   "scripts": {
-    "postman:collection": "node docs/postman/generate-collection.cjs",
     "test:e2e": "powershell -NoProfile -Command \"$env:HEADLESS='true'; $env:PW_SLOW_MO_MS='0'; playwright.cmd test tests/e2e/cms-smoke.spec.ts tests/e2e/cms-wp-extended.spec.ts --workers=1\"",
     "test:e2e:headed": "powershell -NoProfile -Command \"Remove-Item Env:HEADLESS -ErrorAction SilentlyContinue; if (-not $env:PW_SLOW_MO_MS) { $env:PW_SLOW_MO_MS='1200' }; playwright.cmd test tests/e2e/cms-smoke.spec.ts tests/e2e/cms-wp-extended.spec.ts --headed --workers=1\"",
     "test:e2e:headless": "powershell -NoProfile -Command \"$env:HEADLESS='true'; $env:PW_SLOW_MO_MS='0'; playwright.cmd test --headless --workers=1\"",

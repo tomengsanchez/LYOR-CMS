@@ -385,6 +385,101 @@
                 updateClipboardButtons();
                 return true;
             }
+
+            function cloneBag(obj) {
+                if (!obj || typeof obj !== 'object') {
+                    return null;
+                }
+                var out = JSON.parse(JSON.stringify(obj));
+                return Object.keys(out).length ? out : null;
+            }
+
+            function canPasteStyle() {
+                if (!styleClip || !selection.kind) {
+                    return false;
+                }
+                if (styleClip.target === 'module') {
+                    return selection.kind === 'module';
+                }
+                return selection.kind === 'section' || selection.kind === 'row' || selection.kind === 'column';
+            }
+
+            function copyStyle() {
+                var node = getSelectedNode();
+                if (!node || !selection.kind) {
+                    return false;
+                }
+                if (selection.kind === 'module') {
+                    styleClip = {
+                        target: 'module',
+                        design: cloneBag(node.design) || {},
+                        design_tablet: cloneBag(node.design_tablet),
+                        design_mobile: cloneBag(node.design_mobile),
+                        design_hover: cloneBag(node.design_hover)
+                    };
+                } else {
+                    var settings = JSON.parse(JSON.stringify(node.settings || {}));
+                    delete settings.css_class;
+                    styleClip = {
+                        target: 'box',
+                        settings: settings,
+                        settings_tablet: cloneBag(node.settings_tablet),
+                        settings_mobile: cloneBag(node.settings_mobile)
+                    };
+                }
+                setStatus('Copied style');
+                updateClipboardButtons();
+                return true;
+            }
+
+            function pasteStyle() {
+                var node = getSelectedNode();
+                if (!node || !canPasteStyle()) {
+                    setStatus('Select a matching block to paste style', true);
+                    return;
+                }
+                if (styleClip.target === 'module') {
+                    ['design', 'design_tablet', 'design_mobile', 'design_hover'].forEach(function (key) {
+                        if (styleClip[key] && Object.keys(styleClip[key]).length) {
+                            node[key] = JSON.parse(JSON.stringify(styleClip[key]));
+                        } else {
+                            delete node[key];
+                        }
+                    });
+                    if (!node.design) {
+                        node.design = {};
+                    }
+                } else {
+                    var keepClass = node.settings && node.settings.css_class ? node.settings.css_class : '';
+                    node.settings = JSON.parse(JSON.stringify(styleClip.settings || {}));
+                    if (keepClass) {
+                        node.settings.css_class = keepClass;
+                    } else {
+                        delete node.settings.css_class;
+                    }
+                    ['settings_tablet', 'settings_mobile'].forEach(function (key) {
+                        if (styleClip[key] && Object.keys(styleClip[key]).length) {
+                            node[key] = JSON.parse(JSON.stringify(styleClip[key]));
+                        } else {
+                            delete node[key];
+                        }
+                    });
+                }
+                noteLayoutChange();
+                updateDirtyUi();
+                if (typeof refreshSelectedLiveCss === 'function') {
+                    refreshSelectedLiveCss(node);
+                } else {
+                    refreshLiveCss();
+                }
+                if (selection.kind === 'column') {
+                    patchLiveChrome('valign', styleFieldValue(node, 'settings', 'valign'));
+                    patchLiveChrome('width', node.width);
+                }
+                scheduleHistoryCommit(true);
+                renderPanel();
+                setStatus('Pasted style');
+            }
             
             function cutSelected() {
                 if (!copySelected()) {
@@ -546,6 +641,9 @@
             ctx.copySelected = copySelected;
             ctx.cutSelected = cutSelected;
             ctx.pasteClipboard = pasteClipboard;
+            ctx.copyStyle = copyStyle;
+            ctx.pasteStyle = pasteStyle;
+            ctx.canPasteStyle = canPasteStyle;
             ctx.nudgeSelected = nudgeSelected;
         }
     });

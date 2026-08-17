@@ -6,7 +6,7 @@
         with (ctx) {
             function fieldMeta(opts) {
                 if (Array.isArray(opts)) {
-                    return { choices: opts, hint: '', placeholder: '', rows: 4, min: 1, max: 12, step: 1 };
+                    return { choices: opts, hint: '', placeholder: '', rows: 4, min: 1, max: 12, step: 1, overridden: false };
                 }
                 opts = opts || {};
                 return {
@@ -16,7 +16,8 @@
                     rows: opts.rows || 4,
                     min: opts.min != null ? opts.min : 1,
                     max: opts.max != null ? opts.max : 12,
-                    step: opts.step != null ? opts.step : 1
+                    step: opts.step != null ? opts.step : 1,
+                    overridden: !!opts.overridden
                 };
             }
             
@@ -24,11 +25,16 @@
                 type = type || 'text';
                 var meta = fieldMeta(opts);
                 var id = 'bf_' + (selection.kind || 'x') + '_' + String(name).replace(/[^a-z0-9_]/gi, '_');
+                var wrapCls = meta.overridden ? ' cms-lb-is-override' : '';
+                var inheritHint = meta.overridden
+                    ? '<div class="form-text cms-lb-override-hint">' + esc((currentDevice === 'mobile' ? 'Mobile' : 'Tablet') + ' override') + '</div>'
+                    : '';
                 if (type === 'checkbox') {
-                    return '<div class="form-check">'
+                    return '<div class="form-check' + wrapCls + '">'
                         + '<input type="checkbox" class="form-check-input" id="' + id + '" data-field="' + esc(name) + '"' + (value ? ' checked' : '') + '>'
                         + '<label class="form-check-label" for="' + id + '">' + esc(label) + '</label>'
                         + (meta.hint ? '<div class="form-text">' + esc(meta.hint) + '</div>' : '')
+                        + inheritHint
                         + '</div>';
                 }
                 var html = '<label class="form-label" for="' + id + '">' + esc(label) + '</label>';
@@ -56,7 +62,7 @@
                 if (meta.hint) {
                     html += '<div class="form-text">' + esc(meta.hint) + '</div>';
                 }
-                return html;
+                return '<div class="cms-lb-field' + wrapCls + '">' + html + inheritHint + '</div>';
             }
             
             function colorFieldRow(name, value, id) {
@@ -77,6 +83,232 @@
                 return html + '</div>';
             }
             
+            function deviceStyleNoticeHtml(node) {
+                if (selection.kind === 'module' && activeTab === 'design' && designState === 'hover') {
+                    var html = '<p class="cms-lb-panel-lead cms-lb-device-note">Editing <strong>hover</strong> (same on every device). Empty fields inherit Normal. Buttons need this so site/button styles do not win.</p>';
+                    if (hasHoverStyle(node)) {
+                        html += '<p class="mb-2"><button type="button" class="btn btn-outline-secondary btn-sm" data-clear-hover-style>Use normal values</button></p>';
+                    }
+                    return html;
+                }
+                var bp = deviceStyleName();
+                if (!bp) {
+                    return '';
+                }
+                var label = bp === 'mobile' ? 'Mobile' : 'Tablet';
+                var cut = bp === 'mobile' ? '768px' : '1024px';
+                var html = '<p class="cms-lb-panel-lead cms-lb-device-note">Editing <strong>' + label + '</strong> styles (public CSS below '
+                    + cut + '). Same value as desktop inherits. Column width stays one grid for all devices.</p>';
+                if (hasDeviceStyle(node)) {
+                    html += '<p class="mb-2"><button type="button" class="btn btn-outline-secondary btn-sm" data-clear-device-style>Use desktop values</button></p>';
+                }
+                return html;
+            }
+
+            function designStateToggleHtml() {
+                var hover = designState === 'hover';
+                return '<div class="cms-lb-state-toggle" role="group" aria-label="Normal or hover">'
+                    + '<button type="button" class="btn btn-sm ' + (!hover ? 'btn-dark' : 'btn-outline-secondary') + '" data-design-state="normal"'
+                    + ' aria-pressed="' + (!hover ? 'true' : 'false') + '">Normal</button>'
+                    + '<button type="button" class="btn btn-sm ' + (hover ? 'btn-dark' : 'btn-outline-secondary') + '" data-design-state="hover"'
+                    + ' aria-pressed="' + (hover ? 'true' : 'false') + '">Hover</button>'
+                    + '</div>';
+            }
+
+            function styleOpts(node, kind, name, extra) {
+                extra = extra || {};
+                extra.overridden = isStyleOverridden(node, kind, name);
+                return extra;
+            }
+
+            function parseSpacingSides(value) {
+                var parts = String(value || '').trim().split(/\s+/).filter(Boolean);
+                if (!parts.length) {
+                    return { t: '', r: '', b: '', l: '' };
+                }
+                if (parts.length === 1) {
+                    return { t: parts[0], r: parts[0], b: parts[0], l: parts[0] };
+                }
+                if (parts.length === 2) {
+                    return { t: parts[0], r: parts[1], b: parts[0], l: parts[1] };
+                }
+                if (parts.length === 3) {
+                    return { t: parts[0], r: parts[1], b: parts[2], l: parts[1] };
+                }
+                return { t: parts[0], r: parts[1], b: parts[2], l: parts[3] };
+            }
+
+            function joinSpacingSides(sides) {
+                function tok(v) {
+                    v = String(v || '').trim();
+                    if (v === '0') {
+                        return '0px';
+                    }
+                    return v;
+                }
+                var t = tok(sides && sides.t);
+                var r = tok(sides && sides.r);
+                var b = tok(sides && sides.b);
+                var l = tok(sides && sides.l);
+                if (!t && !r && !b && !l) {
+                    return '';
+                }
+                t = t || '0px';
+                r = r || '0px';
+                b = b || '0px';
+                l = l || '0px';
+                if (t === r && r === b && b === l) {
+                    return t;
+                }
+                if (t === b && r === l) {
+                    return t + ' ' + r;
+                }
+                if (r === l) {
+                    return t + ' ' + r + ' ' + b;
+                }
+                return t + ' ' + r + ' ' + b + ' ' + l;
+            }
+
+            function syncSpacingInputs(name, joined) {
+                if (!panelBody) {
+                    return;
+                }
+                var sides = parseSpacingSides(joined);
+                ['t', 'r', 'b', 'l'].forEach(function (side) {
+                    var el = panelBody.querySelector('[data-spacing-field="' + name + '"][data-spacing-side="' + side + '"]');
+                    if (el) {
+                        el.value = sides[side];
+                    }
+                });
+                var hidden = panelBody.querySelector('[data-field="' + name + '"]');
+                if (hidden) {
+                    hidden.value = joined || '';
+                }
+            }
+
+            function spacingSidesHtml(node, kind, name, label) {
+                var raw = styleFieldValue(node, kind, name) || '';
+                var sides = parseSpacingSides(raw);
+                var over = isStyleOverridden(node, kind, name);
+                var html = '<div class="cms-lb-field cms-lb-spacing' + (over ? ' cms-lb-is-override' : '') + '">';
+                html += '<p class="cms-lb-field-group">' + esc(label) + '</p>';
+                html += '<input type="hidden" data-field="' + esc(name) + '" value="' + esc(raw) + '">';
+                html += '<div class="cms-lb-trbl" role="group" aria-label="' + esc(label) + '">';
+                [
+                    { k: 't', l: 'Top' },
+                    { k: 'r', l: 'Right' },
+                    { k: 'b', l: 'Bottom' },
+                    { k: 'l', l: 'Left' }
+                ].forEach(function (side) {
+                    var id = 'bf_sp_' + name + '_' + side.k;
+                    html += '<div><label class="form-label" for="' + id + '">' + side.l + '</label>'
+                        + '<input type="text" class="form-control form-control-sm" id="' + id
+                        + '" data-spacing-field="' + esc(name) + '" data-spacing-side="' + side.k
+                        + '" value="' + esc(sides[side.k]) + '" placeholder="0px"></div>';
+                });
+                html += '</div>';
+                if (over) {
+                    html += '<div class="form-text cms-lb-override-hint">' + esc((designState === 'hover' ? 'Hover' : (currentDevice === 'mobile' ? 'Mobile' : 'Tablet')) + ' override') + '</div>';
+                }
+                html += '</div>';
+                return html;
+            }
+
+            function refreshSelectedLiveCss(node) {
+                if (typeof patchLiveCssForNode === 'function' && node) {
+                    patchLiveCssForNode(node, selection.kind === 'module' ? 'design' : 'settings');
+                    return;
+                }
+                refreshLiveCss();
+            }
+
+            function chromeStyleFields(node, kind) {
+                var html = field('Border width', 'border_width', styleFieldValue(node, kind, 'border_width') || '', 'text', styleOpts(node, kind, 'border_width', { placeholder: '1px' }));
+                html += presetRow('border_width', [
+                    { v: '', l: 'None' },
+                    { v: '1px', l: '1' },
+                    { v: '2px', l: '2' },
+                    { v: '4px', l: '4' }
+                ]);
+                html += field('Border style', 'border_style', styleFieldValue(node, kind, 'border_style') || '', 'select', styleOpts(node, kind, 'border_style', {
+                    choices: [
+                        { v: '', l: 'Default' },
+                        { v: 'solid', l: 'Solid' },
+                        { v: 'dashed', l: 'Dashed' },
+                        { v: 'dotted', l: 'Dotted' },
+                        { v: 'none', l: 'None' }
+                    ]
+                }));
+                html += field('Border color', 'border_color', styleFieldValue(node, kind, 'border_color') || '', 'color', styleOpts(node, kind, 'border_color'));
+                html += colorTokenRow('border_color');
+                html += field('Corners', 'border_radius', styleFieldValue(node, kind, 'border_radius') || '', 'text', styleOpts(node, kind, 'border_radius', { placeholder: '8px' }));
+                html += presetRow('border_radius', [
+                    { v: '', l: 'None' },
+                    { v: '4px', l: 'S' },
+                    { v: '8px', l: 'M' },
+                    { v: '16px', l: 'L' },
+                    { v: '999px', l: 'Pill' }
+                ]);
+                html += field('Shadow', 'box_shadow', styleFieldValue(node, kind, 'box_shadow') || '', 'select', styleOpts(node, kind, 'box_shadow', {
+                    choices: [
+                        { v: '', l: 'None' },
+                        { v: 'sm', l: 'Small' },
+                        { v: 'md', l: 'Medium' },
+                        { v: 'lg', l: 'Large' },
+                        { v: 'none', l: 'No shadow' }
+                    ]
+                }));
+                return html;
+            }
+
+            function styleClipBarHtml() {
+                return '<p class="cms-lb-style-clip">'
+                    + '<button type="button" class="btn btn-outline-secondary btn-sm" data-copy-style>Copy style</button>'
+                    + '<button type="button" class="btn btn-outline-secondary btn-sm" data-paste-style' + (canPasteStyle() ? '' : ' disabled') + '>Paste style</button>'
+                    + '</p>';
+            }
+
+            function colorTokenRow(name) {
+                return presetRow(name, [
+                    { v: '', l: 'None' },
+                    { v: 'accent', l: 'Accent' },
+                    { v: 'accent-soft', l: 'Soft' },
+                    { v: 'text', l: 'Text' },
+                    { v: 'muted', l: 'Muted' },
+                    { v: 'surface', l: 'Surface' },
+                    { v: 'bg', l: 'Page' }
+                ]);
+            }
+
+            function backgroundImageFields(node) {
+                var set = node.settings || {};
+                var html = '<p class="cms-lb-field-group">Background image</p>';
+                html += mediaPreviewHtml({ media_id: set.bg_media_id, url: set.bg_image });
+                var opts = [{ v: '', l: '— None —' }];
+                mediaList.forEach(function (m) {
+                    opts.push({ v: String(m.id), l: (m.name || m.original_name || ('#' + m.id)) });
+                });
+                html += field('Library image', 'bg_media_id', set.bg_media_id ? String(set.bg_media_id) : '', 'select', opts);
+                html += field('Or image URL', 'bg_image', set.bg_image || '', 'text', {
+                    placeholder: 'https:// or /share/media/…',
+                    hint: 'Shared on all devices. Overlay can differ per Desktop / Tablet / Mobile.'
+                });
+                html += field('Overlay', 'bg_overlay', styleFieldValue(node, 'settings', 'bg_overlay') || '', 'color', styleOpts(node, 'settings', 'bg_overlay'));
+                html += colorTokenRow('bg_overlay');
+                html += field('Overlay strength', 'bg_overlay_opacity', styleFieldValue(node, 'settings', 'bg_overlay_opacity') || '40', 'range', styleOpts(node, 'settings', 'bg_overlay_opacity', {
+                    min: 0,
+                    max: 80,
+                    step: 5
+                }));
+                if (canUpload && global.CmsMediaPicker) {
+                    html += '<div class="mt-2"><label class="form-label">Upload background</label>'
+                        + '<input type="file" accept="image/*" class="form-control form-control-sm" data-upload-file data-upload-target="bg">'
+                        + '<button type="button" class="btn btn-outline-secondary btn-sm mt-1" data-upload-btn data-upload-target="bg">Upload image</button>'
+                        + '<span class="small text-muted ms-1" data-upload-status data-upload-target="bg"></span></div>';
+                }
+                return html;
+            }
+
             function moduleLead(type) {
                 var meta = MODULE_META[type];
                 if (!meta || !meta.hint) {
@@ -158,15 +390,14 @@
                         html += renderModuleContent(node);
                     } else if (selection.kind === 'section') {
                         html += '<p class="cms-lb-panel-lead">Section wraps rows. Full width drops the inner container.</p>';
+                        html += deviceStyleNoticeHtml(node);
                         html += field('Section type', 'type', node.type || 'regular', 'select', [
                             { v: 'regular', l: 'Regular (contained)' },
                             { v: 'fullwidth', l: 'Full width' }
                         ]);
-                        html += field('Background color', 'bg_color', (node.settings && node.settings.bg_color) || '', 'color');
-                        html += field('Padding', 'padding', (node.settings && node.settings.padding) || '', 'text', {
-                            hint: 'CSS values only, e.g. 2rem or 24px. Invalid values are cleared on save.',
-                            placeholder: '2rem'
-                        });
+                        html += field('Background color', 'bg_color', styleFieldValue(node, 'settings', 'bg_color') || '', 'color', styleOpts(node, 'settings', 'bg_color'));
+                        html += colorTokenRow('bg_color');
+                        html += spacingSidesHtml(node, 'settings', 'padding', 'Padding');
                         html += presetRow('padding', [
                             { v: '', l: 'Default' },
                             { v: '1rem', l: 'S' },
@@ -182,6 +413,7 @@
                         };
                         html += renderModuleTypePicker(pick.si, pick.ri, pick.ci);
                         html += '<p class="cms-lb-field-group">Column size</p>';
+                        html += deviceStyleNoticeHtml(node);
                         var colW = Number(node.width) || 12;
                         var parentRow = layout.sections[selection.sectionIdx] && layout.sections[selection.sectionIdx].rows
                             && layout.sections[selection.sectionIdx].rows[selection.rowIdx];
@@ -194,10 +426,10 @@
                         html += '<div class="cms-lb-width-bar" aria-hidden="true"><span style="width:' + ((colW / 12) * 100) + '%"></span></div>';
                         html += '<p class="small text-muted mt-1 mb-2">This column ' + colW + '/12 · row total ' + rowSum + '/12'
                             + (rowSum > 12 ? ' (wraps to the next line)' : '') + '.</p>';
-                        html += field('Min height', 'min_height', (node.settings && node.settings.min_height) || '', 'text', {
+                        html += field('Min height', 'min_height', styleFieldValue(node, 'settings', 'min_height') || '', 'text', styleOpts(node, 'settings', 'min_height', {
                             placeholder: '240px',
                             hint: 'Minimum height (px, rem, %, or vh). Content can grow taller.'
-                        });
+                        }));
                         html += presetRow('min_height', [
                             { v: '', l: 'Auto' },
                             { v: '160px', l: 'S' },
@@ -205,11 +437,13 @@
                             { v: '360px', l: 'L' },
                             { v: '50vh', l: 'Half screen' }
                         ]);
-                        html += field('Vertical align', 'valign', (node.settings && node.settings.valign) || '', 'select', [
-                            { v: '', l: 'Top (default)' },
-                            { v: 'center', l: 'Middle' },
-                            { v: 'bottom', l: 'Bottom' }
-                        ]);
+                        html += field('Vertical align', 'valign', styleFieldValue(node, 'settings', 'valign') || '', 'select', styleOpts(node, 'settings', 'valign', {
+                            choices: [
+                                { v: '', l: 'Top (default)' },
+                                { v: 'center', l: 'Middle' },
+                                { v: 'bottom', l: 'Bottom' }
+                            ]
+                        }));
                         html += '<p class="small text-muted mt-2 mb-0">Or select the parent <strong>Row</strong> for equal splits. Drag the ⋮⋮ handle to reorder.</p>';
                     } else if (selection.kind === 'row') {
                         html += renderColumnLayoutPicker(node, selection.sectionIdx, selection.rowIdx);
@@ -218,17 +452,25 @@
                     }
                 } else if (activeTab === 'design') {
                     html += '<p class="cms-lb-panel-lead">Appearance for this ' + esc(selection.kind) + '. Colors need #hex (3–8 digits). Spacing needs px, rem, em, or %.</p>';
+                    html += styleClipBarHtml();
                     if (selection.kind === 'module') {
-                        var des = node.design || {};
-                        html += field('Text align', 'text_align', des.text_align || '', 'select', [
-                            { v: '', l: 'Default' },
-                            { v: 'left', l: 'Left' },
-                            { v: 'center', l: 'Center' },
-                            { v: 'right', l: 'Right' }
-                        ]);
-                        html += field('Text color', 'text_color', des.text_color || '', 'color');
-                        html += field('Background', 'bg_color', des.bg_color || '', 'color');
-                        html += field('Padding', 'padding', des.padding || '', 'text', { placeholder: '1rem' });
+                        html += designStateToggleHtml();
+                    }
+                    html += deviceStyleNoticeHtml(node);
+                    if (selection.kind === 'module') {
+                        html += field('Text align', 'text_align', styleFieldValue(node, 'design', 'text_align') || '', 'select', styleOpts(node, 'design', 'text_align', {
+                            choices: [
+                                { v: '', l: 'Default' },
+                                { v: 'left', l: 'Left' },
+                                { v: 'center', l: 'Center' },
+                                { v: 'right', l: 'Right' }
+                            ]
+                        }));
+                        html += field('Text color', 'text_color', styleFieldValue(node, 'design', 'text_color') || '', 'color', styleOpts(node, 'design', 'text_color'));
+                        html += colorTokenRow('text_color');
+                        html += field('Background', 'bg_color', styleFieldValue(node, 'design', 'bg_color') || '', 'color', styleOpts(node, 'design', 'bg_color'));
+                        html += colorTokenRow('bg_color');
+                        html += spacingSidesHtml(node, 'design', 'padding', 'Padding');
                         html += presetRow('padding', [
                             { v: '', l: 'Default' },
                             { v: '0px', l: '0' },
@@ -236,8 +478,8 @@
                             { v: '1rem', l: 'M' },
                             { v: '2rem', l: 'L' }
                         ]);
-                        html += field('Margin', 'margin', des.margin || '', 'text', { placeholder: '0 0 1rem' });
-                        html += field('Font size', 'font_size', des.font_size || '', 'text', { placeholder: '1.25rem' });
+                        html += spacingSidesHtml(node, 'design', 'margin', 'Margin');
+                        html += field('Font size', 'font_size', styleFieldValue(node, 'design', 'font_size') || '', 'text', styleOpts(node, 'design', 'font_size', { placeholder: '1.25rem' }));
                         html += presetRow('font_size', [
                             { v: '', l: 'Default' },
                             { v: '0.9rem', l: 'S' },
@@ -245,23 +487,44 @@
                             { v: '1.5rem', l: 'L' },
                             { v: '2rem', l: 'XL' }
                         ]);
+                        html += field('Weight', 'font_weight', styleFieldValue(node, 'design', 'font_weight') || '', 'select', styleOpts(node, 'design', 'font_weight', {
+                            choices: [
+                                { v: '', l: 'Default' },
+                                { v: '400', l: 'Regular' },
+                                { v: '500', l: 'Medium' },
+                                { v: '600', l: 'Semibold' },
+                                { v: '700', l: 'Bold' }
+                            ]
+                        }));
+                        html += field('Line height', 'line_height', styleFieldValue(node, 'design', 'line_height') || '', 'select', styleOpts(node, 'design', 'line_height', {
+                            choices: [
+                                { v: '', l: 'Default' },
+                                { v: '1.2', l: 'Tight' },
+                                { v: '1.4', l: 'Snug' },
+                                { v: '1.6', l: 'Normal' },
+                                { v: '1.8', l: 'Relaxed' }
+                            ]
+                        }));
+                        html += chromeStyleFields(node, 'design');
                     } else {
-                        var set = node.settings || {};
-                        html += field('Background', 'bg_color', set.bg_color || '', 'color');
-                        html += field('Padding', 'padding', set.padding || '', 'text', { placeholder: '2rem' });
+                        html += field('Background', 'bg_color', styleFieldValue(node, 'settings', 'bg_color') || '', 'color', styleOpts(node, 'settings', 'bg_color'));
+                        html += colorTokenRow('bg_color');
+                        html += spacingSidesHtml(node, 'settings', 'padding', 'Padding');
                         html += presetRow('padding', [
                             { v: '', l: 'Default' },
                             { v: '1rem', l: 'S' },
                             { v: '2rem', l: 'M' },
                             { v: '3rem', l: 'L' }
                         ]);
-                        html += field('Min height', 'min_height', set.min_height || '', 'text', { placeholder: '200px' });
+                        html += field('Min height', 'min_height', styleFieldValue(node, 'settings', 'min_height') || '', 'text', styleOpts(node, 'settings', 'min_height', { placeholder: '200px' }));
                         html += presetRow('min_height', [
                             { v: '', l: 'Auto' },
                             { v: '160px', l: 'S' },
                             { v: '240px', l: 'M' },
                             { v: '360px', l: 'L' }
                         ]);
+                        html += chromeStyleFields(node, 'settings');
+                        html += backgroundImageFields(node);
                     }
                 } else {
                     html += '<p class="cms-lb-panel-lead">Visibility is previewed with Desktop / Tablet / Mobile. Hide classes apply on the public site.</p>';
@@ -290,91 +553,68 @@
             function renderModuleContent(mod) {
                 var d = mod.data || {};
                 var html = moduleLead(mod.type);
-                switch (mod.type) {
-                    case 'heading':
-                        html += field('Text', 'text', d.text, 'text');
-                        html += field('Level', 'level', d.level || 2, 'select', {
-                            choices: [1, 2, 3, 4, 5, 6].map(function (n) {
-                                return { v: n, l: 'H' + n };
-                            }),
-                            hint: 'H1 is for the page’s main heading. The admin title is not repeated as an H1 on the public page.'
-                        });
-                        break;
-                    case 'text':
-                        html += field('Text', 'text', d.text, 'textarea', {
-                            rows: 8,
-                            hint: 'Line breaks become paragraphs. For lists, bold, or embeds, use Custom HTML.'
-                        });
-                        break;
-                    case 'image':
-                        html += mediaField(d);
-                        html += field('Alt text', 'alt', d.alt, 'text', { hint: 'Describe the image for accessibility and SEO.' });
-                        html += field('Caption', 'caption', d.caption, 'textarea', {
-                            rows: 2,
-                            hint: 'Shown under the image. Use Image URL below for the photo, not this field.'
-                        });
-                        html += field('Link URL', 'link', d.link || '', 'text', {
-                            placeholder: '/about or https://',
-                            hint: 'Optional. Makes the image clickable.'
-                        });
-                        break;
-                    case 'button':
-                        html += field('Label', 'label', d.label, 'text');
-                        html += field('URL', 'url', d.url, 'text', { placeholder: '/about or https://' });
-                        html += field('Style', 'style', d.style || 'primary', 'select', btnStyleChoices);
-                        html += field('Open in new tab', 'new_tab', !!d.new_tab, 'checkbox');
-                        break;
-                    case 'cta':
-                        html += field('Title', 'title', d.title, 'text');
-                        html += field('Text', 'text', d.text, 'textarea', { rows: 3 });
-                        html += field('Button label', 'label', d.label, 'text');
-                        html += field('Button URL', 'url', d.url, 'text', { placeholder: '/contact or https://' });
-                        html += field('Button style', 'style', d.style || 'primary', 'select', btnStyleChoices);
-                        html += field('Open in new tab', 'new_tab', !!d.new_tab, 'checkbox');
-                        break;
-                    case 'spacer':
-                        html += field('Size', 'size', d.size || 'md', 'select', [
-                            { v: 'sm', l: 'Small' },
-                            { v: 'md', l: 'Medium' },
-                            { v: 'lg', l: 'Large' },
-                            { v: 'xl', l: 'Extra large' }
-                        ]);
-                        break;
-                    case 'divider':
-                        html += field('Style', 'style', d.style || 'solid', 'select', [
-                            { v: 'solid', l: 'Solid' },
-                            { v: 'dashed', l: 'Dashed' },
-                            { v: 'dotted', l: 'Dotted' }
-                        ]);
-                        html += '<p class="form-text">Set Design → Text color to tint the line.</p>';
-                        break;
-                    case 'html':
-                        html += field('HTML', 'html', d.html, 'textarea', {
-                            rows: 10,
-                            hint: 'script, iframe, form, and input tags are stripped on the public site.'
-                        });
-                        html += '<p class="cms-lb-field-group">Preview</p><div class="cms-lb-html-preview" data-html-preview>'
-                            + sanitizePreviewHtml(d.html || '') + '</div>';
-                        break;
-                    case 'blurb':
-                        html += field('Title', 'title', d.title, 'text');
-                        html += field('Text', 'text', d.text, 'textarea', { rows: 3 });
-                        html += field('Icon / emoji', 'icon', d.icon, 'text', {
-                            hint: 'Used only when no image is selected. Image wins if both are set.'
-                        });
-                        html += mediaField(d);
-                        html += field('Link URL', 'url', d.url, 'text', {
-                            placeholder: '/page or https://',
-                            hint: 'Optional. Wraps the title.'
-                        });
-                        break;
-                    case 'carousel':
-                        html += carouselFields(d);
-                        break;
-                    default:
-                        html += '<p class="small text-muted">No fields.</p>';
+                var meta = moduleCatalog[mod.type] || {};
+                if (meta.custom === 'carousel') {
+                    html += carouselFields(d);
+                    return html;
                 }
+                var fields = meta.fields || [];
+                if (!fields.length) {
+                    html += '<p class="small text-muted">No fields.</p>';
+                    return html;
+                }
+                fields.forEach(function (spec) {
+                    html += renderCatalogField(spec, d);
+                });
                 return html;
+            }
+
+            function renderCatalogField(spec, d) {
+                spec = spec || {};
+                var type = spec.type || 'text';
+                if (type === 'media') {
+                    return mediaField(d);
+                }
+                if (type === 'note') {
+                    return spec.text ? '<p class="form-text">' + esc(spec.text) + '</p>' : '';
+                }
+                if (type === 'html_preview') {
+                    var src = spec.source || 'html';
+                    return '<p class="cms-lb-field-group">Preview</p><div class="cms-lb-html-preview" data-html-preview>'
+                        + sanitizePreviewHtml(d[src] || '') + '</div>';
+                }
+                var name = spec.name;
+                if (!name) {
+                    return '';
+                }
+                var label = spec.label || name;
+                var opts = {
+                    hint: spec.hint || '',
+                    placeholder: spec.placeholder || ''
+                };
+                if (type === 'checkbox') {
+                    return field(label, name, !!d[name], 'checkbox', opts);
+                }
+                if (type === 'select') {
+                    var choices = spec.choices;
+                    if (!choices || !choices.length) {
+                        choices = (name === 'style') ? btnStyleChoices : [];
+                    }
+                    opts.choices = choices;
+                    var sel = d[name];
+                    if (sel == null || sel === '') {
+                        sel = spec.default != null ? spec.default : '';
+                    }
+                    return field(label, name, sel, 'select', opts);
+                }
+                if (type === 'textarea') {
+                    opts.rows = spec.rows || 4;
+                    return field(label, name, d[name], 'textarea', opts);
+                }
+                if (type === 'number') {
+                    return field(label, name, d[name], 'number', opts);
+                }
+                return field(label, name, d[name], 'text', opts);
             }
             
             function mediaField(d) {
@@ -471,7 +711,63 @@
             }
             
             function bindPanelFields() {
+                var inheritBtn = panelBody.querySelector('[data-clear-device-style]');
+                if (inheritBtn) {
+                    inheritBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        var n = getSelectedNode();
+                        if (!n) {
+                            return;
+                        }
+                        clearDeviceStyle(n);
+                        noteLayoutChange();
+                        updateDirtyUi();
+                        refreshSelectedLiveCss(n);
+                        scheduleHistoryCommit(true);
+                        renderPanel();
+                    });
+                }
+                var clearHoverBtn = panelBody.querySelector('[data-clear-hover-style]');
+                if (clearHoverBtn) {
+                    clearHoverBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        var n = getSelectedNode();
+                        if (!n) {
+                            return;
+                        }
+                        clearHoverStyle(n);
+                        noteLayoutChange();
+                        updateDirtyUi();
+                        refreshSelectedLiveCss(n);
+                        scheduleHistoryCommit(true);
+                        renderPanel();
+                    });
+                }
+                panelBody.querySelectorAll('[data-design-state]').forEach(function (btn) {
+                    btn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        designState = btn.getAttribute('data-design-state') === 'hover' ? 'hover' : 'normal';
+                        renderPanel();
+                    });
+                });
+                var copyStyleBtn = panelBody.querySelector('[data-copy-style]');
+                if (copyStyleBtn) {
+                    copyStyleBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        copyStyle();
+                    });
+                }
+                var pasteStyleBtn = panelBody.querySelector('[data-paste-style]');
+                if (pasteStyleBtn) {
+                    pasteStyleBtn.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        pasteStyle();
+                    });
+                }
                 panelBody.querySelectorAll('[data-field]').forEach(function (el) {
+                    if (el.type === 'hidden') {
+                        return;
+                    }
                     var evt = el.type === 'checkbox' || el.tagName === 'SELECT' ? 'change' : 'input';
                     el.addEventListener(evt, function () {
                         var name = el.getAttribute('data-field');
@@ -513,6 +809,28 @@
                             pair.value = val;
                         }
                         applyField(name, input);
+                        if (name === 'padding' || name === 'margin') {
+                            syncSpacingInputs(name, val);
+                        }
+                    });
+                });
+                panelBody.querySelectorAll('[data-spacing-side]').forEach(function (el) {
+                    el.addEventListener('input', function () {
+                        var name = el.getAttribute('data-spacing-field');
+                        var side = el.getAttribute('data-spacing-side');
+                        var node = getSelectedNode();
+                        if (!node || !name || !side) {
+                            return;
+                        }
+                        var kind = selection.kind === 'module' ? 'design' : 'settings';
+                        var sides = parseSpacingSides(styleFieldValue(node, kind, name));
+                        sides[side] = el.value;
+                        var joined = joinSpacingSides(sides);
+                        var hidden = panelBody.querySelector('[data-field="' + name + '"]');
+                        if (hidden) {
+                            hidden.value = joined;
+                            applyField(name, hidden);
+                        }
                     });
                 });
                 panelBody.querySelectorAll('[data-slide-field]').forEach(function (el) {
@@ -661,9 +979,12 @@
                     uploadBtn.addEventListener('click', function () {
                         var slideIdxAttr = uploadBtn.getAttribute('data-slide-idx');
                         var slideIdx = slideIdxAttr !== null && slideIdxAttr !== '' ? Number(slideIdxAttr) : null;
+                        var target = uploadBtn.getAttribute('data-upload-target');
                         var fileInput = slideIdx !== null
                             ? panelBody.querySelector('[data-upload-file][data-slide-idx="' + slideIdx + '"]')
-                            : panelBody.querySelector('[data-upload-file]:not([data-slide-idx])');
+                            : (target
+                                ? panelBody.querySelector('[data-upload-file][data-upload-target="' + target + '"]')
+                                : panelBody.querySelector('[data-upload-file]:not([data-slide-idx])'));
                         if (!fileInput) {
                             fileInput = panelBody.querySelector('[data-upload-file]');
                         }
@@ -674,14 +995,21 @@
                         }
                         var st = slideIdx !== null
                             ? panelBody.querySelector('[data-upload-status][data-slide-idx="' + slideIdx + '"]')
-                            : panelBody.querySelector('[data-upload-status]:not([data-slide-idx])');
+                            : (target
+                                ? panelBody.querySelector('[data-upload-status][data-upload-target="' + target + '"]')
+                                : panelBody.querySelector('[data-upload-status]:not([data-slide-idx])'));
                         if (st) {
                             st.textContent = 'Uploading…';
                         }
                         global.CmsMediaPicker.uploadFile(f).then(function (item) {
                             mediaList.unshift(item);
                             var node = getSelectedNode();
-                            if (node && node.data) {
+                            var target = uploadBtn.getAttribute('data-upload-target');
+                            if (node && target === 'bg') {
+                                node.settings = node.settings || {};
+                                node.settings.bg_media_id = item.id;
+                                node.settings.bg_image = item.share_url || item.url || '';
+                            } else if (node && node.data) {
                                 if (slideIdx !== null && node.type === 'carousel') {
                                     ensureCarouselSlides(node.data);
                                     if (node.data.slides[slideIdx]) {
@@ -697,8 +1025,14 @@
                                 st.textContent = 'Done';
                             }
                             noteLayoutChange();
-                            render();
-                            renderPanel();
+                            if (target === 'bg') {
+                                refreshSelectedLiveCss(node);
+                                scheduleHistoryCommit(true);
+                                renderPanel();
+                            } else {
+                                render();
+                                renderPanel();
+                            }
                         }).catch(function (err) {
                             if (st) {
                                 st.textContent = '';
@@ -759,8 +1093,7 @@
                             node.data[name] = val;
                         }
                     } else if (activeTab === 'design') {
-                        node.design = node.design || {};
-                        node.design[name] = val;
+                        writeStyleValue(node, 'design', name, val);
                     } else {
                         node.advanced = node.advanced || {};
                         node.advanced[name] = val;
@@ -776,14 +1109,40 @@
                         w = 12;
                     }
                     node.width = w;
-                } else {
+                } else if (name === 'bg_media_id' || name === 'bg_image') {
                     node.settings = node.settings || {};
-                    node.settings[name] = val;
+                    if (name === 'bg_media_id') {
+                        var bgId = val ? Number(val) : 0;
+                        if (bgId > 0) {
+                            node.settings.bg_media_id = bgId;
+                            var bgMedia = mediaById(bgId);
+                            if (bgMedia) {
+                                node.settings.bg_image = bgMedia.share_url || bgMedia.url || node.settings.bg_image || '';
+                            }
+                        } else {
+                            delete node.settings.bg_media_id;
+                        }
+                    } else {
+                        node.settings.bg_image = val;
+                    }
+                } else if (name === 'css_class') {
+                    node.settings = node.settings || {};
+                    node.settings.css_class = val;
+                } else {
+                    writeStyleValue(node, 'settings', name, val);
                 }
                 var live = el.tagName === 'TEXTAREA' || el.type === 'text' || el.type === 'number' || el.type === 'range';
                 noteLayoutChange();
                 updateDirtyUi();
-                scheduleCanvasRender(!live);
+                if (isLiveStyleField(name)) {
+                    refreshSelectedLiveCss(node);
+                    patchLiveChrome(name, val);
+                    scheduleHistoryCommit(el.tagName === 'SELECT' || el.type === 'checkbox');
+                } else if (selection.kind === 'module' && activeTab === 'content' && patchSelectedModulePreview()) {
+                    scheduleHistoryCommit(el.tagName === 'SELECT' || el.type === 'checkbox');
+                } else {
+                    scheduleCanvasRender(!live);
+                }
                 if (el.type === 'text' && panelBody) {
                     var pair = panelBody.querySelector('[data-color-sync="' + name + '"]');
                     if (pair && /^#[0-9a-fA-F]{6}$/.test(String(el.value || ''))) {
@@ -796,6 +1155,10 @@
             ctx.field = field;
             ctx.colorFieldRow = colorFieldRow;
             ctx.presetRow = presetRow;
+            ctx.colorTokenRow = colorTokenRow;
+            ctx.deviceStyleNoticeHtml = deviceStyleNoticeHtml;
+            ctx.designStateToggleHtml = designStateToggleHtml;
+            ctx.backgroundImageFields = backgroundImageFields;
             ctx.moduleLead = moduleLead;
             ctx.mediaPreviewHtml = mediaPreviewHtml;
             ctx.renderCrumbs = renderCrumbs;

@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder border, shadow, type, and copy style",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Design compiles border, radius, allowlisted box-shadow presets, font-weight, and line-height. Same keys work on section/row/column (except type). Invalid shadow strings are dropped."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Copy style / Paste style (inspector + context menu) copies design or settings bags including device/hover overrides, not content. Live CSS patches the selected node."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. New keys live in layout_json; CSS remains derived. Shadow is stored as sm/md/lg/none, not raw CSS."
+    },
+    {
+      "area": "Playwright",
+      "summary": "cms-builder-drag-column-size sets 8px radius and md shadow on Module A and asserts both in the editor and public stylesheet."
+    }
+  ]
+}

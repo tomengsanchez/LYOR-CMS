@@ -27,7 +27,7 @@
         <li>Each ZIP includes <code>manifest.json</code> (app id <code>SimpleCMS</code>, source dbname, schema snapshot),
             <code>database.sql</code>, and usually <code>uploads/</code> (installed theme style packs live under
             <code>public/uploads/theme-packs/library/</code>; active pack ids/settings are in <code>app_settings</code>).
-            Page and post visual layouts are stored as <code>layout_json</code> in the SQL dump (frontend-editor autosave uses the same column).</li>
+            Page and post visual layouts are stored as <code>layout_json</code> in the SQL dump (frontend-editor autosave uses the same column). Module Content values live in that JSON; the editor field list is application code, not a backup file. Design colors (including theme tokens and module hover), spacing (padding/margin shorthand, including four-side editor values), border/radius, allowlisted shadow keys, tablet/mobile overrides, and section background image ids are compiled to CSS at render time; they are not a separate backup field. Background files live under uploads with the rest of Media.</li>
     </ul>
 
     <h4>Restore (CLI only)</h4>

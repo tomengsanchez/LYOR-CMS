@@ -6,7 +6,7 @@
 
 ## Context
 
-Developers and CI hit different hosts (e.g. `http://eco.local`, staging, CI containers). Hard-coded base URLs in specs break clones and pipelines.
+Developers and CI hit different hosts (e.g. `http://cms.local`, staging, CI containers). Hard-coded base URLs in specs break clones and pipelines.
 
 ## Decision
 
@@ -18,7 +18,7 @@ Playwright **`baseURL` must be configurable** via environment (typically `BASE_U
 
 ## Consequences
 
-- Positive: Same suite runs on any PAPeR deployment; CI sets `BASE_URL` explicitly.
+- Positive: Same suite runs on any CMS deployment; CI sets `BASE_URL` explicitly.
 - Negative: Contributors must copy the example env once; mis-set `BASE_URL` fails opaquely until checked.
 - Follow-on: New E2E specs use relative paths against `baseURL`. No impact on MySQL/MariaDB or backup/restore.
 

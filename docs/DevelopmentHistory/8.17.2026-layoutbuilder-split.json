@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "LayoutBuilder split and CMS-only docs",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "LayoutBuilder.php is a thin facade. Implementation traits live in App/LayoutBuilder/ (ModuleCatalog, Normalizer, Renderer, Sanitize, Css). Public LayoutBuilder:: API is unchanged."
+    },
+    {
+      "area": "Docs",
+      "summary": "Removed PAPeR/grievance/structure/SES/RAP/mobile-domain guides and history from docs/. Remaining docs describe Simple CMS. Postman generator and PAPeR collections removed."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. layout_json still in SQL dumps. Compiled CSS still derived."
+    }
+  ]
+}

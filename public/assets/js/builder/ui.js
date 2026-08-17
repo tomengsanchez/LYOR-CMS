@@ -93,6 +93,10 @@
             if (pasteBtn) {
                 pasteBtn.disabled = !(ctx.clip && ctx.clip.payload);
             }
+            var pasteStyleBtn = menu.querySelector('[data-ctx="paste-style"]');
+            if (pasteStyleBtn) {
+                pasteStyleBtn.disabled = !(ctx.canPasteStyle && ctx.canPasteStyle());
+            }
         }
 
         ctx.applyPrefs = applyPrefs;
@@ -149,6 +153,10 @@
                     ctx.copySelected();
                 } else if (act === 'paste') {
                     ctx.pasteClipboard();
+                } else if (act === 'copy-style') {
+                    ctx.copyStyle();
+                } else if (act === 'paste-style') {
+                    ctx.pasteStyle();
                 } else if (act === 'dup') {
                     ctx.duplicateSelected();
                 } else if (act === 'del') {

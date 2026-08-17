@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder module hover CSS and content patch",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Modules can set design_hover (Normal/Hover in Design). Compiled :hover rules include .btn and .public-site so button themes do not win. Hover is not per-device."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Content field edits replace the selected .cms-layout-module inner HTML (rebind inline edit and canvas links only). Carousel still does a full canvas render."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. design_hover is another optional key on modules inside layout_json; CSS remains derived at render."
+    },
+    {
+      "area": "Playwright",
+      "summary": "cms-builder-drag-column-size sets Hover Accent on Module A, patches heading/text in place, and asserts :hover in editor and public stylesheets."
+    }
+  ]
+}

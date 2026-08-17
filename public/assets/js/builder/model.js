@@ -59,49 +59,10 @@
             }
             
             function defaultModule(type) {
+                var meta = moduleCatalog[type] || {};
                 var data = {};
-                switch (type) {
-                    case 'heading':
-                        data = { text: 'Heading', level: 2 };
-                        break;
-                    case 'text':
-                        data = { text: 'Add your text here.' };
-                        break;
-                    case 'image':
-                        data = { media_id: null, url: '', alt: '', caption: '', link: '' };
-                        break;
-                    case 'button':
-                        data = { label: 'Learn more', url: '#', style: 'primary', new_tab: false };
-                        break;
-                    case 'cta':
-                        data = { title: 'Call to action', text: 'Supporting text.', label: 'Get started', url: '#', style: 'primary', new_tab: false };
-                        break;
-                    case 'spacer':
-                        data = { size: 'md' };
-                        break;
-                    case 'divider':
-                        data = { style: 'solid' };
-                        break;
-                    case 'html':
-                        data = { html: '<p>Custom HTML</p>' };
-                        break;
-                    case 'blurb':
-                        data = { title: 'Feature', text: 'Short description.', icon: '★', media_id: null, url: '' };
-                        break;
-                    case 'carousel':
-                        data = {
-                            autoplay: true,
-                            interval_ms: 5000,
-                            show_arrows: true,
-                            show_dots: true,
-                            slides: [
-                                { media_id: null, url: '', alt: '', caption: '', link: '' },
-                                { media_id: null, url: '', alt: '', caption: '', link: '' }
-                            ]
-                        };
-                        break;
-                    default:
-                        data = {};
+                if (meta.defaults && typeof meta.defaults === 'object') {
+                    data = JSON.parse(JSON.stringify(meta.defaults));
                 }
                 return {
                     id: uid(),

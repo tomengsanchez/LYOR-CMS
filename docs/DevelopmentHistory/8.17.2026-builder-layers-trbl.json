@@ -1,0 +1,26 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder Layers drag, TRBL spacing, CSS patch, module catalog",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Layers tree supports HTML5 drag-reorder using the same applyReorder as the canvas. Modules can drop onto another column in the tree."
+    },
+    {
+      "area": "Inspector",
+      "summary": "Padding and margin are four-side fields. Stored value remains a CSS shorthand string so backup and public CSS stay compatible."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Live CSS patches only the selected node’s rules. Module picker hints are loaded from LayoutBuilder::moduleCatalog() via data-modules."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Spacing is still padding/margin strings in layout_json; compiled CSS is derived."
+    },
+    {
+      "area": "Playwright",
+      "summary": "cms-builder-drag-column-size asserts Layers rows are draggable, four-sided padding in the stylesheet, hover, and content patch."
+    }
+  ]
+}

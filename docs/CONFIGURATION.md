@@ -66,17 +66,7 @@ Key/value store (`App\Models\AppSettings`). Managed mainly via System / Settings
 
 ### Email
 - `email_provider`: `smtp` | `mailersend` | `log` (dev)  
-- SMTP / MailerSend credentials and “send email for project notifications” flags  
-
-### Operational
-- Default field role, holidays (table `holidays` + settings as applicable)  
-- Project escalation count-start related settings  
-
-### Live traffic (migration 087+)
-- Retention / enable flags as seeded in migration  
-
-### UI / per-user (not all in `app_settings`)
-- `user_dashboard_config` modules: `ui`, notification preferences, list columns, grievance dashboard widgets  
+- SMTP / MailerSend credentials and notification send flags
 
 When adding a setting: document it here, prefer UI over raw SQL, and note backup impact (`app_settings` is in SQL dumps).
 
@@ -87,7 +77,7 @@ When adding a setting: document it here, prefer UI over raw SQL, and note backup
 | Setting | Guidance |
 |---------|----------|
 | `date.timezone` | Prefer org timezone via app (`UserTime`); keep php.ini sensible |
-| `upload_max_filesize` / `post_max_size` | Must allow SES ZIP (docs mention **10 MB** UI cap) and grievance/profile attachments |
+| `upload_max_filesize` / `post_max_size` | Large enough for media library uploads |
 | `max_execution_time` | Raise for large CLI restore/backup |
 | Document root | Point to `public/` when possible; root `.htaccess` can forward |
 

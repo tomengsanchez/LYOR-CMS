@@ -1,6 +1,6 @@
 /**
  * Visual layout builder — boot (config, events, CmsBuilderApi).
- * Modules: ns, history, model, canvas, layers, dnd, actions, panel, save, ui.
+ * Modules: ns, history, model, styles, canvas, layers, dnd, actions, panel, save, ui.
  */
 (function (global) {
     'use strict';
@@ -10,8 +10,34 @@
         return;
     }
 
+    function normalizeModuleCatalog(raw) {
+        var cat = {};
+        if (!raw || typeof raw !== 'object') {
+            return cat;
+        }
+        Object.keys(raw).forEach(function (key) {
+            var v = raw[key];
+            if (typeof v === 'string') {
+                cat[key] = { label: v, hint: '', fields: [], defaults: {}, custom: '' };
+                return;
+            }
+            if (v && typeof v === 'object') {
+                cat[key] = {
+                    label: String(v.label || key),
+                    hint: String(v.hint || ''),
+                    fields: Array.isArray(v.fields) ? v.fields : [],
+                    defaults: v.defaults && typeof v.defaults === 'object' ? v.defaults : {},
+                    custom: String(v.custom || '')
+                };
+            }
+        });
+        return cat;
+    }
+
     var layout;
+    var moduleCatalog;
     var moduleTypes;
+    var MODULE_META;
     var mediaList;
     var templatesList;
     try {
@@ -20,10 +46,16 @@
         layout = { version: 1, sections: [] };
     }
     try {
-        moduleTypes = JSON.parse(cfgEl.getAttribute('data-modules') || '{}');
+        moduleCatalog = normalizeModuleCatalog(JSON.parse(cfgEl.getAttribute('data-modules') || '{}'));
     } catch (e2) {
-        moduleTypes = {};
+        moduleCatalog = {};
     }
+    moduleTypes = {};
+    MODULE_META = {};
+    Object.keys(moduleCatalog).forEach(function (key) {
+        moduleTypes[key] = moduleCatalog[key].label || key;
+        MODULE_META[key] = { hint: moduleCatalog[key].hint || '' };
+    });
     try {
         mediaList = JSON.parse(cfgEl.getAttribute('data-media') || '[]');
     } catch (e3) {
@@ -54,6 +86,7 @@
     var ctx = global.CmsBuilder.start({
         global: global,
         canvas: document.getElementById('cmsBuilderCanvas'),
+        liveCssEl: document.getElementById('cmsBuilderLiveCss'),
         panel: document.getElementById('cmsBuilderPanel'),
         panelBody: document.getElementById('cmsBuilderPanelBody'),
         panelTitle: document.getElementById('cmsBuilderPanelTitle'),
@@ -70,45 +103,40 @@
         layersBody: document.getElementById('cmsBuilderLayersBody'),
         layersFilter: '',
         clip: null,
+        styleClip: null,
         canvasZoom: 1,
         saveInFlight: false,
         saveQueued: false,
         autoSaveTimer: null,
         AUTOSAVE_MS: 12000,
         layout: layout,
+        moduleCatalog: moduleCatalog,
         moduleTypes: moduleTypes,
         mediaList: mediaList,
         templatesList: templatesList,
         selection: { kind: null, sectionIdx: -1, rowIdx: -1, colIdx: -1, modIdx: -1 },
         activeTab: 'content',
+        designState: 'normal',
         modulePickTarget: null,
         dragSource: null,
         dropHint: { el: null, place: '' },
         canvasDndBound: false,
+        layersDndBound: false,
+        layerDragMoved: false,
         savedSnapshot: JSON.stringify(layout),
         renderTimer: null,
         historyStack: [],
         historyIndex: -1,
         historyLock: false,
         historyPending: false,
+        historyCommitTimer: null,
         HISTORY_MAX: 50,
         btnStyleChoices: [
             { v: 'primary', l: 'Primary' },
             { v: 'secondary', l: 'Secondary' },
             { v: 'outline', l: 'Outline' }
         ],
-        MODULE_META: {
-            heading: { hint: 'Page or section title (H1–H6)' },
-            text: { hint: 'Plain paragraphs. Use Custom HTML for lists or bold.' },
-            image: { hint: 'Library, upload, or URL — with caption and optional link' },
-            button: { hint: 'Linked call-to-action button' },
-            cta: { hint: 'Banner with title, text, and button' },
-            spacer: { hint: 'Vertical space between modules' },
-            divider: { hint: 'Horizontal rule. Color comes from Design → Text color.' },
-            html: { hint: 'Raw HTML (scripts and forms are stripped publicly)' },
-            blurb: { hint: 'Feature card: icon or image plus title' },
-            carousel: { hint: 'Up to 12 image slides' }
-        }
+        MODULE_META: MODULE_META
     });
 
     window.addEventListener('beforeunload', function (e) {
@@ -321,6 +349,7 @@
         loadTemplate: function (id) { ctx.loadTemplate(id); },
         save: function () { ctx.save(false); },
         render: function () { ctx.render(); },
+        refreshLiveCss: function () { ctx.refreshLiveCss(); },
         undo: function () { ctx.undo(); },
         redo: function () { ctx.redo(); },
         isDirty: function () { return ctx.isDirty(); },

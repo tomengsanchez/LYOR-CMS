@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder theme tokens and section backgrounds",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Design colors can be theme tokens (accent, text, surface, …) compiled to var(--pub-…). Section/row/column background image plus overlay in the live stylesheet."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Tokens and bg_media_id live in layout_json; image files stay in uploads. Compiled CSS is still derived at render."
+    },
+    {
+      "area": "Playwright",
+      "summary": "cms-builder-drag-column-size clicks Accent on the section and asserts var(--pub-accent) in editor and public stylesheets."
+    }
+  ]
+}

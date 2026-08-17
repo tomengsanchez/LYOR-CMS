@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder module Content field catalog",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "moduleCatalog() now lists Content fields, editor defaults, and carousel custom. Sanitize and public HTML render stay on type switches (lengths, URLs, HTML strip)."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "panel.js builds the Content tab from catalog fields; defaultModule clones catalog defaults. Media picker and carousel slides stay custom UI."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Catalog is PHP code, not stored. Restored layout_json still holds each module’s data values."
+    },
+    {
+      "area": "Playwright",
+      "summary": "cms-builder-drag-column-size selects the Left column heading and asserts Content field data-field=level."
+    }
+  ]
+}

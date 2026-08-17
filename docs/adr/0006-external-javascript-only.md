@@ -6,7 +6,7 @@
 
 ## Context
 
-PHP views mixed with large inline scripts and `onclick` handlers become hard to cache, review, test, and reuse across profile/structure/grievance modules.
+PHP views mixed with large inline scripts and `onclick` handlers become hard to cache, review, test, and reuse across admin modules (pages, posts, visual builder).
 
 ## Decision
 

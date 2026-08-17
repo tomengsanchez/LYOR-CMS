@@ -60,6 +60,9 @@
                     btn.classList.toggle('is-active', on);
                     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
                 });
+                if (panel && !panel.hidden && selection.kind) {
+                    renderPanel();
+                }
             }
             
             function renderTemplatesMenu() {

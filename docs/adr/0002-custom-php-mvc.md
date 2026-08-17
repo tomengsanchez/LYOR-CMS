@@ -6,7 +6,7 @@
 
 ## Context
 
-PAPeR needs a maintainable PHP app (profiles, structures, grievances, system tools, REST API) runnable on typical shared/XAMPP-style hosts with a small dependency footprint and full control over auth, routing, and migrations.
+Simple CMS needs a maintainable PHP app (pages, posts, media, admin tools, REST API) runnable on typical shared/XAMPP-style hosts with a small dependency footprint and full control over auth, routing, and migrations.
 
 ## Decision
 

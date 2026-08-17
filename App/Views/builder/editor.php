@@ -23,6 +23,7 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
     <link href="/public/assets/css/public/themes.css" rel="stylesheet">
     <link href="/public/assets/css/public/site.css" rel="stylesheet">
     <link href="/public/assets/css/admin/builder.css" rel="stylesheet">
+    <style id="cmsBuilderLiveCss" class="cms-layout-css"></style>
 </head>
 <body class="cms-builder-app">
 <header class="cms-builder-toolbar">
@@ -33,9 +34,9 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
     </div>
     <div class="cms-builder-toolbar-actions">
         <div class="cms-builder-device-toggle" role="group" aria-label="Preview width">
-            <button type="button" class="btn btn-sm btn-outline-light is-active" data-device="desktop" title="Desktop">Desktop</button>
-            <button type="button" class="btn btn-sm btn-outline-light" data-device="tablet" title="Tablet">Tablet</button>
-            <button type="button" class="btn btn-sm btn-outline-light" data-device="mobile" title="Mobile">Mobile</button>
+            <button type="button" class="btn btn-sm btn-outline-light is-active" data-device="desktop" title="Desktop — edit default styles">Desktop</button>
+            <button type="button" class="btn btn-sm btn-outline-light" data-device="tablet" title="Tablet — preview and edit styles below 1024px">Tablet</button>
+            <button type="button" class="btn btn-sm btn-outline-light" data-device="mobile" title="Mobile — preview and edit styles below 768px">Mobile</button>
         </div>
         <button type="button" class="btn btn-sm btn-outline-light" id="cmsBuilderLayersBtn" title="Structure tree" aria-pressed="false">Layers</button>
         <button type="button" class="btn btn-sm btn-outline-light" id="cmsBuilderCopy" title="Copy (Ctrl+C)" disabled>Copy</button>
@@ -124,18 +125,21 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
             <li><kbd>Ctrl</kbd>+<kbd>S</kbd> Save</li>
             <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Y</kbd> Undo / Redo</li>
             <li><kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>X</kbd> / <kbd>V</kbd> Copy / Cut / Paste</li>
+            <li>Right-click <strong>Copy style</strong> / <strong>Paste style</strong> (appearance only)</li>
             <li><kbd>Ctrl</kbd>+<kbd>D</kbd> Duplicate</li>
             <li><kbd>Alt</kbd>+arrows Nudge order</li>
             <li><kbd>Delete</kbd> Remove (confirms)</li>
             <li><kbd>Esc</kbd> Deselect / close panels</li>
             <li><kbd>?</kbd> This list</li>
         </ul>
-        <p class="small text-muted mb-0 mt-2">Right-click a block for Copy / Paste / Dup / Delete. Zoom, device, and Layers stay for this browser tab.</p>
+        <p class="small text-muted mb-0 mt-2">Right-click a block for Copy / Paste / Copy style / Dup / Delete. Drag in Layers to reorder. Zoom, device, and Layers stay for this browser tab.</p>
     </div>
 </div>
 <div id="cmsBuilderContext" class="cms-lb-context" hidden role="menu">
     <button type="button" class="cms-lb-context-item" data-ctx="copy" role="menuitem">Copy</button>
     <button type="button" class="cms-lb-context-item" data-ctx="paste" role="menuitem">Paste</button>
+    <button type="button" class="cms-lb-context-item" data-ctx="copy-style" role="menuitem">Copy style</button>
+    <button type="button" class="cms-lb-context-item" data-ctx="paste-style" role="menuitem">Paste style</button>
     <button type="button" class="cms-lb-context-item" data-ctx="dup" role="menuitem">Duplicate</button>
     <button type="button" class="cms-lb-context-item" data-ctx="del" role="menuitem">Delete</button>
 </div>
@@ -144,7 +148,7 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
 <script src="/public/assets/js/content/media-picker.js"></script>
 <?php
 $builderJsDir = dirname(__DIR__, 3) . '/public/assets/js/builder';
-$builderScripts = ['ns.js', 'history.js', 'model.js', 'canvas.js', 'layers.js', 'dnd.js', 'actions.js', 'panel.js', 'save.js', 'ui.js', 'editor.js'];
+$builderScripts = ['ns.js', 'history.js', 'model.js', 'styles.js', 'canvas.js', 'layers.js', 'dnd.js', 'actions.js', 'panel.js', 'save.js', 'ui.js', 'editor.js'];
 foreach ($builderScripts as $builderFile) {
     $builderPath = $builderJsDir . DIRECTORY_SEPARATOR . $builderFile;
     $builderVer = is_file($builderPath) ? filemtime($builderPath) : time();

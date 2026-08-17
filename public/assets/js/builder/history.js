@@ -127,6 +127,7 @@
             }
             
             function undo() {
+                clearHistoryCommitTimer();
                 commitHistoryNow();
                 if (historyIndex <= 0) {
                     return;
@@ -137,6 +138,8 @@
             }
             
             function redo() {
+                clearHistoryCommitTimer();
+                commitHistoryNow();
                 if (historyIndex >= historyStack.length - 1) {
                     return;
                 }
@@ -146,6 +149,7 @@
             }
             
             function resetHistory() {
+                clearHistoryCommitTimer();
                 historyStack = [];
                 historyIndex = -1;
                 historyPending = false;
@@ -173,6 +177,30 @@
                     renderTimer = null;
                     render();
                 }, 160);
+            }
+
+            function scheduleHistoryCommit(immediate) {
+                if (historyCommitTimer) {
+                    clearTimeout(historyCommitTimer);
+                    historyCommitTimer = null;
+                }
+                if (immediate) {
+                    historyPending = false;
+                    commitHistoryNow();
+                    return;
+                }
+                historyCommitTimer = setTimeout(function () {
+                    historyCommitTimer = null;
+                    historyPending = false;
+                    commitHistoryNow();
+                }, 160);
+            }
+
+            function clearHistoryCommitTimer() {
+                if (historyCommitTimer) {
+                    clearTimeout(historyCommitTimer);
+                    historyCommitTimer = null;
+                }
             }
             
             function setPanelTab(tab) {
@@ -204,6 +232,8 @@
             ctx.resetHistory = resetHistory;
             ctx.isTypingTarget = isTypingTarget;
             ctx.scheduleCanvasRender = scheduleCanvasRender;
+            ctx.scheduleHistoryCommit = scheduleHistoryCommit;
+            ctx.clearHistoryCommitTimer = clearHistoryCommitTimer;
             ctx.setPanelTab = setPanelTab;
         }
     });

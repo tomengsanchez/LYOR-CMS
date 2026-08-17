@@ -217,7 +217,7 @@ class BuilderController extends Controller
             'entityType' => $entityType,
             'entity' => $entity,
             'layoutJson' => json_encode($layout, JSON_UNESCAPED_UNICODE),
-            'moduleTypesJson' => json_encode(LayoutBuilder::moduleTypes(), JSON_UNESCAPED_UNICODE),
+            'moduleTypesJson' => json_encode(LayoutBuilder::moduleCatalog(), JSON_UNESCAPED_UNICODE),
             'mediaJson' => json_encode(Media::listImagesForPicker(), JSON_UNESCAPED_UNICODE),
             'templatesJson' => json_encode($templates, JSON_UNESCAPED_UNICODE),
             'backUrl' => $backUrl,

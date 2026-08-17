@@ -24,8 +24,13 @@
             }
             
             function clearDropHint() {
-                canvas.querySelectorAll('.cms-lb-drop-before, .cms-lb-drop-after').forEach(function (n) {
-                    n.classList.remove('cms-lb-drop-before', 'cms-lb-drop-after');
+                [canvas, layersBody].forEach(function (root) {
+                    if (!root) {
+                        return;
+                    }
+                    root.querySelectorAll('.cms-lb-drop-before, .cms-lb-drop-after').forEach(function (n) {
+                        n.classList.remove('cms-lb-drop-before', 'cms-lb-drop-after');
+                    });
                 });
                 dropHint = { el: null, place: '' };
             }

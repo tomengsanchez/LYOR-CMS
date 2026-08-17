@@ -26,5 +26,5 @@ See README backup section, Help backup-restore page, and `docs/DEVELOPMENTGUIDE.
 ## Alternatives considered
 
 - **In-browser restore upload** — convenient; high risk of accidental wipe and timeout/size limits.
-- **DB-only backups** — misses grievance/profile attachment files under uploads.
+- **DB-only backups** — misses media files under uploads.
 - **Vendor snapshots only (hosting panel)** — outside app control; no app-level completion audit or uploads pairing.

@@ -103,9 +103,15 @@
                 layersBody.querySelectorAll('[data-kind]').forEach(function (btn) {
                     btn.addEventListener('click', function (e) {
                         e.preventDefault();
+                        if (layerDragMoved) {
+                            return;
+                        }
                         selectFromEl(btn);
                     });
                     btn.addEventListener('mouseenter', function () {
+                        if (dragSource) {
+                            return;
+                        }
                         clearLayerPeek();
                         var match = canvasElFromLayer(btn);
                         if (match) {
@@ -116,10 +122,119 @@
                         }
                     });
                     btn.addEventListener('mouseleave', function () {
+                        if (dragSource) {
+                            return;
+                        }
                         clearLayerPeek();
                     });
                 });
+                bindLayersDnd();
                 applyLayersFilter();
+            }
+
+            function findLayerDropTarget(e) {
+                if (!dragSource || !layersBody) {
+                    return null;
+                }
+                var t = e.target;
+                if (t && t.nodeType !== 1) {
+                    t = t.parentElement;
+                }
+                if (!t || !t.closest) {
+                    return null;
+                }
+                var btn = t.closest('#cmsBuilderLayersBody [data-kind]');
+                if (!btn || btn.hidden) {
+                    return null;
+                }
+                var loc = locFromEl(btn);
+                if (dragSource.kind === 'module' && (loc.kind === 'module' || loc.kind === 'column')) {
+                    return { el: btn, loc: loc };
+                }
+                if (loc.kind === dragSource.kind) {
+                    return { el: btn, loc: loc };
+                }
+                return null;
+            }
+
+            function dropPlaceY(e, dest) {
+                if (!dest || (dest.loc.kind === 'column' && dragSource && dragSource.kind === 'module')) {
+                    return 'after';
+                }
+                var rect = dest.el.getBoundingClientRect();
+                return e.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+            }
+
+            function bindLayersDnd() {
+                if (!layersBody || typeof applyReorder !== 'function') {
+                    return;
+                }
+                layersBody.querySelectorAll('[data-kind]').forEach(function (btn) {
+                    btn.setAttribute('draggable', 'true');
+                    btn.addEventListener('dragstart', function (e) {
+                        e.stopPropagation();
+                        layerDragMoved = true;
+                        dragSource = locFromEl(btn);
+                        try {
+                            e.dataTransfer.setData('text/plain', JSON.stringify(dragSource));
+                            e.dataTransfer.effectAllowed = 'move';
+                        } catch (err) { /* IE */ }
+                        btn.classList.add('cms-lb-dragging');
+                        clearLayerPeek();
+                    });
+                    btn.addEventListener('dragend', function () {
+                        btn.classList.remove('cms-lb-dragging');
+                        clearDropHint();
+                        dragSource = null;
+                        setTimeout(function () {
+                            layerDragMoved = false;
+                        }, 0);
+                    });
+                });
+                if (layersDndBound) {
+                    return;
+                }
+                layersDndBound = true;
+                layersBody.addEventListener('dragover', function (e) {
+                    if (!dragSource) {
+                        return;
+                    }
+                    var dest = findLayerDropTarget(e);
+                    if (!dest) {
+                        return;
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var place = dropPlaceY(e, dest);
+                    if (dropHint.el === dest.el && dropHint.place === place) {
+                        return;
+                    }
+                    clearDropHint();
+                    dest.el.classList.add(place === 'before' ? 'cms-lb-drop-before' : 'cms-lb-drop-after');
+                    dropHint = { el: dest.el, place: place };
+                });
+                layersBody.addEventListener('drop', function (e) {
+                    if (!dragSource) {
+                        return;
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var dest = findLayerDropTarget(e);
+                    var src = dragSource;
+                    var place = dest ? dropPlaceY(e, dest) : '';
+                    clearDropHint();
+                    if (!dest || locEqual(src, dest.loc)) {
+                        dragSource = null;
+                        return;
+                    }
+                    applyReorder(src, dest.loc, place);
+                    dragSource = null;
+                    modulePickTarget = null;
+                    openPanel();
+                    noteLayoutChange();
+                    render();
+                    setStatus('Moved');
+                });
             }
 
             function applyLayersFilter() {
@@ -171,6 +286,7 @@
             ctx.applyLayersFilter = applyLayersFilter;
             ctx.toggleLayers = toggleLayers;
             ctx.setZoom = setZoom;
+            ctx.bindLayersDnd = bindLayersDnd;
         }
     });
 })();

@@ -1,6 +1,72 @@
-# Simple CMS – Changes (2026-08)
+﻿# Simple CMS – Changes (2026-08)
 
 Part of the [changes index](../CHANGES.md). Newest entries first within this month.
+
+---
+
+## LayoutBuilder split + CMS-only docs (2026-08-17)
+
+- `App/LayoutBuilder.php` is a facade; parse/render/CSS live in `App/LayoutBuilder/` (`ModuleCatalog`, `Normalizer`, `Renderer`, `Sanitize`, `Css`). Call sites still use `LayoutBuilder::`.
+- Docs under `docs/` are CMS-only: PAPeR / grievance / structure / SES / RAP / mobile-domain guides and history were removed. Backup still dumps `layout_json`; public CSS remains derived.
+- Help: Pages / Posts / Backup. Smoke: `cms_layout_builder_smoke_test`. Postman: Simple CMS collection only.
+
+---
+
+## Visual builder module Content field catalog (2026-08-17)
+
+- `LayoutBuilder::moduleCatalog()` now includes Content **fields**, **defaults**, and a carousel `custom` flag. The editor inspector and Add-module defaults are generated from that JSON (`data-modules`); carousel slides and media pickers stay custom.
+- Public sanitize/render still use the type switches (URL, HTML, lengths). Backup is still `layout_json` (saved module `data`, not the PHP catalog).
+- Help: Pages / Posts / Backup. Smoke asserts heading fields; Playwright checks heading Level on Content.
+
+---
+
+## Visual builder border/shadow, type, copy style (2026-08-17)
+
+- Design: **border** (width / style / color, including theme tokens), **corner radius**, **shadow presets** (sm / md / lg), plus module **weight** and **line height**. Compiled to CSS; shadow values are an allowlist (not raw CSS).
+- **Copy style** / **Paste style** (Design panel and right-click) copies appearance bags only — not text, media, or CSS class. Modules paste onto modules; section/row/column paste onto those.
+- Backup: still `layout_json`. Help: Pages / Posts / Backup. Smoke + Playwright `cms-builder-drag-column-size` assert radius and shadow.
+
+---
+
+## Visual builder Layers drag, TRBL spacing, CSS patch, module catalog (2026-08-17)
+
+- **Layers** rows are draggable; drop uses the same reorder as the canvas ⋮⋮ handle (modules can move into another column).
+- Padding and margin are **top / right / bottom / left** (still stored as a CSS shorthand string in `layout_json`). Presets fill all sides.
+- Design ticks replace that element’s rules in `#cmsBuilderLiveCss` instead of rewriting the whole stylesheet. Public CSS is still compiled in full.
+- Module picker labels/hints come from PHP `LayoutBuilder::moduleCatalog()` (editor `data-modules`). Backup unchanged.
+- Help: Pages / Posts / Backup. Smoke + Playwright `cms-builder-drag-column-size` cover Layers drag and four-sided padding.
+
+---
+
+## Visual builder module hover + content patch (2026-08-17)
+
+- Module Design has **Normal / Hover**. Hover styles live in `design_hover` (same on every device) and compile to `:hover` rules that beat Bootstrap / public button CSS. Empty hover fields inherit Normal.
+- Content inspector edits replace the selected module’s inner HTML instead of rebuilding the canvas (carousel still rebuilds). Design still updates `#cmsBuilderLiveCss`.
+- Backup: still `layout_json`. Help: Pages / Posts / Backup. Smoke + Playwright `cms-builder-drag-column-size` assert `:hover`.
+
+---
+
+## Visual builder theme tokens + section backgrounds (2026-08-17)
+
+- Design colors accept **theme tokens** (Accent, Soft, Text, Muted, Surface, Page) stored as `accent` / `text` / … in `layout_json` and compiled to `var(--pub-accent)` so they follow Customize. Hex still works.
+- Section / row / column Design: **background image** (`bg_media_id` or URL) plus overlay color and strength (0–80%). Compiled into the live/public stylesheet (`linear-gradient` + `url("…")`). Overlay can differ per device; the image is shared. URLs are sanitized.
+- Backup: still `layout_json` + media uploads. Help: Pages / Posts / Backup. Smoke + Playwright `cms-builder-drag-column-size` assert `var(--pub-accent)`.
+
+---
+
+## Visual builder per-device design CSS (2026-08-17)
+
+- Desktop / Tablet / Mobile toolbar now also **edits** Design for that device. Defaults stay on `settings` / `design`; overrides live in `settings_tablet` / `design_tablet` / `*_mobile` inside `layout_json`.
+- Public CSS uses `@media (max-width: 1023.98px)` and `767.98px`. The editor is not an iframe, so preview uses `.cms-builder-canvas-wrap[data-device]` selectors (viewport media queries would ignore the canvas width). Column 1–12 width remains shared.
+- Backup unchanged. Help: Pages / Posts / Backup. Smoke + Playwright `cms-builder-drag-column-size` assert tablet min-height in the stylesheet.
+
+---
+
+## Visual builder live design CSS (2026-08-17)
+
+- Design / settings (colors, spacing, min-height, align, font size) update a compiled stylesheet instead of rebuilding the canvas. Width, vertical align, and hide-on-device patch classes in place. Custom CSS class and section type still rebuild.
+- Public pages/posts emit `<style class="cms-layout-css">` from `LayoutBuilder::compileStylesheet` (same safe color/spacing/height checks). Generated CSS is not stored; backup remains `layout_json`.
+- Editor: `public/assets/js/builder/styles.js`, `#cmsBuilderLiveCss`. Help: Pages / Posts / Backup. Smoke + Playwright `cms-builder-drag-column-size` assert the stylesheet, not inline `style=""`.
 
 ---
 
@@ -14,7 +80,7 @@ Part of the [changes index](../CHANGES.md). Newest entries first within this mon
 
 ## Visual builder layers, copy/paste, inline, autosave (2026-08-15)
 
-- **Layers** tree (toolbar) jumps to any section/row/column/module; hover highlights the matching canvas block; × closes the tree. Click a heading or text module on the canvas to edit in place.
+- **Layers** tree (toolbar) jumps to any section/row/column/module; hover highlights the matching canvas block; Ã— closes the tree. Click a heading or text module on the canvas to edit in place.
 - **Copy** / **Paste** toolbar plus Ctrl/Cmd+C / X / V (in-memory only — not the OS clipboard). **+** after a module inserts into that column; filter the module picker. Alt+arrows nudge order. Canvas zoom 85/100/115%. Autosave ~12s when dirty (same Save POST); deferred while typing and does not rebuild the canvas.
 - In-memory clipboard only. No schema change; backup still `layout_json`. Help: Pages / Posts. Playwright layers + Copy/Paste enable in `cms-builder-drag-column-size`.
 
@@ -252,7 +318,7 @@ Part of the [changes index](../CHANGES.md). Newest entries first within this mon
 
 ## Responsive media sizes (2026-08-15)
 
-- **WordPress-style sizes:** On JPG/PNG/WebP upload, GD generates `thumbnail` (150×150 crop), `medium` (300), `medium_large` (768), `large` (1024), `1536x1536`, `2048x2048` under `public/uploads/media/` (tracked in `cms_media_sizes`, migration **015**).
+- **WordPress-style sizes:** On JPG/PNG/WebP upload, GD generates `thumbnail` (150Ã—150 crop), `medium` (300), `medium_large` (768), `large` (1024), `1536x1536`, `2048x2048` under `public/uploads/media/` (tracked in `cms_media_sizes`, migration **015**).
 - **Serving:** `/share/media/{id}/{size}` (public) and `/serve/media/{id}/{size}` (admin); falls back to full original.
 - **Public HTML:** Featured images and block images emit `srcset`/`sizes` via `Media::responsiveImg` / `MediaImageSizes`.
 - **CLI backfill:** `php cli/regenerate_media_sizes.php` (optional `--id=N`).
@@ -336,7 +402,7 @@ Part of the [changes index](../CHANGES.md). Newest entries first within this mon
 ## Post featured images & social sharing (2026-08-14)
 
 - **Migration 009:** `cms_posts.featured_image_id` (FK → `cms_media`); `cms_media.width` / `height` on upload.
-- **Admin:** Post create/edit — featured image picker from Media library; size hints for 1200×630 social preview.
+- **Admin:** Post create/edit — featured image picker from Media library; size hints for 1200Ã—630 social preview.
 - **Public:** Featured image on blog list and post page; `/share/media/{id}` serves images publicly for crawlers.
 - **Social meta:** Open Graph + Twitter Card tags on blog/post pages (`App\SocialShare`, `public/partials/social_meta.php`).
 - **Test:** `tests/cli/cms_posts_featured_smoke_test.php`.
@@ -414,338 +480,9 @@ Part of the [changes index](../CHANGES.md). Newest entries first within this mon
 
 ---
 
-## Per-project CSV export ZIP (2026-08-14)
-
-- **System → Project CSV Export** (admin) creates a ZIP under `storage/project-csv-exports` for one Library project: profiles, structures, grievances (+ status log, attachments, respondents, tags), **latest SES sections** per profile (`profile_socio_sections.csv`), `audit_log` for those entities, project notifications, linked users (no password hashes), sessions, and API token metadata (no secrets).
-- Optional **Redact personal information** (UI checkbox / CLI `--redact`): replaces **person names and birthdays only** with `[REDACTED]` (SES/audit JSON uses the same rules; includes household member `Name` / `Birthday` columns; excludes Project Name, crop/business names, GPS, contact, address, email); `manifest.json` records `pii_redacted`.
-- Adds **`municipalities.csv`** / **`barangays.csv`** lookup tables for IDs in exported rows.
-- CLI: `php cli/export_project_csv.php --project-id=N` (optional `--out=`, `--redact`). Core: `App\ProjectCsvExporter`.
-- Fix: `profile_structure_tags` export orders by `profile_id, sort_order, structure_tag` (table has no `structure_id`).
-- Default export ZIP filename uses project name slug (not numeric id): `paper-project-{name}[-redacted]-timestamp.zip`.
-- No schema change; backup/restore unchanged. Help + smoke test: `npm run test:export-project-csv`.
-
----
-
-## System CSV Templates + strict import preview (2026-08-14)
-
-- **System → CSV Templates** (`/system/csv-templates`) lists Profile / Structure / Grievance sample CSVs with **Required** / **Needs clarification** / **Optional** column guides (`App\CsvImportTemplates`). Nav under System → Data; access: admin or `add_profiles` | `add_structure` | `add_grievance` (download needs matching add cap).
-- Shared contract: `App\CsvImportSupport` (header normalize, MIME checks, statuses `ready_new` / `ready_update` / `failed` / `needs_clarification`, max **2000** rows). Match prefer numeric `id`, else natural keys.
-- **Profile:** `ProfileCsvImporter` + `POST /profile/import/preview`; list modal Preview then Import (`public/assets/js/profile/import.js`). Template/importer map invitation card (RSVP, **1st/2nd invitation visit**, distribution status), legacy `visit_1`–`visit_3`, address, ownership, civil status, and representative fields.
-- **Structure:** new import (`StructureCsvImporter`, sample/preview/import routes, list modal + `structure/import.js`).
-- **Grievance:** existing case # / `id` → **update** (no longer skip-only); preview labels New / Update / Failed / Needs clarification.
-- Backup/restore unchanged (no schema change). Help, DEVELOPMENTGUIDE, samples README, E2E: `npm run test:e2e:csv-templates-import` / `:fast` (+ grievance import GI-04 update path). Postman N/A (web-only).
-
----
-
-## Grievance CSV import update path (2026-08-14)
-
-- Grievance CSV import no longer skips existing case numbers: match prefers `id`, then existing `grievance_case_number` → **update**; otherwise **create**.
-- Row statuses align with Profile/Structure (`ready_new` / `ready_update` / `needs_clarification` / `failed`); unknown name lookups need clarification; hard validation stays failed. Cap 2000 rows; `CsvImportSupport::buildResult` + column guide.
-- Commit: insert needs `add_grievance`; update needs `edit_grievance` (endpoint still gated by `add_grievance`). Backup/restore unchanged (no schema change). Help, sample README, and E2E updated.
-
----
-
-## Structure CSV import (2026-08-14)
-
-- Structure list **Import** (requires `add_structure`) mirrors Profile CSV preview/commit: match by `id` → `strid` → project + `structure_tag`; unknown/ambiguous names → needs clarification (no auto-create of municipalities/options).
-- Endpoints: `GET /structure/import/sample`, `POST /structure/import/preview`, `POST /structure/import` (`structures_file`). Updates need `edit_structure`; project must be in UserProjects scope.
-- Sample at `public/samples/structure-import-sample.csv` (also via System → CSV Templates). Backup/restore unchanged (no schema change). Help updated.
-
----
-
-## Structure visitation witnesses (2026-08-14)
-
-- Each visit card (1st / 2nd / 3rd) on Structure create/edit/view/PDF now has **two witnesses** (name, position and organization, date of visitation) plus **remarks**.
-- Migration **097** adds the witness columns. Legacy `date_first_visit` / `date_second_visit` / `date_third_visit` are **kept** and synced from that visit’s **witness 1 date** on save (list date filters / CSV / older clients).
-- Secondary structures: manual **Copy visitation from primary** (no auto-copy); remarks get an *Adapted/inherited from primary* indicator and remain editable.
-- Select Columns / list / export / `GET|POST` structure API include the new fields. Backup/restore unchanged (additive columns). Help and Postman updated.
-- E2E: `npm run test:e2e:structure-visitation-witnesses` (headed slow) / `:fast` — create primary with witnesses, secondary copy-from-primary, list smoke (`BASE_URL` configurable).
-
----
-
-## Profile list: Address, Representative, related PN numbers (2026-08-14)
-
-- Profile **Select Columns** / list / CSV / PDF include **Address**, **Representative information** (name + contact numbers), and **Related Structure PN numbers** (multi-value, comma-separated from linked structures).
-- Derived via `Profile::enrichListDerivedFields()` after `listPaginated`; searchable and **sortable** via column headers. No schema change; backup/restore unaffected.
-- Help and API contract updated (`GET /api/profile/list` returns the same derived fields).
-
----
-
 ## Backup `--no-uploads` flag (2026-08-13)
 
 - **Exclude uploads** from System → Backup/Restore now passes `--no-uploads` correctly (it previously became `----no-uploads` and was ignored).
 - CLI backup prints `Uploads: skipped (--no-uploads)` and no longer claims the ZIP contains uploads when they were excluded.
 - Restore CLI uses the same flag parser. Test: `npm run test:backup-no-uploads`. Help/README updated.
 
----
-
-## Structure list GPS columns (2026-08-12)
-
-- Structure **Select Columns** / list / CSV / PDF include **GPS latitude** and **GPS longitude**.
-- List cells are clickable and open the same satellite map dialog as Structure view (via `gps-map-dialog.js`).
-- Help updated. Backup/restore unaffected (existing columns only).
-
----
-
-## Users & Account access dashboard (2026-08-11)
-
-- **Users** landing shows a **Currently online** dashboard (web + API KPIs and who is online).
-- **Users → View** adds **Access & activity**: web sessions, API/mobile tokens, recent audit actions. Managers with `edit_users` can end a session or revoke a token (scoped to that user; audited as `revoked_by_manager`).
-- **Account → Access & activity** (formerly Active sessions) adds the same panels for yourself, including **Revoke token**. My Profile shows a short access summary + link.
-- Shared builder `App\UserAccessDashboard`; helpers `UserSession::listForUser` / `ApiToken::listForUser` / ownership revoke. Activity cards open a paginated dialog (`GET /api/users/{id}/access/activity`); web sessions and API tokens tables are paginated. No schema change; backup/restore unchanged.
-
----
-
-## Realtime Dashboard API / mobile presence (2026-08-11)
-
-- **System → Realtime Dashboard** shows **API / mobile** presence separately from web sessions: KPIs `api_active_users` / `api_active_tokens`, table of active Bearer tokens (`api_tokens.last_used_at` within the same ~10 minute window).
-- Optional enrichment from latest `api_client_events` (client id, device model/OS, path, IP) when logging/migrations are present.
-- Admin **Revoke token**: `POST /api/system/realtime-dashboard/tokens/{id}/revoke` (CSRF); audit `api_token` / `revoked_by_admin`. Web **End session** unchanged.
-- Help, API contract, Development guide, Postman updated. Backup/restore unchanged (uses existing `api_tokens` / events tables).
-
----
-
-## API Clients dashboard, security logs & usage (2026-08-11)
-
-- **System → API Clients** landing page is the **Dashboard** (KPIs, requests-by-day, top clients/users/projects, recent auth fails).
-- **Clients** at `/system/api-clients/clients` — gate, credentials, and logging on/off + retention days.
-- **Security logs** — `auth_fail` events (`UNAUTHORIZED_CLIENT`); filter by client, **user**, **project**, days, path/IP/message; Prev/Next + page jump + per-page.
-- **Usage analytics** — `request` events with breakdowns per client / user / project; dropdown filters show **name (#id)**; request log shows separate User ID / Project ID columns; same pagination controls.
-- Listings **exclude local API data by default** (web UI `web_session` traffic and loopback IPs). Admins can check **Include local API data** on Dashboard / Security logs / Usage when needed.
-- Event logs store **device model** + **OS version** (migration **096**): prefer `X-Device-Model` / `X-Device-OS` (or `X-OS-Version`); otherwise parse `User-Agent`. Shown on Dashboard / Security logs / Usage — not a Clients CRUD field.
-- Migration **095** creates `api_client_events`; logging defaults on. Opportunistic prune by retention. Backup/restore includes the table via full DB dump.
-
----
-
-## API client gate for mobile/frontend (2026-08-11)
-
-- Optional **API clients** under **System → API Clients** (Dashboard / Clients / Security logs / Usage analytics). Create named clients, copy secret once, enable/disable/regenerate/delete per client.
-- When the gate is on, non-session `/api/*` requests require `X-App-Id` + `X-App-Secret` (`App\ApiClientGate`). Web UI session exempt; `GET /api/meta/error-codes` public.
-- Secrets hashed in `app_settings` (`api_clients_json`). Error code **`UNAUTHORIZED_CLIENT`**. CORS sample allows the new headers. Default gate **off** (backward compatible).
-- Capabilities `view_api_clients` / `manage_api_clients` (migration **094**).
-- Backup/restore includes `app_settings` (treat backups as sensitive). Fresh-install truncate clears clients — recreate after reset.
-
----
-
-## Structure PN number + Other details under tagging (2026-08-10)
-
-- Optional **`pn_number`** text field after **Location of the structure** (migration **093**, web form/view/PDF, list export, API).
-- **Other details** moved into Structure tagging information immediately after **Description**; removed the empty **Detailed Measurements** tab.
-- Backup/restore unchanged (full-table dump; migrate after restore adds the column).
-
----
-
-## Structure GPS map links open in satellite view (2026-08-10)
-
-- Clicking GPS coordinates on Structure view (and the form map preview) opens a **dialog** with an embedded satellite map; **View full on new page** opens Google Maps (`t=k`, zoom 18) in a new tab.
-- Shared partial `_gps_map_modal.php` + external `gps-map-dialog.js`. Helpers: `Structure::googleMapsSatelliteUrl()` / `googleMapsSatelliteEmbedUrl()`.
-- Default CSP (`Core\SecurityHeaders`) adds `frame-src` for `maps.google.com` and `www.google.com` so the embed is not blocked (`ERR_BLOCKED_BY_CSP`).
-
----
-
-## List Back remembers page and filters (2026-08-10)
-
-- Visiting Profile / Structure / Grievance lists stores the current list URI (page, search, filters) in the session (`App\ListReturn`).
-- **Back** on view/create/edit returns to that list context so sequential encoding stays on the same page.
-- Allowlisted relative paths only (no open redirects). Playwright `tests/e2e/list-return.spec.ts` + `npm run test:e2e:list-return:fast`.
-- Also include `entity_type` in Profile list pagination query extras.
-
----
-
-## Fix Structure Options Flash::set 500 (2026-08-10)
-
-- Structure Options Library store/update/delete called undefined `Flash::set()` → HTTP 500 after successful insert.
-- Switched to `Flash::success()` / `Flash::error()` like the rest of the app.
-- Playwright `tests/e2e/structure-options-library.spec.ts` + npm `test:e2e:structure-options-library:fast` (BASE_URL configurable).
-
----
-
-## Structure Actual Usage — free-text with suggestion store (2026-08-10)
-
-- **Actual usage** is free text again (not a closed dropdown). The browser suggests prior values via `<datalist>` from `structure_actual_usages`.
-- Saving a structure create/update (web or API) auto-stores new non-blank usages in that table (`StructureActualUsage::remember`, case-insensitive).
-- Options Library → Actual Usage remains for reviewing/editing/deleting suggestion rows. Tagging Status stays a proper lookup CRUD.
-- Docs/help/API: `actual_usages` on `GET /api/structure/options` are suggestions only; `actual_usage` on store/update stays free text.
-
----
-
-## Structure Options Library — Actual Usage & Tagging Status (2026-08-10)
-
-- Global lookup CRUDs under **Structure → Options Library** for **Tagging Status** and **Actual Usage** (capability `manage_structure_options`, granted to Administrator on migrate/seed).
-- Migration **092** creates `structure_tagging_statuses` / `structure_actual_usages`; seeds the former hardcoded tagging statuses; imports distinct existing `actual_usage` values when the usage table is empty.
-- Structure create/edit: Actual Usage is free text with datalist suggestions; Status options + other/refusal flags come from the library (`form.js` uses `data-requires-other` / `data-requires-refusal`).
-- **Additive API:** `GET /api/structure/options` — `tagging_statuses`, `actual_usages`, `classifications` (Bearer; view/add/edit structure).
-- Seeder `database/seeders/seed_structure_options.php`; truncate + E2E global-setup wired. Help, CAPABILITY_MATRIX, Postman, API/mobile docs updated.
-- Backup/restore: new tables included in normal DB dump/restore (no special handling).
-
----
-
-## Structure list — visitation, Actual Usage, Description columns (2026-08-10)
-
-- Structure list / Select Columns / CSV export now include **Actual Usage**, full **visitation** fields (1st–3rd date + remarks), and keep **Description**.
-- List SQL selects the new columns; table cells truncate long remarks/usage like description.
-- Help (Structure overview) updated; Playwright `structure-list-visitation-columns.spec.ts` + npm `test:e2e:structure-list-visitation-columns:fast`.
-- Users with saved column preferences keep their previous set until they re-select columns. Backup/restore unchanged.
-
----
-
-## Docs consistency pass — API 2FA, routes, E2E gaps (2026-08-09)
-
-- **`API_CONTRACT.md`:** Documented API email 2FA (`pending_2fa` → `/api/auth/2fa/verify` / `resend`); expanded HTTP route index; noted validation-section no-op; trimmed obsolete E2E npm notes.
-- **`adr/0004`:** Consequences updated for API 2FA challenge flow (no longer “use web login only”).
-- **E2E cleanup:** Removed orphan `package.json` runners whose Playwright specs are absent (escalation badges/scenario/multi-project, dashboard-by-category, effective-date, backup-restore-ui). `AUTOMATED_FUNCTIONAL_TEST_DESIGN.md` Known gaps lists former scripts for restore; history prereqs use living activity-history timezone suite.
-- **SES ERD/UML + live diagrams:** Added migration-084 columns (`source_filename`, batch counters, etc.) in `ERD.md`, `UML_SES_IMPORT.md`, `erd-diagrams.js`, `ses-uml-diagrams.js`.
-- **Index / labels:** `DOCUMENTATION.md` → `samples/`; `CAPABILITY_MATRIX.md` Roles UI labels aligned with `Capabilities.php`.
-
----
-
-## E2E test results log space (2026-08-09)
-
-- Added **`docs/test-results/`**: README (how to log), `TEMPLATE.md`, monthly folder `2026-08/`, and `YYYY-MM-README-TEMPLATE.md`.
-- Wired into DOCUMENTATION update rules, TEST_STRATEGY DoD, RELEASE checklist, CONTRIBUTING, AUTOMATED_FUNCTIONAL_TEST_DESIGN, README, DEVELOPMENTGUIDE, `dev-help`. No secrets; documentation process only.
-
----
-
-## Testing History prerequisites guide (2026-08-09)
-
-- Added **`docs/TESTING_HISTORY_PREREQUISITES.md`**: environment/data/capability prerequisites, action→history matrix, timezone notes, verify steps (UI + `/api/history` + status-log), false failures, Mermaid flows.
-- Linked from DOCUMENTATION, TEST_STRATEGY, AUTOMATED_FUNCTIONAL_TEST_DESIGN, README, GLOSSARY, DEVELOPMENTGUIDE tree. Documentation only.
-
----
-
-## ERD — split SES import vs RAP mapping (2026-08-09)
-
-- **`docs/ERD.md`:** former combined §6 split into **§6 SES import** and **§7 RAP mapping** (platform renumbered). Inventory lists SES and RAP separately.
-- Live `/dev-help/#erd` tabs: **SES import** and **RAP mapping** (was “SES & RAP”). Documentation only.
-
----
-
-## SES ZIP import feature UML (2026-08-09)
-
-- Added **`docs/UML_SES_IMPORT.md`**: context, preview/import sequences, profile-tab read, validation activity, classes, data model, capabilities (match by `control_number`; Main fields never written).
-- Live **`/dev-help/#ses-uml`** (`ses-uml-diagrams.js` / `ses-uml.js`). Corrected ERD SES note (no `section_id` FK on version sections).
-- Linked from DOCUMENTATION, UML.md, GLOSSARY, README. Documentation only.
-- **Mermaid fix:** GitHub-safe sequence/flowchart syntax (no `;` in `Note` lines, avoid `{id}` / `≤` / `<br/>` in diagrams).
-
----
-
-## Restrict public access to `/dev-help/` (2026-08-09)
-
-- Root `.htaccess`: **403** for `/dev-help` unless client is `127.0.0.1` / `::1`.
-- `dev-help/.htaccess`: Apache 2.4 `Require local` (local XAMPP still works).
-- Docs: DEPLOYMENT §4.1 (incl. nginx snippet), SECURITY hardening, CONFIGURATION, RUNBOOK §7.7. Prefer production DocumentRoot = `public/`.
-- Backup/restore unchanged (Apache config / docs only).
-
----
-
-## UML — RBAC roles & capabilities (2026-08-09)
-
-- Added **UML §8**: RBAC class diagram (User / Role / RoleCapability / Capabilities / Auth / UserProjects) and decision flow for `Auth::can` + project scope.
-- Live `/dev-help/#uml` tabs **RBAC model** and **RBAC flow** (`uml-diagrams.js`). Linked from CAPABILITY_MATRIX and ADR-0007.
-- Documentation only — no auth runtime changes.
-
----
-
-## Software engineering documentation pack (2026-08-09)
-
-- Added **`docs/DOCUMENTATION.md`** master index plus: `REQUIREMENTS.md`, `NFR.md`, `GLOSSARY.md`, `CAPABILITY_MATRIX.md`, `RUNBOOK.md`, `CONFIGURATION.md`, `DEPLOYMENT.md`, `SECURITY.md`, `TEST_STRATEGY.md`, `RELEASE.md`.
-- Repo root: **`CONTRIBUTING.md`**, **`SECURITY.md`** (points to docs). Linked from README, DEVELOPMENTGUIDE, FrameworksGuide, adr README, `dev-help`.
-- Documentation only — no schema, API, or backup/restore behavior changes. Ops contacts / some NFR baselines left TBD for each org.
-
----
-
-## UML diagrams + live /dev-help/#uml (2026-08-09)
-
-- Added **`docs/UML.md`**: Mermaid component, class, sequence (web / API / restore), grievance state, and authorization-flow diagrams.
-- **`/dev-help/#uml`**: interactive canvas with tabs; external JS `uml-diagrams.js` + `uml.js` (Mermaid CDN shared with ERD). Linked from README, DEVELOPMENTGUIDE, FrameworksGuide, adr README.
-- Documentation / guide UI only — no schema, API, or backup/restore behavior changes.
-
----
-
-## Dev-help live ERD diagrams (2026-08-09)
-
-- **`/dev-help/#erd`**: interactive Mermaid ER canvas with domain tabs (Overview, Auth & API, Projects & geo, Profiles & structures, Grievances, SES & RAP, Platform).
-- External JS: `dev-help/assets/erd-diagrams.js` (sources), `erd.js` (render/tabs/theme); Mermaid 11 via CDN; styles in `style.css`. Keep sources aligned with `docs/ERD.md`.
-- Documentation / guide UI only — no schema or backup/restore behavior changes.
-
----
-
-## Database ERD documentation (2026-08-09)
-
-- Added **`docs/ERD.md`**: Mermaid entity-relationship diagrams by domain (auth, projects/geo, profiles/structures, grievances, SES/RAP, platform) plus table inventory (migrations 000–091).
-- Linked from `DEVELOPMENTGUIDE.md` §4, root `README.md`, `FrameworksGuide.txt`, and `dev-help`. Documentation only — no schema or backup/restore behavior changes.
-
----
-
-## Architectural Decision Records (2026-08-09)
-
-- Added **`docs/adr/`**: README (process + index) and Accepted ADRs **0001–0010** (ADR process, custom PHP MVC, MySQL/MariaDB, session + Bearer auth, API envelope, external JS, capabilities, ZIP backup / CLI restore, additive mobile REST, configurable Playwright `BASE_URL`).
-- Linked from `docs/DEVELOPMENTGUIDE.md` and root `README.md` docs table. No schema, API, or backup/restore behavior changes (documentation only).
-
----
-
-## Profile + grievance attachment cards on API (2026-08-05)
-
-- **Additive:** `GET /api/profile/{id}` and `GET /api/grievance/{id}` return `attachments[]` (id, title, description, file_path, url, sort_order).
-- **Profile:** multipart attachment cards on **`POST /api/profile/store`** (was update-only) and update; omit fields on update to leave cards unchanged.
-- **Grievance:** multipart registration cards on **`POST /api/grievance/store`** and **`update/{id}`** (same fields as web); status-history `status_attachments[]` unchanged.
-- Serve URLs reuse `/serve/profile` and `/serve/grievance-card-attachment` (Bearer or session). Docs, Postman, MOBILE_EXCHANGES, help updated. Backup/restore unchanged (same tables/files).
-
----
-
-## Structure list API for mobile (2026-08-05)
-
-- **Additive:** `GET /api/structure/list` — paginated list (`page`, `per_page`, `q`, `project_id`, plus the same optional filters as the web Structure list). Envelope matches profile/grievance list (`items`, `total`, …). Requires `view_structure`; project-scoped via `user_projects`.
-- Enables a mobile **Structures** tab without opening structures only from Profiles.
-- Docs: `MOBILE_APP_INTEGRATION.md`, `API_CONTRACT.md`, `MOBILE_EXCHANGES.md`, Postman, help (Structure overview), DevelopmentHistory. Backup/restore unchanged (read-only API).
-
----
-
-## Mobile + tablet responsiveness baseline (2026-08-04)
-
-- Responsive shell now works by default on mobile/tablet: sidebar becomes a drawer under ~992px with overlay and close behavior.
-- Top navigation gains a mobile hamburger/offcanvas menu under ~992px to keep modules reachable on narrow screens.
-- List toolbar, grievance filter/form/view actions, and history panels were tightened for small screens.
-- `UserUiSettings::MOBILE_FRIENDLY_DEFAULT` is now `true` for new users; the setting remains available for enhanced stacking mode.
-- Added Playwright responsive smoke coverage and npm scripts.
-
----
-
-## Grievance API — field-level Activity History (2026-08-04)
-
-- **`POST /api/grievance/update/{id}`** now records the same field-level **from → to** diffs in Activity History as the web edit form (via shared `App\GrievanceFieldChanges`), and still tags the entry with `source: api`.
-- Notifications for non-status API updates include the changed-field summary when present.
-- Partial API updates preserve **`phase_id`** when omitted (no longer cleared to null on every update).
-- Help (grievance view), API contract, Postman description, DEVELOPMENTGUIDE, and DevelopmentHistory updated. Backup/restore unchanged (same `audit_log.changes` JSON shape).
-
----
-
-## Help / Admin Guide — backup restore hardening (2026-08-03)
-
-- Contextual Help page: `App/Views/help/pages/backup-restore.php` (`/help?from=backup-restore`).
-- Administrator Guide §4 Maintenance updated with PAPeR ZIP backup, CLI restore, wipe/`--force`, completion audit, and rollback guidance.
-- Backup/Restore UI tip links to Help and Admin Guide.
-
-## Restore hardening — force, wipe leftovers, safer migrate (2026-08-03)
-
-- **Hard-fail** on missing/foreign manifest `app` or dbname mismatch unless `--force`.
-- **Schema wipe** before import (drop all tables/views) so leftovers cannot survive; opt out with `--keep-extra-tables`.
-- **MigrationRunner:** duplicate column/table/key “already exists” conflicts are recorded as applied **without** running `down()` (avoids dropping restored columns).
-- **Tests:** `npm run test:restore-completion-audit`, `npm run test:migration-idempotent-schema`.
-
-## Restore — data completion audit + auto-rollback (2026-08-03)
-
-- **Feature:** After SQL import, restore compares **pre-sanitize** `database.sql` INSERT row counts to live `COUNT(*)` per table (`cli/restore_completion_audit.php`).
-- **On failure:** Auto-rolls back from the pre-restore safety ZIP when present, otherwise the newest `paper-backup-*.zip` / `paper-before-restore-*.zip` in `storage/backups` (excludes the failed source). Nested rollback uses `--skip-safety-backup --no-completion-audit --no-auto-rollback --no-migrate`.
-- **Flags:** `--no-completion-audit`, `--no-auto-rollback`.
-- **Test:** `npm run test:restore-completion-audit`.
-
-## Restore — keep INSERT rows with parentheses in text (2026-08-03)
-
-- **Bug:** `paper_sql_parse_value_tuples()` treated `(` / `)` inside quoted VALUES as tuple delimiters. Sanitizing legacy generated-column dumps (e.g. `grievances.description_complaint`) dropped most rows while mysql still exited 0 — list pages looked “empty” after restore.
-- **Fix:** `cli/backup_sql_helper.php` parses tuples with string/escape awareness (including SQL `''` doubled quotes).
-- **Test:** `tests/cli/backup_sql_generated_columns_test.php` covers parentheses and doubled quotes in VALUES.
-
-## Stop tracking `.env.playwright` (2026-08-03)
-
-- Remove `.env.playwright` from the git index (file was already listed in `.gitignore`). Local copies stay; use `.env.playwright.example` as the template for `BASE_URL` and credentials.

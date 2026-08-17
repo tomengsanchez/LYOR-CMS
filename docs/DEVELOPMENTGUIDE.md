@@ -40,7 +40,8 @@ Legacy paths (`/login`, `/pages`, …) **301 redirect** to `/admin/...` via `Leg
 │   ├── Views/                # admin views + public/ + help/
 │   ├── Capabilities.php      # Role capabilities + menu keys
 │   ├── ContentBlocks.php     # Block builder parse/render
-│   ├── LayoutBuilder.php     # Divi-style Section/Row/Column/Module
+│   ├── LayoutBuilder.php     # Facade: Section/Row/Column/Module (`LayoutBuilder::`)
+│   ├── LayoutBuilder/        # ModuleCatalog, Normalizer, Renderer, Sanitize, Css
 │   ├── Permalink.php         # URL generation + catch-all resolver
 │   ├── ReadingSettings.php   # Homepage / posts per page
 │   ├── DiscussionSettings.php
@@ -191,7 +192,7 @@ Key CMS capabilities: `view_pages`, `view_posts`, `moderate_comments`, `manage_c
 
 **External files only** under `public/assets/js/`. Views may output JSON config blocks for JS; no inline `onclick` / behavior scripts.
 
-Examples: `public/assets/js/content/blocks.js`, `public/assets/js/builder/*.js` (boot `editor.js` plus `ns.js`, `history.js`, `model.js`, `canvas.js`, `layers.js`, `dnd.js`, `actions.js`, `panel.js`, `save.js`, `ui.js`), `public/assets/js/widgets/form.js`, `public/assets/js/public/comments.js`.
+Examples: `public/assets/js/content/blocks.js`, `public/assets/js/builder/*.js` (boot `editor.js` plus `ns.js`, `history.js`, `model.js`, `styles.js`, `canvas.js`, `layers.js`, `dnd.js`, `actions.js`, `panel.js`, `save.js`, `ui.js`), `public/assets/js/widgets/form.js`, `public/assets/js/public/comments.js`.
 
 ### Content revisions
 
@@ -211,11 +212,13 @@ JSON stored in `layout_json` on pages/posts (migration **016**). Structure: Sect
 
 - **Admin:** `GET /admin/builder/page/{id}` / `GET /admin/builder/post/{id}`; save via `POST .../save` (FormData `layout_json` + CSRF, check without rotate).
 - **Entry:** “Edit via Frontend editor” on page/post forms (after the entity is saved).
-- **Device preview:** Desktop / Tablet / Mobile toolbar toggles set canvas `max-width` (1100 / 768 / 390).
+- **Device preview:** Desktop / Tablet / Mobile toolbar toggles set canvas `max-width` (1100 / 768 / 390) and which Design bag is edited (`settings` vs `settings_tablet` / `settings_mobile`, same for `design_*`). Public CSS: `@media (max-width: 1023.98px)` / `767.98px`. Editor preview prefixes rules with `[data-device]` because the canvas is not an iframe.
+- **Theme colors:** Design color fields accept `#hex` or tokens (`accent`, `accent-soft`, `text`, `muted`, `surface`, `bg`, `border`) compiled to `var(--pub-…)`. Tokens follow Appearance → Customize without rewriting each module.
+- **Background image:** Section / row / column Design can set `bg_media_id` / `bg_image` plus overlay color and 0–80% strength. Compiled to `background-image` (optional `linear-gradient` overlay + `url("…")`). URLs are sanitized (no quotes/parentheses). Image is site-wide; overlay can be per-device.
 - **Templates:** Shared library in `cms_layout_templates` (migration **018**). Toolbar **Templates** → load / save current / delete. Endpoints: `GET|POST /admin/builder/templates`, `GET /admin/builder/templates/{id}`, `POST .../{id}/delete`.
 - **Row columns:** Content panel layout picker (1–4 equal + common splits); row chrome **Columns** opens it. Individual columns: **1–12** width slider + **min height** / vertical align. Drag the edge between two columns to split widths. Modules are preserved when the row layout changes.
-- **Modules:** Side-panel type picker with short descriptions and a filter box; empty-column **+ Add module** or **+** after a module; Content / Design / Advanced inspector; drag **⋮⋮** to reorder; **Layers** tree (search box; hover previews on the canvas); click heading/text on canvas to type in place; **Copy** / **Paste** toolbar, right-click menu, and Ctrl/Cmd+C/V/X (in-memory only); **?** for shortcuts; Alt+arrows to nudge; 85/100/115% zoom; **Undo / Redo**; autosave about every 12s when dirty (deferred while typing; does not rebuild the canvas). Zoom / device / Layers stay for the browser tab (`sessionStorage`). Confirm before delete. Button and CTA support `style` (`primary|secondary|outline`) and `new_tab`. Column settings `min_height` and `valign` live in `layout_json` (backup via SQL dump).
-- **PHP:** `App\LayoutBuilder` parse/normalize/render; `App\Models\LayoutTemplate`; assets `public/assets/js/builder/` (split modules, boot `editor.js`) and `public/assets/css/admin/builder.css`.
+- **Modules:** Side-panel type picker with short descriptions and a filter box (`LayoutBuilder::moduleCatalog()` via editor `data-modules` also carries Content **fields** and **defaults**; carousel uses `custom: carousel`; media/html preview stay special in `panel.js`); empty-column **+ Add module** or **+** after a module; PHP `normalizeModuleData` / `renderModuleInner` remain type switches. Content / Design / Advanced inspector; Design **Normal / Hover** (hover stored in `design_hover`, same CSS on every device; compiled `:hover` includes `.btn` / `.public-site` so button themes do not win); **Copy style** / **Paste style** (appearance bags only); drag **⋮⋮** to reorder; **Layers** tree (search box; drag rows to reorder; hover previews on the canvas); click heading/text on canvas to type in place; **Copy** / **Paste** toolbar, right-click menu, and Ctrl/Cmd+C/V/X (in-memory only); **?** for shortcuts; Alt+arrows to nudge; 85/100/115% zoom; **Undo / Redo**; autosave about every 12s when dirty (deferred while typing; does not rebuild the canvas). Zoom / device / Layers stay for the browser tab (`sessionStorage`). Confirm before delete. Button and CTA support `style` (`primary|secondary|outline`) and `new_tab`. Column settings `min_height` and `valign` live in `layout_json` (backup via SQL dump). **Design / settings CSS** (colors including theme tokens, spacing as TRBL that stores a shorthand string, min-height, text align, font size/weight/line-height, border/radius, allowlisted box-shadow, section background image + overlay, module hover) patches that node’s rules in `#cmsBuilderLiveCss` without rebuilding the canvas, including per-device overrides; width, valign, and hide-on-device patch classes in place. **Content** edits patch the selected module’s inner HTML (carousel still rebuilds). Custom CSS class and section type still rebuild. Public HTML prepends `<style class="cms-layout-css">` compiled by `LayoutBuilder::compileStylesheet` (same safeColor / safeSpacing / safeHeight checks; not stored — derived from `layout_json`).
+- **PHP:** `App\LayoutBuilder` facade plus `App/LayoutBuilder/` (`ModuleCatalog`, `Normalizer`, `Renderer`, `Sanitize`, `Css`); `App\Models\LayoutTemplate`; assets `public/assets/js/builder/` (split modules including `styles.js`, boot `editor.js`) and `public/assets/css/admin/builder.css`.
 - **Public precedence** (`ContentBlocks::renderEntity`): `layout_json` → `blocks_json` → HTML `body`.
 - **Backup:** `layout_json` and `cms_layout_templates` included in full DB dump; no special restore steps.
 

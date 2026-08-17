@@ -20,7 +20,7 @@ PAPeR was a domain-specific system (profiles, structures, grievances, SES, RAP).
 
 - **Breaking:** Existing PAPeR databases are not migrated automatically; deploy requires a new database and `php cli/migrate.php`.
 - **Positive:** Smaller codebase, clearer module boundaries, standard CMS UX.
-- **Negative:** Historical PAPeR data and domain-specific docs remain in git history and `migrations_legacy/` but are not active.
+- **Negative:** Historical PAPeR data remains in git history and `database/migrations_legacy/`; it is not active. Domain docs were removed from `docs/`.
 
 ## Alternatives considered
 

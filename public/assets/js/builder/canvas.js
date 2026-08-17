@@ -6,16 +6,16 @@
         with (ctx) {
             function modulePreviewHtml(mod) {
                 var d = mod.data || {};
-                var style = designStyle(mod.design);
                 var adv = mod.advanced || {};
-                var wrapCls = 'cms-layout-module cms-mod-' + esc(mod.type);
+                var mid = ensureNodeId(mod);
+                var wrapCls = 'cms-layout-module cms-mod-' + esc(mod.type) + (elementCssClass(mid) ? ' ' + elementCssClass(mid) : '');
                 if (adv.hide_mobile) {
                     wrapCls += ' cms-lb-hide-mobile';
                 }
                 if (adv.hide_desktop) {
                     wrapCls += ' cms-lb-hide-desktop';
                 }
-                var wrapOpen = '<div class="' + wrapCls + '"' + (style ? ' style="' + esc(style) + '"' : '') + '>';
+                var wrapOpen = '<div class="' + wrapCls + '"' + (mid ? ' data-el-id="' + esc(mid) + '"' : '') + '>';
                 var wrapClose = '</div>';
                 var inner = '';
                 switch (mod.type) {
@@ -133,9 +133,12 @@
                 if (!canvas) {
                     return;
                 }
+                if (refreshLiveCss) {
+                    refreshLiveCss();
+                }
                 if (!layout.sections.length) {
                     canvas.innerHTML = '<div class="cms-lb-empty"><h2>Start this layout</h2>'
-                        + '<p>Add a section, pick columns, then modules. Drag ⋮⋮ to reorder. Layers lists the tree. Copy/paste with Ctrl+C / V. Undo with Ctrl+Z, save with Ctrl+S.</p>'
+                        + '<p>Add a section, pick columns, then modules. Drag ⋮⋮ on the canvas or rows in Layers to reorder. Copy/paste with Ctrl+C / V. Undo with Ctrl+Z, save with Ctrl+S.</p>'
                         + '<button type="button" class="btn btn-primary btn-sm" data-action="add-section">+ Add section</button></div>';
                     bindCanvas();
                     updateShell();
@@ -149,13 +152,14 @@
                     }
                     return;
                 }
-            
+
                 var html = '<div class="cms-layout">';
                 layout.sections.forEach(function (section, si) {
                     var sel = selection.kind === 'section' && selection.sectionIdx === si ? ' is-selected' : '';
-                    var st = settingsStyle(section.settings);
-                    html += '<section class="cms-lb-section cms-layout-section cms-layout-section--' + esc(section.type || 'regular') + sel + '" data-kind="section" data-si="' + si + '"'
-                        + (st ? ' style="' + esc(st) + '"' : '') + '>';
+                    var sid = ensureNodeId(section);
+                    html += '<section class="cms-lb-section cms-layout-section cms-layout-section--' + esc(section.type || 'regular')
+                        + (elementCssClass(sid) ? ' ' + elementCssClass(sid) : '') + sel
+                        + '" data-kind="section" data-si="' + si + '"' + (sid ? ' data-el-id="' + esc(sid) + '"' : '') + '>';
                     html += chrome('Section',
                         chromeBtn('sec-up', 'data-si="' + si + '"', '↑', 'Move section up')
                         + chromeBtn('sec-down', 'data-si="' + si + '"', '↓', 'Move section down')
@@ -166,7 +170,11 @@
             
                     (section.rows || []).forEach(function (row, ri) {
                         var rsel = selection.kind === 'row' && selection.sectionIdx === si && selection.rowIdx === ri ? ' is-selected' : '';
-                        html += '<div class="cms-lb-row cms-layout-row row g-3' + rsel + '" data-kind="row" data-si="' + si + '" data-ri="' + ri + '">';
+                        var rid = ensureNodeId(row);
+                        html += '<div class="cms-lb-row cms-layout-row row g-3'
+                            + (elementCssClass(rid) ? ' ' + elementCssClass(rid) : '') + rsel
+                            + '" data-kind="row" data-si="' + si + '" data-ri="' + ri + '"'
+                            + (rid ? ' data-el-id="' + esc(rid) + '"' : '') + '>';
                         html += chrome('Row',
                             chromeBtn('row-up', 'data-si="' + si + '" data-ri="' + ri + '"', '↑', 'Move row up')
                             + chromeBtn('row-down', 'data-si="' + si + '" data-ri="' + ri + '"', '↓', 'Move row down')
@@ -184,11 +192,12 @@
                                 && modulePickTarget.ci === ci;
                             var valign = (col.settings && col.settings.valign) || '';
                             var valignCls = (valign === 'center' || valign === 'bottom') ? ' cms-layout-column--valign-' + valign : '';
-                            var cst = settingsStyle(col.settings);
+                            var cid = ensureNodeId(col);
                             var colsInRow = (row.columns || []).length;
                             html += '<div class="cms-lb-col cms-layout-column col-md-' + w + csel + (picking ? ' is-picking' : '') + valignCls
+                                + (elementCssClass(cid) ? ' ' + elementCssClass(cid) : '')
                                 + '" data-kind="column" data-si="' + si + '" data-ri="' + ri + '" data-ci="' + ci + '"'
-                                + (cst ? ' style="' + esc(cst) + '"' : '') + '>';
+                                + (cid ? ' data-el-id="' + esc(cid) + '"' : '') + '>';
                             html += chrome('Col ' + w + '/12',
                                 chromeBtn('add-mod', 'data-si="' + si + '" data-ri="' + ri + '" data-ci="' + ci + '"', '+ Module', 'Add module')
                                 + chromeBtn('dup-col', 'data-si="' + si + '" data-ri="' + ri + '" data-ci="' + ci + '"', 'Dup', 'Duplicate column')
@@ -296,7 +305,18 @@
                         selectFromEl(el);
                     });
                 });
-                canvas.querySelectorAll('[data-cms-canvas-link]').forEach(function (a) {
+                bindCanvasLinks(canvas);
+                bindDragAndDrop();
+                bindColumnResize();
+                bindInlineEditing(canvas);
+            }
+
+            function bindCanvasLinks(root) {
+                root = root || canvas;
+                if (!root) {
+                    return;
+                }
+                root.querySelectorAll('[data-cms-canvas-link]').forEach(function (a) {
                     a.addEventListener('click', function (e) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -306,13 +326,14 @@
                         }
                     });
                 });
-                bindDragAndDrop();
-                bindColumnResize();
-                bindInlineEditing();
             }
             
-            function bindInlineEditing() {
-                canvas.querySelectorAll('[data-inline-field]').forEach(function (el) {
+            function bindInlineEditing(root) {
+                root = root || canvas;
+                if (!root) {
+                    return;
+                }
+                root.querySelectorAll('[data-inline-field]').forEach(function (el) {
                     el.addEventListener('paste', function (e) {
                         e.preventDefault();
                         var text = '';
@@ -365,6 +386,37 @@
                     panelField.value = val;
                 }
             }
+
+            function patchSelectedModulePreview() {
+                if (!canvas || selection.kind !== 'module') {
+                    return false;
+                }
+                var node = getSelectedNode();
+                if (!node || node.type === 'carousel') {
+                    return false;
+                }
+                var chrome = selectedChromeEl();
+                if (!chrome) {
+                    return false;
+                }
+                var wrap = chrome.querySelector('.cms-layout-module');
+                if (!wrap) {
+                    return false;
+                }
+                var box = document.createElement('div');
+                box.innerHTML = modulePreviewHtml(node);
+                var next = box.firstElementChild;
+                if (!next) {
+                    return false;
+                }
+                wrap.replaceWith(next);
+                bindCanvasLinks(chrome);
+                bindInlineEditing(chrome);
+                if (layersEl && !layersEl.hidden) {
+                    renderLayers();
+                }
+                return true;
+            }
             
             ctx.modulePreviewHtml = modulePreviewHtml;
             ctx.sanitizePreviewHtml = sanitizePreviewHtml;
@@ -373,8 +425,10 @@
             ctx.render = render;
             ctx.updateShell = updateShell;
             ctx.bindCanvas = bindCanvas;
+            ctx.bindCanvasLinks = bindCanvasLinks;
             ctx.bindInlineEditing = bindInlineEditing;
             ctx.applyInlineFromEl = applyInlineFromEl;
+            ctx.patchSelectedModulePreview = patchSelectedModulePreview;
         }
     });
 })();

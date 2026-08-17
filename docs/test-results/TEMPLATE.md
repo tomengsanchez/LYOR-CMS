@@ -7,7 +7,7 @@
 | **Branch** | e.g. `dev1` |
 | **Commit** | short SHA |
 | **Environment** | local / staging / CI |
-| **BASE_URL** | e.g. `http://eco.local` (no credentials) |
+| **BASE_URL** | e.g. `http://cms.local` (no credentials) |
 | **DB engine** | MySQL x.x / MariaDB x.x (if known) |
 | **Suite** | e.g. `test:e2e:full`, API smoke, backup-restore |
 | **Command** | exact npm / playwright command |

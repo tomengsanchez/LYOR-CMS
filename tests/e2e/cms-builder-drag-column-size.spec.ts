@@ -39,6 +39,27 @@ test.describe('Visual builder — drag order + column size', () => {
     await expect(page.locator('#cmsBuilderLayersBody')).toContainText('Module A');
     await page.locator('#cmsBuilderLayersBody button').filter({ hasText: 'Module A' }).click();
     await expect(page.locator('.cms-lb-mod.is-selected')).toContainText('Module A');
+    await page.locator('[data-panel-tab="design"]').click();
+    await page.locator('[data-design-state="hover"]').click();
+    await page.locator('#cmsBuilderPanelBody [data-preset-field="text_color"][data-preset-value="accent"]').click();
+    await expectLiveCss(page, '#cmsBuilderLiveCss', ':hover');
+    await page.locator('[data-design-state="normal"]').click();
+    await page.locator('#cmsBuilderPanelBody [data-spacing-field="padding"][data-spacing-side="t"]').fill('1rem');
+    await expectLiveCss(page, '#cmsBuilderLiveCss', 'padding:1rem 0px 0px');
+    await page.locator('#cmsBuilderPanelBody [data-preset-field="border_radius"][data-preset-value="8px"]').click();
+    await expectLiveCss(page, '#cmsBuilderLiveCss', 'border-radius:8px');
+    await page.locator('#cmsBuilderPanelBody [data-field="box_shadow"]').selectOption('md');
+    await expectLiveCss(page, '#cmsBuilderLiveCss', 'box-shadow:0 4px 12px');
+    await page.locator('[data-panel-tab="content"]').click();
+    await page.locator('#cmsBuilderPanelBody [data-field="text"]').fill('Module A live patch');
+    await expect(page.locator('.cms-lb-mod.is-selected')).toContainText('Module A live patch');
+    await page.locator('#cmsBuilderPanelBody [data-field="text"]').fill('Module A — drag me');
+    await expect(page.locator('.cms-lb-mod.is-selected')).toContainText('Module A — drag me');
+    await page.locator('#cmsBuilderLayersBody button').filter({ hasText: 'Left column' }).click();
+    await page.locator('[data-panel-tab="content"]').click();
+    await expect(page.locator('#cmsBuilderPanelBody [data-field="level"]')).toHaveValue('2');
+    await page.locator('#cmsBuilderLayersBody button').filter({ hasText: 'Module A' }).click();
+    await page.locator('[data-panel-tab="content"]').click();
     await expect(page.locator('#cmsBuilderCopy')).toBeEnabled();
     await page.locator('#cmsBuilderCopy').click();
     await expect(page.locator('#cmsBuilderPaste')).toBeEnabled();
@@ -47,6 +68,7 @@ test.describe('Visual builder — drag order + column size', () => {
     await expect(page.locator('#cmsBuilderShortcuts')).toBeVisible();
     await page.locator('#cmsBuilderShortcutsClose').click();
     await expect(page.locator('#cmsBuilderShortcuts')).toBeHidden();
+    await expect(page.locator('#cmsBuilderLayersBody [data-kind="module"]').first()).toHaveAttribute('draggable', 'true');
     await pauseToWatch(page, 'Layers tree, Copy/Paste, and keyboard shortcuts (?).');
 
     await selectBlock(page, page.locator('.cms-lb-col[data-ci="0"]'));
@@ -67,15 +89,26 @@ test.describe('Visual builder — drag order + column size', () => {
     await page.locator('[data-field="valign"]').selectOption('center');
     await page.waitForTimeout(250);
     await expect(page.locator('.cms-lb-col[data-ci="0"]')).toHaveClass(/cms-layout-column--valign-center/);
-    await expect(page.locator('.cms-lb-col[data-ci="0"]')).toHaveAttribute('style', /min-height:\s*240px/);
+    await expectLiveCss(page, '#cmsBuilderLiveCss', 'min-height:240px');
     await pauseToWatch(page, 'Min height 240px + vertical align middle.');
 
     await page.locator('#cmsBuilderPanelBody [data-preset-field="min_height"][data-preset-value="50vh"]').click();
     await page.waitForTimeout(250);
-    await expect(page.locator('.cms-lb-col[data-ci="0"]')).toHaveAttribute('style', /min-height:\s*50vh/);
+    await expectLiveCss(page, '#cmsBuilderLiveCss', 'min-height:50vh');
     await pauseToWatch(page, 'Same control: Half screen (50vh). Restoring 240px next.');
     await page.locator('#cmsBuilderPanelBody [data-preset-field="min_height"][data-preset-value="240px"]').click();
     await page.waitForTimeout(250);
+
+    await page.locator('[data-device="tablet"]').click();
+    await expect(page.locator('#cmsBuilderCanvasWrap')).toHaveAttribute('data-device', 'tablet');
+    await page.locator('[data-field="min_height"]').fill('160px');
+    await page.waitForTimeout(250);
+    await expectLiveCss(page, '#cmsBuilderLiveCss', 'min-height:160px');
+    await expectLiveCss(page, '#cmsBuilderLiveCss', 'data-device="tablet"');
+    await page.locator('[data-device="desktop"]').click();
+    await expect(page.locator('#cmsBuilderCanvasWrap')).toHaveAttribute('data-device', 'desktop');
+    await expectLiveCss(page, '#cmsBuilderLiveCss', 'min-height:240px');
+    await pauseToWatch(page, 'Tablet min-height 160px override; desktop still 240px.');
 
     await selectBlock(page, page.locator('.cms-lb-row[data-kind="row"]').first());
     await page.locator('[data-panel-tab="design"]').click();
@@ -88,7 +121,10 @@ test.describe('Visual builder — drag order + column size', () => {
     await page.locator('[data-panel-tab="design"]').click();
     await page.locator('#cmsBuilderPanelBody [data-preset-field="min_height"][data-preset-value="160px"]').click();
     await page.waitForTimeout(250);
-    await pauseToWatch(page, 'Section Design → min height 160px.');
+    await page.locator('#cmsBuilderPanelBody [data-preset-field="bg_color"][data-preset-value="accent"]').click();
+    await page.waitForTimeout(250);
+    await expectLiveCss(page, '#cmsBuilderLiveCss', 'var(--pub-accent)');
+    await pauseToWatch(page, 'Section Design → min height 160px + Accent theme color.');
 
     const widthsBefore = await columnWidths(page);
     expect(widthsBefore[0] + widthsBefore[1]).toBeGreaterThanOrEqual(11);
@@ -161,13 +197,27 @@ test.describe('Visual builder — drag order + column size', () => {
     await page.goto(new URL(previewHref!, page.url()).href);
     await expect(page.getByRole('heading', { name: 'Left column' })).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('.cms-layout-column[class*="col-md-"]')).toHaveCount(2);
-    await expect(page.locator('.cms-layout-column').first()).toHaveAttribute('style', /min-height:\s*240px/);
+    await expectLiveCss(page, 'style.cms-layout-css', 'min-height:240px');
+    await expectLiveCss(page, 'style.cms-layout-css', 'min-height:160px');
+    await expectLiveCss(page, 'style.cms-layout-css', '@media (max-width:1023.98px)');
+    await expectLiveCss(page, 'style.cms-layout-css', 'var(--pub-accent)');
+    await expectLiveCss(page, 'style.cms-layout-css', ':hover');
+    await expectLiveCss(page, 'style.cms-layout-css', 'padding:1rem 0px 0px');
+    await expectLiveCss(page, 'style.cms-layout-css', 'border-radius:8px');
+    await expectLiveCss(page, 'style.cms-layout-css', 'box-shadow:0 4px 12px');
     await expect(page.locator('.cms-layout-column.cms-layout-column--valign-center').first()).toBeVisible();
     await pauseToWatch(page, 'Public page: saved widths and min-height apply to visitors.');
 
     console.log(`Builder demo page #${pageId} at ${new URL(previewHref!, page.url()).href}`);
   });
 });
+
+/** <style> tags are not in the a11y tree; read textContent instead of toContainText. */
+async function expectLiveCss(page: Page, selector: string, snippet: string): Promise<void> {
+  await expect
+    .poll(async () => page.locator(selector).evaluate((el) => el.textContent || ''), { timeout: 10_000 })
+    .toContain(snippet);
+}
 
 async function createPublishedPage(page: Page, title: string, slug: string): Promise<string> {
   await page.goto(`${baseURL}/admin/pages/create`);
@@ -304,6 +354,7 @@ declare global {
       setLayout: (layout: unknown) => void;
       applyReorder: (src: unknown, dest: unknown, place: string) => void;
       render: () => void;
+      refreshLiveCss?: () => void;
     };
   }
 }
