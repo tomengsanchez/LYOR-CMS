@@ -7,6 +7,7 @@ $siteSeo = $siteSeo ?? \App\Models\AppSettings::getSiteSeoConfig();
 $publicTheme = $publicTheme ?? \App\PublicTheme::getConfig();
 $reading = $reading ?? \App\ReadingSettings::get();
 $discussion = $discussion ?? \App\DiscussionSettings::get();
+$newsletter = $newsletter ?? \App\NewsletterSettings::get();
 $permalinks = $permalinks ?? \App\PermalinkSettings::get();
 $themePresets = \App\PublicTheme::presets();
 $mediaImages = $mediaImages ?? [];
@@ -43,7 +44,7 @@ ob_start();
         <p class="text-muted small mb-4">
             Configure the application name, company name, and logo. The logo is also used as the favicon.
         </p>
-        <form method="post" action="<?= admin_url('system/general/save') ?>" enctype="multipart/form-data">
+        <form id="generalSettingsForm" method="post" action="<?= admin_url('system/general/save') ?>" enctype="multipart/form-data">
             <?= \Core\Csrf::field() ?>
             <div class="row g-3">
                 <div class="col-md-6">
@@ -143,6 +144,33 @@ ob_start();
                 </div>
             </div>
             <hr class="my-4">
+            <h6 class="mb-3">Newsletter</h6>
+            <p class="text-muted small">Public form at <code>/subscribe</code> and the Newsletter signup widget. Confirmed addresses are listed under Content → Subscribers. Double opt-in sends a confirm email via Email settings (SMTP or MailerSend).</p>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input type="hidden" name="newsletter_enabled" value="0">
+                        <input type="checkbox" class="form-check-input" name="newsletter_enabled" value="1" id="nlEnabled"
+                            <?= !empty($newsletter->enabled) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="nlEnabled">Allow public newsletter signups</label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input type="hidden" name="newsletter_double_opt_in" value="0">
+                        <input type="checkbox" class="form-check-input" name="newsletter_double_opt_in" value="1" id="nlDouble"
+                            <?= !empty($newsletter->double_opt_in) ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="nlDouble">Require email confirmation (double opt-in)</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" for="nlRate">Max signups per IP / hour</label>
+                    <input type="number" name="newsletter_rate_limit" id="nlRate" class="form-control"
+                        min="0" max="100" value="<?= (int) ($newsletter->rate_limit_per_hour ?? 8) ?>">
+                    <small class="text-muted">0 = unlimited. Counts new rows and form attempts.</small>
+                </div>
+            </div>
+            <hr class="my-4">
             <h6 class="mb-3">Permalinks</h6>
             <p class="text-muted small">Custom URL structures for pages and posts. Default routes (<code>/p/…</code>, <code>/blog/…</code>) always work; these add alternate patterns.</p>
             <div class="row g-3">
@@ -167,39 +195,6 @@ ob_start();
             <h6 class="mb-3">Public site theme</h6>
             <p class="text-muted small">Colors, typography, layout, and default light/dark mode for the public site and auth pages.</p>
             <div class="row g-3">
-                <div class="col-12">
-                    <div class="border rounded p-3">
-                        <h6 class="fw-semibold mb-2">Style packs</h6>
-                        <p class="small text-muted">Upload into the library, then activate the pack you want. WordPress zips map colors only. <a href="<?= admin_url('customize') ?>">Open Customizer</a> for live preview.</p>
-                        <?php
-                        $stylePackFlash = $_SESSION['style_pack_flash'] ?? null;
-                        unset($_SESSION['style_pack_flash']);
-                        ?>
-                        <?php if (!empty($stylePackFlash) && is_array($stylePackFlash)): ?>
-                        <div class="alert alert-<?= !empty($stylePackFlash['ok']) ? 'success' : 'danger' ?> py-2"><?= htmlspecialchars((string) ($stylePackFlash['message'] ?? '')) ?></div>
-                        <?php endif; ?>
-                        <?php $returnTarget = 'general'; require __DIR__ . '/../partials/theme_style_pack_library.php'; ?>
-                        <form method="post" action="<?= admin_url('customize/import-style-pack') ?>" enctype="multipart/form-data" class="row g-2 align-items-end">
-                            <?= \Core\Csrf::field() ?>
-                            <input type="hidden" name="return" value="general">
-                            <div class="col-md-6">
-                                <label class="form-label">Upload zip to library</label>
-                                <input type="file" name="style_pack" class="form-control" accept=".zip,application/zip" required>
-                            </div>
-                            <div class="col-md-6 d-flex flex-wrap gap-2">
-                                <button type="submit" class="btn btn-primary">Upload &amp; activate</button>
-                                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/export-style-pack') ?>">Export current</a>
-                                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/sample-style-pack') ?>">Download template</a>
-                                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/sample-style-pack') ?>?pack=manly">Download Manly</a>
-                            </div>
-                        </form>
-                        <form method="post" action="<?= admin_url('customize/clear-style-pack') ?>" class="mt-2">
-                            <?= \Core\Csrf::field() ?>
-                            <input type="hidden" name="return" value="general">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Clear active pack</button>
-                        </form>
-                    </div>
-                </div>
                 <div class="col-12">
                     <label class="form-label fw-semibold d-block">Color preset</label>
                     <div class="pub-theme-swatch-grid">
@@ -804,6 +799,45 @@ ob_start();
         </form>
     </div>
 </div>
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Style packs</h5>
+    </div>
+    <div class="card-body">
+        <p class="small text-muted">Upload into the library, then activate the pack you want. WordPress zips map colors only. <a href="<?= admin_url('customize') ?>">Open Customizer</a> for live preview.</p>
+        <?php
+        $stylePackFlash = $_SESSION['style_pack_flash'] ?? null;
+        unset($_SESSION['style_pack_flash']);
+        ?>
+        <?php if (!empty($stylePackFlash) && is_array($stylePackFlash)): ?>
+        <div class="alert alert-<?= !empty($stylePackFlash['ok']) ? 'success' : 'danger' ?> py-2"><?= htmlspecialchars((string) ($stylePackFlash['message'] ?? '')) ?></div>
+        <?php endif; ?>
+        <?php $returnTarget = 'general'; require __DIR__ . '/../partials/theme_style_pack_library.php'; ?>
+        <form method="post" action="<?= admin_url('customize/import-style-pack') ?>" enctype="multipart/form-data" class="row g-2 align-items-end">
+            <?= \Core\Csrf::field() ?>
+            <input type="hidden" name="return" value="general">
+            <div class="col-md-6">
+                <label class="form-label">Upload zip to library</label>
+                <input type="file" name="style_pack" class="form-control" accept=".zip,application/zip" required>
+            </div>
+            <div class="col-md-6 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">Upload &amp; activate</button>
+                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/export-style-pack') ?>">Export current</a>
+                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/sample-style-pack') ?>">Download template</a>
+                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/sample-style-pack') ?>?pack=manly">Download Manly</a>
+                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/sample-style-pack') ?>?pack=pulse">Download Pulse</a>
+                <a class="btn btn-outline-secondary" href="<?= admin_url('customize/sample-style-pack') ?>?pack=enterprise">Download Enterprise</a>
+            </div>
+        </form>
+        <form method="post" action="<?= admin_url('customize/clear-style-pack') ?>" class="mt-2">
+            <?= \Core\Csrf::field() ?>
+            <input type="hidden" name="return" value="general">
+            <button type="submit" class="btn btn-sm btn-outline-danger">Clear active pack</button>
+        </form>
+    </div>
+</div>
+
 <script src="/public/assets/js/general/seo-form.js"></script>
 <link href="/public/assets/css/public/themes.css" rel="stylesheet">
 <script src="/public/assets/js/general/theme-customizer.js"></script>

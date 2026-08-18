@@ -13,6 +13,7 @@ use App\Models\Page;
 use App\PublicTheme;
 use App\ReadingSettings;
 use App\DiscussionSettings;
+use App\NewsletterSettings;
 use App\PermalinkSettings;
 
 class GeneralController extends Controller
@@ -42,6 +43,7 @@ class GeneralController extends Controller
             'reading' => ReadingSettings::get(),
             'publishedPages' => Page::publishedOptions(),
             'discussion' => DiscussionSettings::get(),
+            'newsletter' => NewsletterSettings::get(),
             'permalinks' => PermalinkSettings::get(),
         ]);
     }
@@ -103,6 +105,7 @@ class GeneralController extends Controller
         ReadingSettings::save($_POST);
 
         DiscussionSettings::save($_POST);
+        NewsletterSettings::save($_POST);
         PermalinkSettings::save($_POST);
 
         AppSettings::saveSiteSeoConfig([

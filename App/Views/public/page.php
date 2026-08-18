@@ -2,10 +2,20 @@
 use App\Models\Media;
 use App\Models\Page;
 use App\ContentBlocks;
+use App\PublicToc;
 use App\Permalink;
 
 $publicTitle = ($page->meta_title ?: $page->title) . ' — ' . ($branding->app_name ?? 'Simple CMS');
-$bodyHtml = ContentBlocks::renderEntity($page, (string) ($page->body ?? ''));
+$contentLocked = !empty($contentLocked);
+if ($contentLocked) {
+    $bodyHtml = '';
+    $tocNav = '';
+} else {
+    $bodyHtml = ContentBlocks::renderEntity($page, (string) ($page->body ?? ''));
+    $tocPack = PublicToc::enhance($bodyHtml);
+    $bodyHtml = $tocPack['html'];
+    $tocNav = PublicToc::renderNav($tocPack['items']);
+}
 $publicNavActive = $publicNavActive ?? 'home';
 $isHomepage = !empty($isHomepage);
 $pageLayout = \App\PublicTheme::normalizeContentLayout($page->content_layout ?? null);
@@ -44,13 +54,18 @@ ob_start();
     <?php if (!$isHomepage && !empty($page->updated_at)): ?>
     <p class="text-muted small mb-3"><time datetime="<?= htmlspecialchars($page->updated_at) ?>">Updated <?= htmlspecialchars($page->updated_at) ?></time></p>
     <?php endif; ?>
+    <?php if ($contentLocked): ?>
+    <?php $unlockType = 'page'; $unlockEntity = $page; require __DIR__ . '/partials/password_gate.php'; ?>
+    <?php else: ?>
     <?php
     $bluf = trim((string) ($page->citation_snippet ?? ''));
     if ($bluf !== ''):
     ?>
     <p class="cms-ai-answer"><?= htmlspecialchars($bluf) ?></p>
     <?php endif; ?>
+    <?= $tocNav ?>
     <div class="cms-body"><?= $bodyHtml ?></div>
+    <?php endif; ?>
 </article>
 <?php
 $content = ob_get_clean();

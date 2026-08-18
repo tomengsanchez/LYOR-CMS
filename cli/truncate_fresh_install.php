@@ -87,6 +87,7 @@ $tablesToTruncate = [
     'cms_post_tags',
     'cms_tags',
     'cms_comments',
+    'cms_newsletter_subscribers',
     'cms_widgets',
     'cms_media_sizes',
     'cms_posts',

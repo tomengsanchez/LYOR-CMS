@@ -3,10 +3,21 @@ import { loginAsAdmin } from './support/auth';
 import { baseURL } from './support/config';
 
 test.describe('Simple CMS extended features', () => {
-  test('blog search form accepts query', async ({ page }) => {
+  test('site search form accepts query', async ({ page }) => {
+    await page.goto(`${baseURL}/search?q=welcome`);
+    await expect(page.locator('#siteSearchInput')).toHaveValue('welcome');
+    await expect(page.locator('h1')).toContainText(/Search/);
+  });
+
+  test('blog search form accepts query when theme enables it', async ({ page }) => {
     await page.goto(`${baseURL}/blog?q=welcome`);
-    await expect(page.locator('#blogSearchInput')).toHaveValue('welcome');
     await expect(page.locator('h1')).toContainText(/Search|Blog/);
+    const blogSearch = page.locator('#blogSearchInput');
+    if ((await blogSearch.count()) === 0) {
+      test.skip(true, 'Pulse and similar packs hide the on-blog search box');
+      return;
+    }
+    await expect(blogSearch).toHaveValue('welcome');
   });
 
   test('admin comments page loads', async ({ page }) => {

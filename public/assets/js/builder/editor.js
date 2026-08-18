@@ -1,6 +1,6 @@
 /**
  * Visual layout builder — boot (config, events, CmsBuilderApi).
- * Modules: ns, history, model, styles, canvas, layers, dnd, actions, panel, save, ui.
+ * Modules: ns, history, model, styles, canvas, layers, dnd, actions, wysiwyg, panel, save, ui.
  */
 (function (global) {
     'use strict';
@@ -27,7 +27,8 @@
                     hint: String(v.hint || ''),
                     fields: Array.isArray(v.fields) ? v.fields : [],
                     defaults: v.defaults && typeof v.defaults === 'object' ? v.defaults : {},
-                    custom: String(v.custom || '')
+                    custom: String(v.custom || ''),
+                    design: Array.isArray(v.design) ? v.design : []
                 };
             }
         });

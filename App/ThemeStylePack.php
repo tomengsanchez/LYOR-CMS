@@ -121,6 +121,8 @@ class ThemeStylePack
             'example' => 'Sample template',
             'play-build-sound' => 'Play · Build · Sound (gaming / web / music)',
             'manly' => 'Manly (oak, iron, leather)',
+            'pulse' => 'Pulse (header & homepage widgets)',
+            'enterprise' => 'Enterprise (modern navy & slate)',
         ];
     }
 
@@ -135,6 +137,12 @@ class ThemeStylePack
         }
         if (in_array($slug, ['manhood', 'lodge', 'oak', 'iron', 'forge'], true)) {
             return 'manly';
+        }
+        if (in_array($slug, ['gazette', 'harbor', 'civic', 'community'], true)) {
+            return 'pulse';
+        }
+        if (in_array($slug, ['corporate', 'business', 'professional', 'b2b'], true)) {
+            return 'enterprise';
         }
         $allowed = array_keys(self::bundledPackLabels());
         return in_array($slug, $allowed, true) ? $slug : 'example';
@@ -301,9 +309,19 @@ class ThemeStylePack
         AppSettings::set(self::SETTING_ACTIVE_ID, $id);
         AuditLog::record('theme_style_pack', 0, 'activated', ['id' => $id, 'name' => $name]);
 
+        $message = 'Activated style pack: ' . $name . '.';
+        $widgetsFile = $dir . '/widgets.json';
+        if (is_file($widgetsFile)) {
+            $map = json_decode((string) file_get_contents($widgetsFile), true);
+            $filled = \App\Models\Widget::installStarterIfEmpty(is_array($map) ? $map : []);
+            if ($filled > 0) {
+                $message .= ' Filled ' . $filled . ' empty widget area(s) (occupied areas were left unchanged).';
+            }
+        }
+
         return [
             'ok' => true,
-            'message' => 'Activated style pack: ' . $name . '.',
+            'message' => $message,
             'name' => $name,
             'source' => $source,
             'id' => $id,
@@ -449,6 +467,11 @@ class ThemeStylePack
         $id = self::storeLibraryPack($zipTmp, $entries, $packName, 'cms', $post, $extraCssName !== '' ? $extraCssName : null, null);
         if ($id === null) {
             return ['ok' => false, 'message' => 'Could not store pack in library.'];
+        }
+        $widgets = \App\Models\Widget::sanitizeStarterMap(is_array($data['widgets'] ?? null) ? $data['widgets'] : []);
+        if ($widgets !== []) {
+            $wfile = self::libraryPackDir($id) . '/widgets.json';
+            file_put_contents($wfile, json_encode($widgets, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
         AuditLog::record('theme_style_pack', 0, 'imported_cms', ['name' => $packName, 'id' => $id]);
         return self::activatePack($id);

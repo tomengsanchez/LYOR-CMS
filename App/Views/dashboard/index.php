@@ -37,12 +37,26 @@
 <div class="row g-3 mb-4">
     <div class="col-md-3">
         <div class="dashboard-stat">
+            <div class="stat-label">Newsletter pending</div>
+            <div class="stat-value"><?= (int) ($pendingSubscribers ?? 0) ?></div>
+            <div class="stat-meta">
+                <?php if (\Core\Auth::can('view_subscribers')): ?>
+                <a href="<?= admin_url('subscribers?status=pending') ?>">Review</a>
+                <?php else: ?>&nbsp;<?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="dashboard-stat">
             <div class="stat-label">Quick links</div>
             <div class="d-flex flex-column gap-1 mt-2">
                 <a href="<?= admin_url('pages') ?>">Pages</a>
                 <a href="<?= admin_url('posts') ?>">Posts</a>
                 <a href="<?= admin_url('menus') ?>">Menus</a>
                 <a href="<?= admin_url('widgets') ?>">Widgets</a>
+                <a href="<?= admin_url('subscribers') ?>">Subscribers</a>
                 <a href="<?= admin_url('tags') ?>">Tags</a>
                 <a href="/" target="_blank" rel="noopener">Public site</a>
                 <a href="/blog" target="_blank" rel="noopener">Public blog</a>

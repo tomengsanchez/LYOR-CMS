@@ -2,6 +2,8 @@
 namespace App\Controllers;
 
 use App\AdminPath;
+use App\ContentPassword;
+use App\Flash;
 use App\ListConfig;
 use App\ListHelper;
 use App\Models\Media;
@@ -88,7 +90,14 @@ class PageController extends Controller
             $this->redirect(AdminPath::url('pages/create'));
             return;
         }
-        $id = Page::create($this->pagePayloadFromPost());
+        $payload = $this->pagePayloadFromPost();
+        $pwError = ContentPassword::writeError($payload);
+        if ($pwError !== null) {
+            $_SESSION['page_form_error'] = $pwError;
+            $this->redirect(AdminPath::url('pages/create'));
+            return;
+        }
+        $id = Page::create($payload);
         if ($id <= 0) {
             $_SESSION['page_form_error'] = 'Could not save page. Slug may conflict with an existing post.';
             $this->redirect(AdminPath::url('pages/create'));
@@ -123,7 +132,14 @@ class PageController extends Controller
             $this->redirect(AdminPath::url('pages/edit/' . $id));
             return;
         }
-        if (!Page::update($id, $this->pagePayloadFromPost())) {
+        $payload = $this->pagePayloadFromPost();
+        $pwError = ContentPassword::writeError($payload);
+        if ($pwError !== null) {
+            $_SESSION['page_form_error'] = $pwError;
+            $this->redirect(AdminPath::url('pages/edit/' . $id));
+            return;
+        }
+        if (!Page::update($id, $payload)) {
             $_SESSION['page_form_error'] = 'Could not update page. Slug may conflict with an existing post.';
             $this->redirect(AdminPath::url('pages/edit/' . $id));
             return;
@@ -136,6 +152,68 @@ class PageController extends Controller
         $this->validateCsrf();
         $this->requireCapability('delete_pages');
         Page::softDelete($id);
+        $this->redirect(AdminPath::url('pages'));
+    }
+
+    public function duplicate(int $id): void
+    {
+        $this->validateCsrf();
+        $this->requireCapability('add_pages');
+        $newId = Page::duplicate($id);
+        if ($newId <= 0) {
+            Flash::error('Could not duplicate that page.');
+            $this->redirect(AdminPath::url('pages'));
+            return;
+        }
+        Flash::success('Draft copy created.');
+        $this->redirect(AdminPath::url('pages/edit/' . $newId));
+    }
+
+    public function bulk(): void
+    {
+        $this->validateCsrf();
+        $ids = \App\ContentBulk::idsFromRequest();
+        $action = (string) ($_POST['bulk_action'] ?? '');
+        $originalCount = count($ids);
+        if ($ids === []) {
+            Flash::error('Select at least one page.');
+            $this->redirect(AdminPath::url('pages'));
+            return;
+        }
+        $protected = \App\ContentBulk::protectedPageIds();
+        if (in_array($action, ['draft', 'delete'], true)) {
+            $kept = count($ids);
+            $ids = \App\ContentBulk::withoutIds($ids, $protected);
+            if (count($ids) < $kept && $ids === []) {
+                Flash::error('The homepage cannot be drafted or deleted in bulk.');
+                $this->redirect(AdminPath::url('pages'));
+                return;
+            }
+        }
+        $n = 0;
+        if ($action === 'publish') {
+            $this->requireCapability('edit_pages');
+            $n = Page::bulkSetStatus($ids, 'published');
+            Flash::success($n === 1 ? '1 page published.' : $n . ' pages published.');
+        } elseif ($action === 'draft') {
+            $this->requireCapability('edit_pages');
+            $n = Page::bulkSetStatus($ids, 'draft');
+            $msg = $n === 1 ? '1 page set to draft.' : $n . ' pages set to draft.';
+            if (count($ids) < $originalCount) {
+                $msg .= ' Homepage skipped.';
+            }
+            Flash::success($msg);
+        } elseif ($action === 'delete') {
+            $this->requireCapability('delete_pages');
+            $n = Page::bulkSoftDelete($ids);
+            $msg = $n === 1 ? '1 page deleted.' : $n . ' pages deleted.';
+            if (count($ids) < $originalCount) {
+                $msg .= ' Homepage skipped.';
+            }
+            Flash::success($msg);
+        } else {
+            Flash::error('Unknown bulk action.');
+        }
         $this->redirect(AdminPath::url('pages'));
     }
 
@@ -157,7 +235,7 @@ class PageController extends Controller
             'content_layout' => $_POST['content_layout'] ?? '',
             'parent_id' => $_POST['parent_id'] ?? null,
             'blocks_json' => $_POST['blocks_json'] ?? null,
-        ];
+        ] + ContentPassword::requestWriteFields();
     }
 
     protected function csrfRedirectUrl(): string

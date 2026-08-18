@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder Inner row nested columns",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Catalog/normalize/render Inner row (one nested Bootstrap row on mod.columns). Nested inner_row modules are dropped. Public class cms-mod-inner-row; compileStylesheet and plainText walk inner columns."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Canvas uses cms-lb-inner-col / cms-lb-inner-mod with data-kind inner_column/inner_module so outer module drag still uses .cms-lb-mod. No ⋮⋮ on nested chrome. Picker hides Inner row when already inside. Layers lists nested nodes without making them draggable."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Inner columns live in layout_json and restore with the SQL dump. Extra nesting is stripped on save."
+    }
+  ]
+}

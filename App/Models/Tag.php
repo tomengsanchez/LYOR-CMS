@@ -150,12 +150,12 @@ class Tag
     /** Tags used on at least one published post. */
     public static function publishedForSitemap(): array
     {
-        return Database::getInstance()->query("
+        return Database::getInstance()->query('
             SELECT DISTINCT t.id, t.slug, t.name
             FROM cms_tags t
             INNER JOIN cms_post_tags pt ON pt.tag_id = t.id
-            INNER JOIN cms_posts p ON p.id = pt.post_id AND p.deleted_at IS NULL AND p.status = 'published'
+            INNER JOIN cms_posts p ON p.id = pt.post_id AND ' . \App\Models\Post::liveSql('p') . '
             ORDER BY t.name
-        ")->fetchAll(\PDO::FETCH_OBJ);
+        ')->fetchAll(\PDO::FETCH_OBJ);
     }
 }

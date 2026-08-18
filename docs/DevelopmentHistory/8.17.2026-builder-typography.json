@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder typography pack",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Design stores font_family, letter_spacing, and text_transform as allowlisted keys. compileStylesheet maps them to hardcoded font stacks and tracking values. Injection strings are dropped on normalize."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Module Design inspector adds Font, Letter spacing, and Text transform. Changes patch #cmsBuilderLiveCss without rebuilding the canvas. Copy style includes the new bags."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Keys live in layout_json design bags and restore with the SQL dump. Public CSS stays derived at render time."
+    }
+  ]
+}

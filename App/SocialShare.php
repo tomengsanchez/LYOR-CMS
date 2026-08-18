@@ -24,7 +24,9 @@ class SocialShare
         }
         $title = AppSettings::formatSeoTitle($title);
         $description = trim((string) ($post->meta_description ?? ''));
-        if ($description === '') {
+        if (ContentPassword::isLocked('post', $post)) {
+            $description = ContentPassword::gateMessage();
+        } elseif ($description === '') {
             $description = self::descriptionFromText(
                 trim((string) ($post->llm_summary ?? '')),
                 trim((string) ($post->excerpt ?? '')) ?: ContentBlocks::plainTextFromEntity($post)

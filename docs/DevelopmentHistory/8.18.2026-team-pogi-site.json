@@ -1,0 +1,12 @@
+{
+  "date": "2026-08-18",
+  "title": "Team POGI demo site + General settings form fix",
+  "summary": "Playwright E2E builds a Team POGI marketing site (pages, posts, menu, Facebook). Fixed nested forms in General settings that prevented Save from persisting branding and homepage.",
+  "files": [
+    "tests/e2e/cms-team-pogi-site.spec.ts",
+    "tests/e2e/cms-tomeng-site.spec.ts",
+    "App/Views/general/index.php",
+    "package.json",
+    "docs/changes/2026-08/CHANGES.md"
+  ]
+}

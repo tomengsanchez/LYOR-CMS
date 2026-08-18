@@ -43,10 +43,12 @@ ob_start();
     <p class="mb-0"><a href="/blog" class="public-back">&larr; All posts</a></p>
     <?php elseif (!empty($archiveTag)): ?>
     <p class="mb-0"><a href="/blog" class="public-back">&larr; All posts</a></p>
+    <?php elseif (!empty($archiveAuthor) || !empty($archiveYear)): ?>
+    <p class="mb-0"><a href="/blog" class="public-back">&larr; All posts</a></p>
     <?php endif; ?>
 </div>
 <?php endif; ?>
-<?php if (!empty($archiveCategory) || !empty($archiveTag)): ?>
+<?php if (!empty($archiveCategory) || !empty($archiveTag) || !empty($archiveAuthor) || !empty($archiveYear)): ?>
 <p class="mb-3"><a href="/blog" class="public-back">&larr; All posts</a></p>
 <?php endif; ?>
 <?php if (PublicTheme::showBlogSearch($blogTheme)): ?>
@@ -107,7 +109,7 @@ ob_start();
             <span class="public-badge"><?= htmlspecialchars($post->category_name) ?></span>
             <?php endif; ?>
         </div>
-        <?php if ($showExcerpt && !empty($post->excerpt)): ?><p class="public-excerpt"><?= htmlspecialchars($post->excerpt) ?></p><?php endif; ?>
+        <?php if ($showExcerpt && !empty($post->excerpt) && !\App\ContentPassword::isLocked('post', $post)): ?><p class="public-excerpt"><?= htmlspecialchars($post->excerpt) ?></p><?php endif; ?>
         <?php if ($showMore): ?>
         <a href="<?= htmlspecialchars(Permalink::urlForPost($post)) ?>" class="public-read-more">Read more →</a>
         <?php endif; ?>

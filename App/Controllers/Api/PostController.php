@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers\Api;
 
+use App\ContentPassword;
 use App\Models\Post;
 use App\Models\Tag;
 use Core\Controller;
@@ -13,7 +14,7 @@ class PostController extends Controller
             return;
         }
         $items = Post::allActive();
-        $this->apiSuccess(['items' => $items]);
+        $this->apiSuccess(['items' => ContentPassword::withoutHashList($items)]);
     }
 
     public function getApi(int $id): void
@@ -26,7 +27,7 @@ class PostController extends Controller
             $this->apiNotFound('Post not found.');
             return;
         }
-        $this->apiSuccess($post);
+        $this->apiSuccess(ContentPassword::withoutHash($post));
     }
 
     public function createApi(): void
@@ -40,7 +41,13 @@ class PostController extends Controller
             $this->apiValidationError('title is required.');
             return;
         }
-        $id = Post::create($this->postPayload($body));
+        $payload = $this->postPayload($body);
+        $pwError = ContentPassword::writeError($payload);
+        if ($pwError !== null) {
+            $this->apiValidationError($pwError);
+            return;
+        }
+        $id = Post::create($payload);
         if ($id <= 0) {
             $this->apiConflict('Could not create post (slug conflict or invalid data).');
             return;
@@ -52,7 +59,7 @@ class PostController extends Controller
                 return;
             }
         }
-        $this->apiSuccess(Post::find($id), 201);
+        $this->apiSuccess(ContentPassword::withoutHash(Post::find($id)), 201);
     }
 
     public function updateApi(int $id): void
@@ -67,6 +74,11 @@ class PostController extends Controller
         }
         $body = $this->readJsonBody();
         $merged = $this->postPayload($body, $existing);
+        $pwError = ContentPassword::writeError($merged);
+        if ($pwError !== null) {
+            $this->apiValidationError($pwError);
+            return;
+        }
         if (trim((string) ($merged['title'] ?? '')) === '') {
             $this->apiValidationError('title is required.');
             return;
@@ -82,7 +94,7 @@ class PostController extends Controller
                 return;
             }
         }
-        $this->apiSuccess(Post::find($id));
+        $this->apiSuccess(ContentPassword::withoutHash(Post::find($id)));
     }
 
     public function deleteApi(int $id): void
@@ -126,7 +138,7 @@ class PostController extends Controller
         $tags = array_key_exists('tags', $body)
             ? $body['tags']
             : ($existing !== null ? Tag::namesForPost((int) $existing->id) : '');
-        return [
+        $payload = [
             'title' => (string) $get('title', ''),
             'slug' => (string) $get('slug', $existing->slug ?? ''),
             'excerpt' => (string) $get('excerpt', ''),
@@ -142,8 +154,17 @@ class PostController extends Controller
             'robots_noindex' => !empty($get('robots_noindex', 0)),
             'content_layout' => $get('content_layout'),
             'status' => (string) $get('status', 'draft'),
+            'published_at' => (string) $get('published_at', $existing->published_at ?? ''),
+            'is_sticky' => !empty($get('is_sticky', $existing->is_sticky ?? 0)),
             'tags' => is_string($tags) ? $tags : (is_array($tags) ? implode(',', $tags) : ''),
         ];
+        if (array_key_exists('content_password', $body)) {
+            $payload['content_password'] = (string) $body['content_password'];
+        }
+        if (!empty($body['remove_content_password'])) {
+            $payload['remove_content_password'] = true;
+        }
+        return $payload;
     }
 
     /** @param array<string, mixed> $body */

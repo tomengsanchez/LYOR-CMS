@@ -11,6 +11,7 @@ use App\Models\Redirect;
 use App\Models\Tag;
 use App\Models\Widget;
 use App\ContentBlocks;
+use App\ContentPassword;
 use App\CommentRateLimit;
 use App\DiscussionSettings;
 use App\LlmsTxt;
@@ -18,6 +19,7 @@ use App\Permalink;
 use App\PublicSeo;
 use App\ReadingSettings;
 use App\SocialShare;
+use Core\Auth;
 use Core\Controller;
 
 class PublicController extends Controller
@@ -51,6 +53,7 @@ class PublicController extends Controller
             'branding' => $branding,
             'isHomepage' => $isHomepage,
             'publicNavActive' => 'home',
+            'contentLocked' => ContentPassword::isLocked('page', $page),
             'publicShare' => $seo['share'],
             'publicJsonLd' => $seo['json_ld'],
             'publicJsonUrl' => $seo['json_url'],
@@ -97,7 +100,12 @@ class PublicController extends Controller
 
     public function page(string $slug): void
     {
+        $preview = false;
         $page = Page::findBySlug($slug, true);
+        if (!$page) {
+            $page = $this->previewPage($slug);
+            $preview = $page !== null;
+        }
         if (!$page) {
             Redirect::applyForRequestPath('/p/' . $slug);
             Redirect::applyForRequestPath('/' . $slug);
@@ -113,18 +121,23 @@ class PublicController extends Controller
         $isHomepage = $front && (int) $front->id === (int) $page->id;
         $crumbs = $isHomepage ? [] : Page::ancestors($page);
         $seo = PublicSeo::pageContext($page, $branding, $isHomepage, $crumbs);
+        if ($preview) {
+            $seo['robots_noindex'] = true;
+        }
         $this->view('public/page', [
             'page' => $page,
             'branding' => $branding,
             'isHomepage' => $isHomepage,
             'publicNavActive' => 'page-' . (int) $page->id,
             'pageBreadcrumbs' => $crumbs,
+            'contentLocked' => ContentPassword::isLocked('page', $page),
             'publicShare' => $seo['share'],
             'publicJsonLd' => $seo['json_ld'],
-            'publicJsonUrl' => $seo['json_url'],
+            'publicJsonUrl' => $preview ? '' : $seo['json_url'],
             'publicRobotsNoindex' => $seo['robots_noindex'],
             'publicLlmSummary' => $seo['llm_summary'],
             'publicCitationSnippet' => $seo['citation_snippet'] ?? '',
+            'publicPreviewNotice' => $preview ? 'Preview of unpublished page.' : '',
         ]);
     }
 
@@ -192,18 +205,107 @@ class PublicController extends Controller
         $this->renderBlogListing($page, false, null, $tag);
     }
 
-    private function renderBlogListing(int $pageNum, bool $isFrontPosts, ?object $category = null, ?object $tag = null): void
+    public function archiveYear(string $year): void
+    {
+        $y = (int) $year;
+        if (!preg_match('/^\d{4}$/', $year) || $y < 2000 || $y > 2100) {
+            http_response_code(404);
+            $this->view('public/not_found', [
+                'message' => 'Archive not found.',
+                'branding' => AppSettings::getBrandingConfig(),
+            ]);
+            return;
+        }
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $this->renderBlogListing($page, false, null, null, ['year' => $y]);
+    }
+
+    public function archiveMonth(string $year, string $month): void
+    {
+        $y = (int) $year;
+        $m = (int) $month;
+        if (!preg_match('/^\d{4}$/', $year) || !preg_match('/^\d{1,2}$/', $month) || $y < 2000 || $y > 2100 || $m < 1 || $m > 12) {
+            http_response_code(404);
+            $this->view('public/not_found', [
+                'message' => 'Archive not found.',
+                'branding' => AppSettings::getBrandingConfig(),
+            ]);
+            return;
+        }
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $this->renderBlogListing($page, false, null, null, ['year' => $y, 'month' => $m]);
+    }
+
+    public function author(string $username): void
+    {
+        $author = Post::findAuthorByUsername($username);
+        if (!$author) {
+            http_response_code(404);
+            $this->view('public/not_found', [
+                'message' => 'Author not found.',
+                'branding' => AppSettings::getBrandingConfig(),
+            ]);
+            return;
+        }
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $this->renderBlogListing($page, false, null, null, ['author' => $author]);
+    }
+
+    public function search(): void
+    {
+        $q = trim((string) ($_GET['q'] ?? ''));
+        if (mb_strlen($q) > 100) {
+            $q = mb_substr($q, 0, 100);
+        }
+        $posts = $q === '' ? [] : Post::publishedList(20, 0, null, null, $q);
+        $pages = $q === '' ? [] : Page::searchPublished($q, 20);
+        $branding = AppSettings::getBrandingConfig();
+        $lead = $q === ''
+            ? 'Search published pages and posts.'
+            : ((count($posts) + count($pages)) === 0
+                ? 'No pages or posts matched your search.'
+                : ((count($posts) + count($pages)) . ' results.'));
+        $seo = PublicSeo::archiveContext('Search', $lead, '/search', 'SearchResultsPage', $branding);
+        $seo['robots_noindex'] = true;
+        $seo['json_url'] = '';
+        $this->view('public/search', [
+            'branding' => $branding,
+            'publicShare' => $seo['share'],
+            'publicJsonLd' => $seo['json_ld'],
+            'publicJsonUrl' => '',
+            'publicRobotsNoindex' => true,
+            'publicLlmSummary' => $seo['llm_summary'],
+            'publicCitationSnippet' => $seo['citation_snippet'] ?? '',
+            'searchQuery' => $q,
+            'searchPosts' => $posts,
+            'searchPages' => $pages,
+            'searchLead' => $lead,
+        ]);
+    }
+
+    private function renderBlogListing(int $pageNum, bool $isFrontPosts, ?object $category = null, ?object $tag = null, array $archive = []): void
     {
         $reading = ReadingSettings::get();
         $perPage = $reading->posts_per_page;
         $categoryId = $category ? (int) $category->id : null;
         $tagId = $tag ? (int) $tag->id : null;
         $search = trim($_GET['q'] ?? '');
-        $total = Post::publishedCount($categoryId, $tagId, $search !== '' ? $search : null);
+        $opts = [];
+        if (!empty($archive['year'])) {
+            $opts['year'] = (int) $archive['year'];
+        }
+        if (!empty($archive['month'])) {
+            $opts['month'] = (int) $archive['month'];
+        }
+        $author = is_object($archive['author'] ?? null) ? $archive['author'] : null;
+        if ($author) {
+            $opts['author_id'] = (int) $author->id;
+        }
+        $total = Post::publishedCount($categoryId, $tagId, $search !== '' ? $search : null, $opts);
         $totalPages = max(1, (int) ceil($total / $perPage));
         $pageNum = min($pageNum, $totalPages);
         $offset = ($pageNum - 1) * $perPage;
-        $posts = Post::publishedList($perPage, $offset, $categoryId, $tagId, $search !== '' ? $search : null);
+        $posts = Post::publishedList($perPage, $offset, $categoryId, $tagId, $search !== '' ? $search : null, $opts);
         $branding = AppSettings::getBrandingConfig();
 
         $listTitle = 'Blog';
@@ -219,6 +321,23 @@ class PublicController extends Controller
             $listTitle = 'Tag: ' . $tag->name;
             $listLead = 'Posts tagged “' . $tag->name . '”.';
             $paginationBase = '/blog/tag/' . rawurlencode($tag->slug);
+            $schemaType = 'CollectionPage';
+        } elseif ($author) {
+            $authorLabel = trim((string) ($author->display_name ?? '')) ?: (string) $author->username;
+            $listTitle = 'Author: ' . $authorLabel;
+            $listLead = 'Posts by ' . $authorLabel . '.';
+            $paginationBase = '/blog/author/' . rawurlencode((string) $author->username);
+            $schemaType = 'ProfilePage';
+        } elseif (!empty($opts['year']) && !empty($opts['month'])) {
+            $stamp = sprintf('%04d-%02d-01', (int) $opts['year'], (int) $opts['month']);
+            $listTitle = date('F Y', strtotime($stamp) ?: time());
+            $listLead = 'Posts from ' . $listTitle . '.';
+            $paginationBase = sprintf('/blog/archive/%04d/%02d', (int) $opts['year'], (int) $opts['month']);
+            $schemaType = 'CollectionPage';
+        } elseif (!empty($opts['year'])) {
+            $listTitle = (string) (int) $opts['year'];
+            $listLead = 'Posts from ' . $listTitle . '.';
+            $paginationBase = '/blog/archive/' . (int) $opts['year'];
             $schemaType = 'CollectionPage';
         } elseif ($search !== '') {
             $listTitle = 'Search: ' . $search;
@@ -256,12 +375,20 @@ class PublicController extends Controller
             'isFrontPosts' => $isFrontPosts,
             'archiveCategory' => $category,
             'archiveTag' => $tag,
+            'archiveAuthor' => $author,
+            'archiveYear' => $opts['year'] ?? null,
+            'archiveMonth' => $opts['month'] ?? null,
         ]);
     }
 
     public function post(string $slug): void
     {
+        $preview = false;
         $post = Post::findBySlug($slug, true);
+        if (!$post) {
+            $post = $this->previewPost($slug);
+            $preview = $post !== null;
+        }
         if (!$post) {
             Redirect::applyForRequestPath('/blog/' . $slug);
             http_response_code(404);
@@ -273,27 +400,35 @@ class PublicController extends Controller
         }
         $branding = AppSettings::getBrandingConfig();
         $postTags = Tag::forPost((int) $post->id);
-        $comments = DiscussionSettings::get()->comments_enabled
+        $comments = !$preview && !ContentPassword::isLocked('post', $post) && DiscussionSettings::get()->comments_enabled
             ? Comment::forPost((int) $post->id, true)
             : [];
         $commentMessage = $_SESSION['comment_message'] ?? '';
         $commentError = $_SESSION['comment_error'] ?? '';
         unset($_SESSION['comment_message'], $_SESSION['comment_error']);
         $seo = PublicSeo::postContext($post, $branding, $postTags);
+        if ($preview) {
+            $seo['robots_noindex'] = true;
+        }
+        $neighbors = $preview ? ['previous' => null, 'next' => null] : Post::neighbors($post);
         $this->view('public/post', [
             'post' => $post,
             'postTags' => $postTags,
+            'relatedPosts' => $preview ? [] : Post::related($post, 3),
+            'neighborPosts' => $neighbors,
+            'contentLocked' => ContentPassword::isLocked('post', $post),
             'comments' => $comments,
             'commentMessage' => $commentMessage,
             'commentError' => $commentError,
             'discussion' => DiscussionSettings::get(),
             'branding' => $branding,
             'publicShare' => $seo['share'],
-            'publicJsonLd' => $seo['json_ld'],
-            'publicJsonUrl' => $seo['json_url'],
+            'publicJsonLd' => $preview ? [] : $seo['json_ld'],
+            'publicJsonUrl' => $preview ? '' : $seo['json_url'],
             'publicRobotsNoindex' => $seo['robots_noindex'],
             'publicLlmSummary' => $seo['llm_summary'],
             'publicCitationSnippet' => $seo['citation_snippet'] ?? '',
+            'publicPreviewNotice' => $preview ? 'Preview of unpublished or scheduled post.' : '',
         ]);
     }
 
@@ -320,12 +455,63 @@ class PublicController extends Controller
         echo json_encode(PublicSeo::postJsonDocument($post, $branding), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 
+    public function unlockPage(int $id): void
+    {
+        $this->unlockContent('page', $id);
+    }
+
+    public function unlockPost(int $id): void
+    {
+        $this->unlockContent('post', $id);
+    }
+
+    private function unlockContent(string $type, int $id): void
+    {
+        $entity = $type === 'page' ? Page::findPublished($id) : Post::findPublished($id);
+        $fallback = $type === 'page' ? '/' : '/blog';
+        if (!$entity) {
+            $this->redirect($fallback);
+            return;
+        }
+        $return = $type === 'page' ? Permalink::urlForPage($entity) : Permalink::urlForPost($entity);
+        if ($type === 'page') {
+            $front = ReadingSettings::resolveFrontPage();
+            if ($front && (int) $front->id === (int) $entity->id) {
+                $return = '/';
+            }
+        }
+        if (!\Core\Csrf::validate()) {
+            $_SESSION['content_unlock_error'] = 'Could not verify the form. Try again.';
+            $this->redirect($return);
+            return;
+        }
+        if (ContentPassword::tooManyAttempts()) {
+            $_SESSION['content_unlock_error'] = 'Too many attempts. Try again later.';
+            $this->redirect($return);
+            return;
+        }
+        $plain = (string) ($_POST['content_password'] ?? '');
+        if (!ContentPassword::verify($entity, $plain)) {
+            ContentPassword::recordFail();
+            $_SESSION['content_unlock_error'] = 'Incorrect password.';
+            $this->redirect($return);
+            return;
+        }
+        ContentPassword::remember($type, $entity);
+        $this->redirect($return);
+    }
+
     public function commentStore(int $postId): void
     {
         $post = Post::findPublished($postId);
         if (!$post) {
             http_response_code(404);
             echo 'Not found';
+            return;
+        }
+        if (ContentPassword::isLocked('post', $post)) {
+            $_SESSION['comment_error'] = 'This post is password protected.';
+            $this->redirect(Permalink::urlForPost($post));
             return;
         }
         $this->validateCsrf();
@@ -386,6 +572,35 @@ class PublicController extends Controller
         }
     }
 
+    private function wantsPreview(): bool
+    {
+        return isset($_GET['preview']) && (string) $_GET['preview'] === '1';
+    }
+
+    private function previewPage(string $slug): ?object
+    {
+        if (!$this->wantsPreview() || !Auth::can('edit_pages')) {
+            return null;
+        }
+        $page = Page::findBySlug($slug, false);
+        if (!$page || (string) ($page->status ?? '') === 'published') {
+            return null;
+        }
+        return $page;
+    }
+
+    private function previewPost(string $slug): ?object
+    {
+        if (!$this->wantsPreview() || !Auth::can('edit_posts')) {
+            return null;
+        }
+        $post = Post::findBySlug($slug, false);
+        if (!$post || Post::isLive($post)) {
+            return null;
+        }
+        return $post;
+    }
+
     public function sitemap(): void
     {
         $siteSeo = AppSettings::getSiteSeoConfig();
@@ -423,6 +638,9 @@ class PublicController extends Controller
         }
         foreach (Tag::publishedForSitemap() as $row) {
             echo $this->sitemapUrl($base . '/blog/tag/' . rawurlencode((string) $row->slug), null, 'weekly', '0.4');
+        }
+        foreach (Post::archiveMonths(24) as $row) {
+            echo $this->sitemapUrl($base . $row->url, null, 'monthly', '0.3');
         }
 
         echo '</urlset>';
@@ -503,10 +721,12 @@ class PublicController extends Controller
         foreach (Post::publishedForFeed($limit) as $post) {
             $link = $base . Permalink::urlForPost($post);
             $title = htmlspecialchars((string) ($post->title ?? ''), ENT_XML1);
-            $desc = SocialShare::descriptionFromText(
-                (string) ($post->excerpt ?? ''),
-                ContentBlocks::plainTextFromEntity($post)
-            );
+            $desc = ContentPassword::has($post)
+                ? ContentPassword::gateMessage()
+                : SocialShare::descriptionFromText(
+                    (string) ($post->excerpt ?? ''),
+                    ContentBlocks::plainTextFromEntity($post)
+                );
             $desc = htmlspecialchars($desc, ENT_XML1);
             $pubDate = !empty($post->published_at)
                 ? gmdate('D, d M Y H:i:s', strtotime((string) $post->published_at)) . ' GMT'

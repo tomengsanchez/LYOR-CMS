@@ -3,6 +3,7 @@ namespace App\Controllers;
 
 use App\AdminPath;
 
+use App\ContentPassword;
 use App\Flash;
 use App\ListConfig;
 use App\ListHelper;
@@ -73,6 +74,7 @@ class PostController extends Controller
                 'id' => 0, 'title' => '', 'slug' => '', 'excerpt' => '', 'body' => '',
                 'status' => 'draft', 'category_id' => null, 'featured_image_id' => null, 'content_layout' => null,
                 'blocks_json' => null, 'meta_title' => '', 'meta_description' => '', 'llm_summary' => '', 'citation_snippet' => '', 'faq_json' => '', 'robots_noindex' => 0,
+                'published_at' => '', 'is_sticky' => 0,
             ],
             'categories' => Category::all(),
             'mediaImages' => Media::listImages(),
@@ -92,7 +94,7 @@ class PostController extends Controller
             $this->redirect(AdminPath::url('posts/create'));
             return;
         }
-        $id = Post::create([
+        $payload = [
             'title' => $title,
             'slug' => trim($_POST['slug'] ?? ''),
             'excerpt' => $_POST['excerpt'] ?? '',
@@ -109,7 +111,16 @@ class PostController extends Controller
             'citation_snippet' => $_POST['citation_snippet'] ?? '',
             'faq_json' => $_POST['faq_json'] ?? null,
             'robots_noindex' => !empty($_POST['robots_noindex']),
-        ]);
+            'published_at' => $_POST['published_at'] ?? '',
+            'is_sticky' => !empty($_POST['is_sticky']),
+        ] + ContentPassword::requestWriteFields();
+        $pwError = ContentPassword::writeError($payload);
+        if ($pwError !== null) {
+            $_SESSION['post_form_error'] = $pwError;
+            $this->redirect(AdminPath::url('posts/create'));
+            return;
+        }
+        $id = Post::create($payload);
         if ($id <= 0) {
             $_SESSION['post_form_error'] = 'Could not save post. Slug may conflict with an existing page.';
             $this->redirect(AdminPath::url('posts/create'));
@@ -146,7 +157,7 @@ class PostController extends Controller
             $this->redirect(AdminPath::url('posts/edit/' . $id));
             return;
         }
-        if (!Post::update($id, [
+        $payload = [
             'title' => $title,
             'slug' => trim($_POST['slug'] ?? ''),
             'excerpt' => $_POST['excerpt'] ?? '',
@@ -163,7 +174,16 @@ class PostController extends Controller
             'citation_snippet' => $_POST['citation_snippet'] ?? '',
             'faq_json' => $_POST['faq_json'] ?? null,
             'robots_noindex' => !empty($_POST['robots_noindex']),
-        ])) {
+            'published_at' => $_POST['published_at'] ?? '',
+            'is_sticky' => !empty($_POST['is_sticky']),
+        ] + ContentPassword::requestWriteFields();
+        $pwError = ContentPassword::writeError($payload);
+        if ($pwError !== null) {
+            $_SESSION['post_form_error'] = $pwError;
+            $this->redirect(AdminPath::url('posts/edit/' . $id));
+            return;
+        }
+        if (!Post::update($id, $payload)) {
             $_SESSION['post_form_error'] = 'Could not update post. Slug may conflict with an existing page.';
             $this->redirect(AdminPath::url('posts/edit/' . $id));
             return;
@@ -176,6 +196,56 @@ class PostController extends Controller
         $this->validateCsrf();
         $this->requireCapability('delete_posts');
         Post::softDelete($id);
+        $this->redirect(AdminPath::url('posts'));
+    }
+
+    public function duplicate(int $id): void
+    {
+        $this->validateCsrf();
+        $this->requireCapability('add_posts');
+        $newId = Post::duplicate($id);
+        if ($newId <= 0) {
+            Flash::error('Could not duplicate that post.');
+            $this->redirect(AdminPath::url('posts'));
+            return;
+        }
+        Flash::success('Draft copy created.');
+        $this->redirect(AdminPath::url('posts/edit/' . $newId));
+    }
+
+    public function bulk(): void
+    {
+        $this->validateCsrf();
+        $ids = \App\ContentBulk::idsFromRequest();
+        $action = (string) ($_POST['bulk_action'] ?? '');
+        if ($ids === []) {
+            Flash::error('Select at least one post.');
+            $this->redirect(AdminPath::url('posts'));
+            return;
+        }
+        if ($action === 'publish') {
+            $this->requireCapability('edit_posts');
+            $n = Post::bulkSetStatus($ids, 'published');
+            Flash::success($n === 1 ? '1 post published.' : $n . ' posts published.');
+        } elseif ($action === 'draft') {
+            $this->requireCapability('edit_posts');
+            $n = Post::bulkSetStatus($ids, 'draft');
+            Flash::success($n === 1 ? '1 post set to draft.' : $n . ' posts set to draft.');
+        } elseif ($action === 'pin') {
+            $this->requireCapability('edit_posts');
+            $n = Post::bulkSetSticky($ids, true);
+            Flash::success($n === 1 ? '1 post pinned.' : $n . ' posts pinned.');
+        } elseif ($action === 'unpin') {
+            $this->requireCapability('edit_posts');
+            $n = Post::bulkSetSticky($ids, false);
+            Flash::success($n === 1 ? '1 post unpinned.' : $n . ' posts unpinned.');
+        } elseif ($action === 'delete') {
+            $this->requireCapability('delete_posts');
+            $n = Post::bulkSoftDelete($ids);
+            Flash::success($n === 1 ? '1 post deleted.' : $n . ' posts deleted.');
+        } else {
+            Flash::error('Unknown bulk action.');
+        }
         $this->redirect(AdminPath::url('posts'));
     }
 

@@ -24,15 +24,15 @@ Failure: `{ "success": false, "data": null, "error": { "code": "...", "message":
 | GET | `/api/media` | `view_media` | Library |
 | GET | `/api/notifications` | session/API user | In-app notifications |
 | GET | `/api/settings/ui` | `view_settings` | UI prefs |
-| GET | `/api/system/general` | admin / `view_settings` | General settings (subset) |
+| GET | `/api/system/general` | admin / `view_settings` | General settings (subset; includes newsletter flags) |
 | GET | `/api/meta/error-codes` | public | Error code registry |
 
 Exact verbs and paths: see Postman **CMS (authenticated)** and `public/index.php`. Visual layout save from the **frontend editor** is session + CSRF (`POST /admin/builder/.../save`), not Bearer.
 
 ## Public (no auth)
 
-`/site.json`, `/blog.json`, `/blog/{slug}.json`, `/p/{slug}.json`, `/sitemap.xml`, `/robots.txt`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/share/media/{id}`.
+`/site.json`, `/blog.json`, `/blog/{slug}.json`, `/p/{slug}.json`, `/sitemap.xml`, `/robots.txt`, `/feed.xml`, `/llms.txt`, `/llms-full.txt`, `/share/media/{id}`, `/search`, `/blog/archive/{year}`, `/blog/archive/{year}/{month}`, `/blog/author/{username}`, `/subscribe`.
 
 ## Layout JSON
 
-Page/post create/update may send `layout_json` (string or object). The server runs `LayoutBuilder::normalizeJson`. Invalid or empty layouts store `null`. Compiled CSS is **not** an API field; it is derived on public render.
+Page/post create/update may send `layout_json` (string or object). The server runs `LayoutBuilder::normalizeJson`. Invalid or empty layouts store `null`. Compiled CSS is **not** an API field; it is derived on public render. Post write also accepts `is_sticky` (bool) and `published_at` (SQL datetime; future values stay off the public site until due).

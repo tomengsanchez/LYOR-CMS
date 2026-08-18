@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder Tabs and Icon list modules",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Catalog/normalize/render Tabs (radio+CSS panels) and Icon list. Accordion title/body sanitizer is reused for tabs. Icons and copy are HTML-escaped."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Custom inspectors use data-tabs-* and data-ilist-* (not carousel/accordion attrs). Canvas shows tab chips and icon rows. Add/remove rebuilds; field edits can live-patch."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Tab and icon-list items live in layout_json."
+    }
+  ]
+}

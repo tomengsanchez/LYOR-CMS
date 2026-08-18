@@ -69,12 +69,12 @@ class Category
     /** Categories that have at least one published post. */
     public static function publishedForSitemap(): array
     {
-        return Database::getInstance()->query("
+        return Database::getInstance()->query('
             SELECT DISTINCT c.id, c.slug, c.name, c.description
             FROM cms_categories c
-            INNER JOIN cms_posts p ON p.category_id = c.id AND p.deleted_at IS NULL AND p.status = 'published'
+            INNER JOIN cms_posts p ON p.category_id = c.id AND ' . \App\Models\Post::liveSql('p') . '
             ORDER BY c.name
-        ")->fetchAll(\PDO::FETCH_OBJ);
+        ')->fetchAll(\PDO::FETCH_OBJ);
     }
 
     public static function delete(int $id): bool

@@ -126,7 +126,7 @@ trait Normalizer
     }
 
     /** @param array<string, mixed> $col */
-    private static function normalizeColumn(array $col): ?array
+    private static function normalizeColumn(array $col, bool $allowInnerRow = true): ?array
     {
         $width = (int) ($col['width'] ?? 12);
         if (!in_array($width, self::WIDTHS, true)) {
@@ -134,27 +134,14 @@ trait Normalizer
         }
         $modsIn = is_array($col['modules'] ?? null) ? $col['modules'] : [];
         $modules = [];
-        $types = self::moduleTypes();
         foreach ($modsIn as $mod) {
             if (!is_array($mod)) {
                 continue;
             }
-            $type = (string) ($mod['type'] ?? '');
-            if (!isset($types[$type])) {
-                continue;
+            $normMod = self::normalizeModule($mod, $allowInnerRow);
+            if ($normMod !== null) {
+                $modules[] = $normMod;
             }
-            $modOut = self::withStyleOverrides([
-                'id' => self::id($mod['id'] ?? null),
-                'type' => $type,
-                'data' => self::normalizeModuleData($type, is_array($mod['data'] ?? null) ? $mod['data'] : []),
-                'design' => self::normalizeDesign(is_array($mod['design'] ?? null) ? $mod['design'] : []),
-                'advanced' => self::normalizeAdvanced(is_array($mod['advanced'] ?? null) ? $mod['advanced'] : []),
-            ], $mod, 'design');
-            $hover = self::normalizeDesignOverride(is_array($mod['design_hover'] ?? null) ? $mod['design_hover'] : []);
-            if ($hover !== []) {
-                $modOut['design_hover'] = $hover;
-            }
-            $modules[] = $modOut;
         }
         return self::withStyleOverrides([
             'id' => self::id($col['id'] ?? null),
@@ -162,6 +149,54 @@ trait Normalizer
             'settings' => self::normalizeSettings(is_array($col['settings'] ?? null) ? $col['settings'] : []),
             'modules' => $modules,
         ], $col, 'settings');
+    }
+
+    /** @param array<string, mixed> $mod */
+    private static function normalizeModule(array $mod, bool $allowInnerRow): ?array
+    {
+        $type = (string) ($mod['type'] ?? '');
+        $types = self::moduleTypes();
+        if (!isset($types[$type])) {
+            return null;
+        }
+        if ($type === 'inner_row' && !$allowInnerRow) {
+            return null;
+        }
+        $modOut = self::withStyleOverrides([
+            'id' => self::id($mod['id'] ?? null),
+            'type' => $type,
+            'data' => self::normalizeModuleData($type, is_array($mod['data'] ?? null) ? $mod['data'] : []),
+            'design' => self::normalizeDesign(is_array($mod['design'] ?? null) ? $mod['design'] : []),
+            'advanced' => self::normalizeAdvanced(is_array($mod['advanced'] ?? null) ? $mod['advanced'] : []),
+        ], $mod, 'design');
+        $hover = self::normalizeDesignOverride(is_array($mod['design_hover'] ?? null) ? $mod['design_hover'] : []);
+        foreach (['position', 'z_index', 'sticky_offset'] as $posKey) {
+            unset($hover[$posKey]);
+        }
+        if ($hover !== []) {
+            $modOut['design_hover'] = $hover;
+        }
+        if ($type === 'inner_row') {
+            $rawCols = is_array($mod['columns'] ?? null) ? $mod['columns'] : [];
+            $innerCols = [];
+            foreach ($rawCols as $innerCol) {
+                if (!is_array($innerCol)) {
+                    continue;
+                }
+                $nc = self::normalizeColumn($innerCol, false);
+                if ($nc !== null) {
+                    $innerCols[] = $nc;
+                }
+            }
+            if ($innerCols === []) {
+                $left = self::normalizeColumn(['width' => 6, 'modules' => []], false);
+                $right = self::normalizeColumn(['width' => 6, 'modules' => []], false);
+                $innerCols = array_values(array_filter([$left, $right]));
+            }
+            $modOut['columns'] = $innerCols;
+            $modOut['data'] = [];
+        }
+        return $modOut;
     }
 
     /** @param array<string, mixed> $data */
@@ -175,7 +210,7 @@ trait Normalizer
                 ];
             case 'text':
                 return [
-                    'text' => mb_substr(trim((string) ($data['text'] ?? '')), 0, 20000),
+                    'text' => mb_substr(self::sanitizeRichText((string) ($data['text'] ?? '')), 0, 20000),
                 ];
             case 'image':
                 $mediaId = (int) ($data['media_id'] ?? 0);
@@ -196,7 +231,7 @@ trait Normalizer
             case 'cta':
                 return [
                     'title' => mb_substr(trim((string) ($data['title'] ?? '')), 0, 200),
-                    'text' => mb_substr(trim((string) ($data['text'] ?? '')), 0, 2000),
+                    'text' => mb_substr(self::sanitizeRichText((string) ($data['text'] ?? '')), 0, 2000),
                     'label' => mb_substr(trim((string) ($data['label'] ?? 'Get started')), 0, 120),
                     'url' => self::safeUrl((string) ($data['url'] ?? '#')) ?: '#',
                     'style' => self::normalizeButtonStyle((string) ($data['style'] ?? 'primary')),
@@ -219,13 +254,36 @@ trait Normalizer
             case 'blurb':
                 return [
                     'title' => mb_substr(trim((string) ($data['title'] ?? '')), 0, 200),
-                    'text' => mb_substr(trim((string) ($data['text'] ?? '')), 0, 2000),
+                    'text' => mb_substr(self::sanitizeRichText((string) ($data['text'] ?? '')), 0, 2000),
                     'icon' => mb_substr(trim((string) ($data['icon'] ?? '')), 0, 40),
                     'media_id' => ((int) ($data['media_id'] ?? 0)) > 0 ? (int) $data['media_id'] : null,
                     'url' => self::safeUrl((string) ($data['url'] ?? '')),
                 ];
             case 'carousel':
                 return self::normalizeCarouselData($data);
+            case 'accordion':
+                return self::normalizeAccordionData($data);
+            case 'tabs':
+                return [
+                    'items' => self::normalizeTitleBodyItems($data, 'Tab'),
+                ];
+            case 'icon_list':
+                return self::normalizeIconListData($data);
+            case 'gallery':
+                return self::normalizeGalleryData($data);
+            case 'testimonial':
+                return self::normalizeTestimonialData($data);
+            case 'video':
+                $url = self::safeUrl((string) ($data['url'] ?? ''));
+                if ($url !== '' && self::parseVideoUrl($url) === null) {
+                    $url = '';
+                }
+                return [
+                    'url' => $url,
+                    'caption' => mb_substr(trim((string) ($data['caption'] ?? '')), 0, 500),
+                ];
+            case 'inner_row':
+                return [];
             default:
                 return [];
         }
@@ -284,6 +342,158 @@ trait Normalizer
         ];
     }
 
+    /** @param array<string, mixed> $data */
+    private static function normalizeAccordionData(array $data): array
+    {
+        return [
+            'first_open' => array_key_exists('first_open', $data) ? !empty($data['first_open']) : true,
+            'items' => self::normalizeTitleBodyItems($data, 'Question'),
+        ];
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function normalizeTitleBodyItems(array $data, string $fallbackTitle): array
+    {
+        $rawItems = is_array($data['items'] ?? null) ? $data['items'] : [];
+        $items = [];
+        foreach ($rawItems as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $title = mb_substr(trim((string) ($item['title'] ?? '')), 0, 200);
+            $body = mb_substr(self::sanitizeRichText((string) ($item['body'] ?? '')), 0, 5000);
+            if ($title === '' && $body === '') {
+                continue;
+            }
+            $items[] = [
+                'title' => $title !== '' ? $title : $fallbackTitle,
+                'body' => $body,
+            ];
+            if (count($items) >= 12) {
+                break;
+            }
+        }
+        if ($items === []) {
+            $items[] = ['title' => $fallbackTitle, 'body' => ''];
+        }
+        return $items;
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function normalizeIconListData(array $data): array
+    {
+        $rawItems = is_array($data['items'] ?? null) ? $data['items'] : [];
+        $items = [];
+        foreach ($rawItems as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $icon = mb_substr(trim((string) ($item['icon'] ?? '')), 0, 40);
+            $text = mb_substr(trim((string) ($item['text'] ?? '')), 0, 500);
+            if ($icon === '' && $text === '') {
+                continue;
+            }
+            $items[] = [
+                'icon' => $icon !== '' ? $icon : '•',
+                'text' => $text,
+            ];
+            if (count($items) >= 12) {
+                break;
+            }
+        }
+        if ($items === []) {
+            $items[] = ['icon' => '✓', 'text' => ''];
+        }
+        return ['items' => $items];
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function normalizeGalleryData(array $data): array
+    {
+        $cols = (int) ($data['columns'] ?? 3);
+        if (!in_array($cols, [2, 3, 4], true)) {
+            $cols = 3;
+        }
+        $rawItems = is_array($data['items'] ?? null) ? $data['items'] : [];
+        $items = [];
+        foreach ($rawItems as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $mediaId = (int) ($item['media_id'] ?? 0);
+            $url = self::safeUrl((string) ($item['url'] ?? ''));
+            $alt = mb_substr(trim((string) ($item['alt'] ?? '')), 0, 255);
+            $caption = mb_substr(trim((string) ($item['caption'] ?? '')), 0, 500);
+            $link = self::safeUrl((string) ($item['link'] ?? ''));
+            if ($mediaId <= 0 && $url === '' && $caption === '') {
+                continue;
+            }
+            $items[] = [
+                'media_id' => $mediaId > 0 ? $mediaId : null,
+                'url' => $url,
+                'alt' => $alt,
+                'caption' => $caption,
+                'link' => $link,
+            ];
+            if (count($items) >= 12) {
+                break;
+            }
+        }
+        if ($items === []) {
+            $items[] = [
+                'media_id' => null,
+                'url' => '',
+                'alt' => '',
+                'caption' => '',
+                'link' => '',
+            ];
+        }
+        return [
+            'columns' => $cols,
+            'items' => $items,
+        ];
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function normalizeTestimonialData(array $data): array
+    {
+        $rawItems = is_array($data['items'] ?? null) ? $data['items'] : [];
+        $items = [];
+        foreach ($rawItems as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $quote = mb_substr(trim((string) ($item['quote'] ?? '')), 0, 2000);
+            $name = mb_substr(trim((string) ($item['name'] ?? '')), 0, 200);
+            $role = mb_substr(trim((string) ($item['role'] ?? '')), 0, 200);
+            $mediaId = (int) ($item['media_id'] ?? 0);
+            $url = self::safeUrl((string) ($item['url'] ?? ''));
+            if ($quote === '' && $name === '') {
+                continue;
+            }
+            $items[] = [
+                'quote' => $quote,
+                'name' => $name !== '' ? $name : 'Name',
+                'role' => $role,
+                'media_id' => $mediaId > 0 ? $mediaId : null,
+                'url' => $url,
+            ];
+            if (count($items) >= 12) {
+                break;
+            }
+        }
+        if ($items === []) {
+            $items[] = [
+                'quote' => '',
+                'name' => 'Name',
+                'role' => '',
+                'media_id' => null,
+                'url' => '',
+            ];
+        }
+        return ['items' => $items];
+    }
+
     /** @param array<string, mixed> $design */
     private static function normalizeDesign(array $design): array
     {
@@ -297,11 +507,17 @@ trait Normalizer
             'font_size' => self::safeFontSize((string) ($design['font_size'] ?? '')),
             'font_weight' => self::safeFontWeight((string) ($design['font_weight'] ?? '')),
             'line_height' => self::safeLineHeight((string) ($design['line_height'] ?? '')),
+            'font_family' => self::safeFontFamilyKey((string) ($design['font_family'] ?? '')),
+            'letter_spacing' => self::safeLetterSpacingKey((string) ($design['letter_spacing'] ?? '')),
+            'text_transform' => self::safeTextTransform((string) ($design['text_transform'] ?? '')),
             'border_width' => self::safeSpacing((string) ($design['border_width'] ?? '')),
             'border_style' => self::safeBorderStyle((string) ($design['border_style'] ?? '')),
             'border_color' => self::safeColor((string) ($design['border_color'] ?? '')),
             'border_radius' => self::safeRadius((string) ($design['border_radius'] ?? '')),
             'box_shadow' => self::safeShadowKey((string) ($design['box_shadow'] ?? '')),
+            'position' => self::safePosition((string) ($design['position'] ?? '')),
+            'z_index' => self::safeZIndex((string) ($design['z_index'] ?? '')),
+            'sticky_offset' => self::safeStickyOffsetKey((string) ($design['sticky_offset'] ?? '')),
         ];
     }
 
@@ -316,7 +532,9 @@ trait Normalizer
         $out = [];
         foreach ([
             'text_align', 'text_color', 'bg_color', 'padding', 'margin', 'font_size',
-            'font_weight', 'line_height', 'border_width', 'border_style', 'border_color', 'border_radius', 'box_shadow',
+            'font_weight', 'line_height', 'font_family', 'letter_spacing', 'text_transform',
+            'border_width', 'border_style', 'border_color', 'border_radius', 'box_shadow',
+            'position', 'z_index', 'sticky_offset',
         ] as $k) {
             if (!array_key_exists($k, $design)) {
                 continue;
@@ -359,7 +577,10 @@ trait Normalizer
             'border_color' => self::safeColor((string) ($settings['border_color'] ?? '')),
             'border_radius' => self::safeRadius((string) ($settings['border_radius'] ?? '')),
             'box_shadow' => self::safeShadowKey((string) ($settings['box_shadow'] ?? '')),
-        ] + self::normalizeBackgroundSettings($settings);
+            'position' => self::safePosition((string) ($settings['position'] ?? '')),
+            'z_index' => self::safeZIndex((string) ($settings['z_index'] ?? '')),
+            'sticky_offset' => self::safeStickyOffsetKey((string) ($settings['sticky_offset'] ?? '')),
+        ] + self::normalizeBackgroundSettings($settings) + self::normalizeSectionExtraSettings($settings);
     }
 
     /**
@@ -391,6 +612,51 @@ trait Normalizer
     }
 
     /**
+     * Optional section extras (shapes, video background, row reverse). Omitted when empty.
+     *
+     * @param array<string, mixed> $settings
+     * @return array<string, mixed>
+     */
+    private static function normalizeSectionExtraSettings(array $settings): array
+    {
+        $out = [];
+        $top = self::safeShapeKey((string) ($settings['shape_top'] ?? ''));
+        if ($top !== '') {
+            $out['shape_top'] = $top;
+        }
+        $bottom = self::safeShapeKey((string) ($settings['shape_bottom'] ?? ''));
+        if ($bottom !== '') {
+            $out['shape_bottom'] = $bottom;
+        }
+        foreach (['shape_top_color', 'shape_bottom_color'] as $k) {
+            $c = self::safeColor((string) ($settings[$k] ?? ''));
+            if ($c !== '') {
+                $out[$k] = $c;
+            }
+        }
+        foreach (['shape_top_height', 'shape_bottom_height'] as $k) {
+            $h = self::safeShapeHeightKey((string) ($settings[$k] ?? ''));
+            if ($h !== '') {
+                $out[$k] = $h;
+            }
+        }
+        if (!empty($settings['shape_top_flip'])) {
+            $out['shape_top_flip'] = true;
+        }
+        if (!empty($settings['shape_bottom_flip'])) {
+            $out['shape_bottom_flip'] = true;
+        }
+        $video = self::safeUrl((string) ($settings['bg_video_url'] ?? ''));
+        if ($video !== '' && self::parseVideoUrl($video) !== null) {
+            $out['bg_video_url'] = mb_substr($video, 0, 500);
+        }
+        if (!empty($settings['col_reverse_mobile'])) {
+            $out['col_reverse_mobile'] = true;
+        }
+        return $out;
+    }
+
+    /**
      * Sparse tablet/mobile settings (no css_class). Empty string means unset at that breakpoint.
      *
      * @param array<string, mixed> $settings
@@ -399,7 +665,7 @@ trait Normalizer
     private static function normalizeSettingsOverride(array $settings): array
     {
         $out = [];
-        foreach (['bg_color', 'padding', 'min_height', 'valign', 'bg_overlay', 'bg_overlay_opacity', 'border_width', 'border_style', 'border_color', 'border_radius', 'box_shadow'] as $k) {
+        foreach (['bg_color', 'padding', 'min_height', 'valign', 'bg_overlay', 'bg_overlay_opacity', 'border_width', 'border_style', 'border_color', 'border_radius', 'box_shadow', 'position', 'z_index', 'sticky_offset', 'shape_top_color', 'shape_bottom_color', 'shape_top_height', 'shape_bottom_height'] as $k) {
             if (!array_key_exists($k, $settings)) {
                 continue;
             }

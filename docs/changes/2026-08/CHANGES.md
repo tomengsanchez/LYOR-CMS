@@ -1,6 +1,132 @@
-﻿# Simple CMS – Changes (2026-08)
+﻿## Enterprise style pack + Team POGI theme (2026-08-18)
 
-Part of the [changes index](../CHANGES.md). Newest entries first within this month.
+- New bundled style pack **Enterprise** (`docs/samples/cms-style-pack-enterprise/`): navy/slate palette (`#0f172a` / `#1e40af`), modern sans-serif, soft shadows, compact radius, sticky header, card blog layout. Optional starter widgets (search, CTA band, featured posts, pages, social) seed **empty** areas only. Install from **System → General → Style packs** or **Customize**; download `?pack=enterprise`. Rebuild: `php cli/build_style_pack.php enterprise`.
+- Team POGI E2E (`npm run test:e2e:cms-team-pogi-site:fast`) activates Enterprise after site seed.
+
+---
+
+## Team POGI demo site + General settings form fix (2026-08-18)
+
+- Playwright builder `tests/e2e/cms-team-pogi-site.spec.ts` seeds a full marketing site for [Team POGI](https://www.facebook.com/teampogi31/): five layout-builder pages (home, mission, projects, crew, join), five blog posts with Lorem Picsum images, Primary Menu (including Facebook link), homepage = Team POGI page, branding, and Facebook SEO URL. Run: `npm run test:e2e:cms-team-pogi-site` (headed) or `npm run test:e2e:cms-team-pogi-site:fast`.
+- **Fix:** nested style-pack `<form>` elements inside System → General’s main save form broke HTML form boundaries so **Save** did not persist branding/Reading settings. Style packs moved to a separate card; main form has `id="generalSettingsForm"`. Tomeng E2E updated to match.
+
+---
+
+## Newsletter signups and subscribers (2026-08-17)
+
+- Public list at `/subscribe` plus a **Newsletter signup** widget (CSRF, honeypot `website`, consent checkbox, per-IP/session rate limit). Default **double opt-in** emails a 7-day confirm link (`GET /subscribe/confirm/{token}`); unsubscribe is `GET` then `POST /unsubscribe/{token}`. Success copy does not reveal whether an address was already on the list. Migration **025** (`cms_newsletter_subscribers`). Settings: `newsletter_enabled`, `newsletter_double_opt_in`, `newsletter_rate_limit` (General). Admin: `/admin/subscribers` (Confirm / Unsubscribe / Delete / CSV). Caps: `view_subscribers`, `manage_subscribers`, `export_subscribers`. Confirm mail uses the existing Mailer (SMTP / MailerSend / log).
+- Backup is the new table plus `newsletter_*` keys in `app_settings`. Help: Subscribers / Widgets / General / Email / Backup. Smoke: `cms_newsletter_smoke_test`. Playwright: `npm run test:e2e:cms-newsletter`. External JS: `widgets/form.js` field options only.
+
+---
+
+## Playwright coverage for Pulse through password UX (2026-08-17)
+
+- Headless spec `tests/e2e/cms-pulse-content-ux.spec.ts` walks Pulse widget areas, skip-to-content, 404 search, Duplicate, bulk UI, sticky/reading/TOC/share, `/search` + year/author archives, scheduled preview vs 404, and password gate (visitor JSON stub + unlock). `BASE_URL` defaults to `http://cms.local`. Run: `npm run test:e2e:cms-pulse-ux`. Public skip-to-content link restored in `layout.php` (CSS was already present).
+- `cms-smoke` homepage checks `#public-content` (does not require a page titled Welcome). `cms-wp-extended` asserts `/search` (`#siteSearchInput`); on-blog `#blogSearchInput` is skipped when Pulse hides it (`pub_theme_show_blog_search` off).
+- Backup unchanged. Help: Pages / Posts. Added to `npm run test:e2e:cms`.
+
+---
+
+## Password-protected pages and posts (2026-08-17)
+
+- Published pages and posts can require a visitor password (`cms_pages`/`cms_posts.password_hash`, migration 024). The public URL stays 200; body, layout, citations, comments, OG/JSON body, and LLM/search listings stay hidden until unlock (`POST /unlock/page|post/{id}`, CSRF, rate-limited). Editors with `edit_pages` / `edit_posts` skip the gate. Session plus a 10-day HttpOnly cookie (HMAC’d with `cms_content_pass_key` in `app_settings`; changing the password invalidates old cookies). Hashes are never returned on the REST API (`password_protected` flag instead). Optional write fields: `content_password`, `remove_content_password`.
+- Backup is the hashed column plus the HMAC key in `app_settings`. Help: Pages / Posts / General / Backup. Smoke: `cms_pages_smoke_test`, `cms_wp_extended_smoke_test`, `cms_routes_smoke_test`. External JS: none (unlock is a plain form).
+
+---
+
+## Bulk actions on pages and posts (2026-08-17)
+
+- List screens add a Bulk control: select rows on the current page (max 100) and Apply. Pages: publish / draft / delete. Posts: publish / draft / pin / unpin / delete. CSRF, capability per action (`edit_*` vs `delete_*`). Draft/delete skip the configured homepage and `welcome`/`home` fallback pages. Row checkboxes use the HTML `form` attribute so Duplicate/Delete row forms are not nested.
+- Backup is unchanged (`deleted_at` / `status` / `is_sticky` in SQL). Slug uniqueness now counts soft-deleted pages/posts so Duplicate after delete cannot hit `uk_cms_*_slug`. Help: Pages / Posts. Smoke: `cms_pages_smoke_test`, `cms_wp_extended_smoke_test`, `cms_routes_smoke_test`. External JS: `bulk-list.js`.
+
+---
+
+## Reading UX, schedule, sticky, search & archives (2026-08-17)
+
+- Public posts get previous/next, an on-page TOC (two or more h2/h3), last-updated, tracker-free Share (copy / email / native), print CSS, and a back-to-top control (`enhance.js`). Skip-to-content, reading time, related posts, and a 404 with site search stay in place.
+- Editors preview drafts and scheduled posts with `?preview=1` (requires `edit_posts` / `edit_pages`; `noindex`). Future **Publish at** times stay off lists, RSS, sitemap, and public slug lookup until due. **Pin to top** (`cms_posts.is_sticky`, migration 023) lists first.
+- New public routes: `/search` (pages + posts), `/blog/archive/{year}` and `/{month}`, `/blog/author/{username}`. Search widgets hit `/search`. New **Monthly archives** widget. Sitemap includes recent month archives.
+- Backup: `is_sticky` and `published_at` in the SQL dump; widget areas unchanged. Help: Posts / Pages / Widgets / Backup. Smoke: `cms_wp_extended_smoke_test`, `cms_routes_smoke_test`. Postman: optional `is_sticky` / `published_at` on post write.
+
+---
+
+## Duplicate page/post + public reading basics (2026-08-17)
+
+- Admin **Duplicate** (`POST /admin/pages|posts/duplicate/{id}`, CSRF, `add_pages` / `add_posts`) creates a draft “Copy of …” including `layout_json`, blocks, SEO, and post tags (sticky is not copied). Redirects to edit.
+- Public layout has a skip link to `#public-content`. Posts show an estimated reading time and related posts (same category first). 404 pages offer search plus latest posts.
+
+---
+
+## Pulse style pack + extra widget areas (2026-08-17)
+
+- Widget areas: **Header**, **After header**, **Homepage**, **Sidebar**, **After content**, **Footer**. Types include featured posts, CTA, pages, and social links. Pulse (`docs/samples/cms-style-pack-pulse/`, `?pack=pulse`) fills **empty** Header / After header / Homepage / After content only (`installStarterIfEmpty`); occupied areas stay as they are.
+- Backup is `cms_widgets` plus theme pack CSS in uploads/`app_settings`. Help: Widgets / Customize / General / Backup. Smoke: `cms_wp_extended_smoke_test`, `cms_theme_style_pack_smoke_test`. Rebuild: `php cli/build_style_pack.php pulse`.
+
+---
+
+## Design field groups + small rich text (2026-08-17)
+
+- Module catalog now lists Design **groups** (`align` / `type` / `color` / `space` / `chrome`). The inspector only shows those packs (Spacer is spacing; Image has no type; Heading still has type). Hover appears only when color, type, or chrome is present.
+- Text, CTA, and Blurb bodies plus Accordion/Tabs item bodies use a small Bold / Italic / list / Link toolbar (`wysiwyg.js`). Heading stays plain. Unknown tags and `javascript:` links are stripped on save (`sanitizeRichText`); Custom HTML remains the escape hatch for embeds.
+- Backup is still `layout_json`. Help: Pages / Posts / Backup. Smoke: `text` field type `rich`; spacer has no type group; `<strong>` kept, `<script>` gone, `javascript:` unwrapped; plain `"a\\nb"` still renders.
+
+---
+
+## Design text-align beats inner module CSS (2026-08-17)
+
+- Compiled module `text-align` now also sets `.cms-el-* > *` so inner wrappers cannot keep a hardcoded align. Blurb was the only module that fought Design (`text-align:center` plus `margin:auto` on the image). Heading, text, CTA, button, testimonials, and icon list did not. Blurb images follow the same align; blurbs with no Design align stay centered.
+- Backup is still `layout_json`. Help: Pages / Posts. Smoke: `.cms-el-m-bl>*{text-align:left}`.
+
+---
+
+## Section extras: shape dividers, video background, reverse columns (2026-08-17)
+
+- Section Design adds allowlisted **shape dividers** (wave / tilt / curve / triangle; hardcoded SVG, `currentColor` fill), a **video background** URL (YouTube watch → constructed youtube-nocookie mute/loop iframe, Vimeo `background=1`, or HTTPS file; canvas never loads the iframe), and row Content **Reverse columns on mobile**. Per-device Bootstrap column widths are not in this pass. Overflow is clipped on the inner background layer so sticky children still work.
+- Backup is still `layout_json`. Help: Pages / Posts / Backup. Smoke: shape SVG present; YouTube watch URL → nocookie background src; unknown host dropped; reverse class; no `javascript:` in CSS.
+
+---
+
+## Allowlisted sticky and z-index (2026-08-17)
+
+- Visual builder Advanced adds **Position** (relative / sticky), **Z-index** (1–100), and **Sticky offset**. Values are stored as keys on design/settings bags (not `advanced`), compiled to hardcoded CSS. Absolute/fixed and z-index above 100 are dropped. Hover cannot store position. Copy style does not copy these keys.
+- Backup is still `layout_json`. Help: Pages / Posts / Backup. Smoke: `position:sticky`, `top:1rem`, `z-index:10`; `fixed` / `9999` dropped.
+
+---
+
+## Typography pack (font, tracking, transform) (2026-08-17)
+
+- Module Design adds allowlisted **Font** (system / sans / serif / mono), **Letter spacing** (tight–wider), and **Text transform**. Values are stored as keys in `layout_json` and compiled to hardcoded CSS — never interpolated user CSS. Live editor CSS patches the same way as font size/weight.
+- Backup is still `layout_json`. Help: Pages / Posts / Backup. Smoke: serif stack, `letter-spacing:0.05em`, `text-transform:uppercase`; injection strings dropped.
+
+---
+
+## Inner row nested columns (2026-08-17)
+
+- Visual builder adds **Inner row**: one nested row inside a column (stored as `mod.columns`, not gallery `data.columns`). Public markup is Bootstrap `row g-3` + `col-md-*`. A second inner row inside an inner column is dropped on save.
+- Editor: nested inner columns/modules use `data-kind=inner_column|inner_module` and `cms-lb-inner-col` / `cms-lb-inner-mod` (no ⋮⋮ drag; ↑↓ only). Layers lists them but does not drag them. The module picker hides Inner row when already inside one.
+- Backup is still `layout_json`. Help: Pages / Posts / Backup. Smoke: nested heading renders; nested inner_row dropped; `cms-mod-inner-row` / `col-md-6`; plainText walks inner columns.
+
+---
+
+## Gallery + Testimonials modules (2026-08-17)
+
+- Visual builder adds **Gallery** (up to 12 images, 2–4 columns; stacks to one column on small screens; optional link per image) and **Testimonials** (quote, name, role, optional photo). Captions, quotes, and names are escaped; `javascript:` image links are dropped.
+- Backup is still `layout_json` (plus Media uploads). Help: Pages / Posts / Backup. Smoke asserts column clamp, escaped captions, and escaped quotes.
+
+---
+
+## Tabs + Icon list modules (2026-08-17)
+
+- Visual builder adds **Tabs** (up to 12 panels; public HTML is radio + CSS, no extra JS) and **Icon list** (emoji/symbol + text). Titles, bodies, and icons are escaped. The canvas shows labels/rows, not live radios.
+- Backup is still `layout_json`. Help: Pages / Posts / Backup. Smoke asserts escaped tab titles and icon markup.
+
+---
+
+## Accordion + Video modules (2026-08-17)
+
+- Visual builder adds **Accordion** (up to 12 items; public HTML is native `<details>`/`<summary>`, no extra JS) and **Video** (YouTube, Vimeo, or HTTPS `.mp4`/`.webm`/`.ogg`). Iframe `src` is constructed from an allowlisted ID/host — never an arbitrary URL. The canvas shows a placeholder (no iframe).
+- CSP default `frame-src` adds `youtube-nocookie.com` and `player.vimeo.com`; `media-src` allows HTTPS files. Custom HTML modules still strip iframes.
+- Backup is still `layout_json` (plus uploads). Help: Pages / Posts / Backup. Smoke: YouTube watch URL → nocookie embed; script in accordion titles escaped; unknown hosts dropped.
 
 ---
 

@@ -7,5 +7,7 @@ Fixture zips and folders for Appearance → Customize **style pack** import (`Ap
 | Example | [cms-style-pack-example/](cms-style-pack-example/) and `.zip` |
 | Manly | [cms-style-pack-manly/](cms-style-pack-manly/) |
 | Play / Build / Sound | [cms-style-pack-play-build-sound/](cms-style-pack-play-build-sound/) |
+| Pulse | [cms-style-pack-pulse/](cms-style-pack-pulse/) (header / homepage starter widgets) |
+| Enterprise | [cms-style-pack-enterprise/](cms-style-pack-enterprise/) (modern navy / slate) |
 
 Each pack: `cms-theme.json` plus optional `extra.css`. Backup stores theme CSS in `app_settings` and media files under uploads — not these sample zips.

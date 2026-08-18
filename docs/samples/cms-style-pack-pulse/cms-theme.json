@@ -1,0 +1,111 @@
+{
+  "format": "cms-style-pack",
+  "version": 1,
+  "name": "Pulse",
+  "notes": "Teal civic / community look. Uses Header, After header, Homepage, and After content widgets (not Sidebar or Footer). Occupied widget areas are left unchanged on activate.",
+  "settings": {
+    "pub_theme_preset": "custom",
+    "public_accent_color": "#0d9488",
+    "pub_theme_custom_bg": "#f4f7f8",
+    "pub_theme_custom_surface": "#ffffff",
+    "pub_theme_custom_text": "#134e4a",
+    "pub_theme_font": "modern",
+    "pub_theme_font_size": "md",
+    "pub_theme_line_height": "relaxed",
+    "pub_theme_radius": "md",
+    "pub_theme_width": "wide",
+    "pub_theme_blog_width": "wide",
+    "pub_theme_color_mode": "light",
+    "pub_theme_header": "solid",
+    "pub_theme_header_height": "comfortable",
+    "pub_theme_footer_style": "minimal",
+    "pub_theme_footer_align": "center",
+    "pub_theme_button_style": "solid",
+    "pub_theme_button_size": "md",
+    "pub_theme_card_shadow": "soft",
+    "pub_theme_content_spacing": "comfortable",
+    "pub_theme_link_style": "accent",
+    "pub_theme_nav_style": "inline",
+    "pub_theme_nav_uppercase": "0",
+    "pub_theme_brand_weight": "bold",
+    "pub_theme_heading_scale": "dramatic",
+    "pub_theme_blog_list_style": "cards",
+    "pub_theme_blog_grid_columns": "3",
+    "pub_theme_blog_image_ratio": "landscape",
+    "pub_theme_blog_show_excerpt": "1",
+    "pub_theme_blog_show_read_more": "1",
+    "pub_theme_blog_show_category": "1",
+    "pub_theme_blog_view_switcher": "0",
+    "pub_theme_image_style": "rounded",
+    "pub_theme_border_style": "subtle",
+    "pub_theme_sticky_header": "1",
+    "pub_theme_show_admin_link": "0",
+    "pub_theme_show_site_title": "1",
+    "pub_theme_show_breadcrumbs": "1",
+    "pub_theme_sidebar_style": "plain",
+    "pub_theme_prose_align": "left",
+    "pub_theme_logo_size": "md",
+    "pub_theme_transition": "subtle",
+    "pub_theme_focus": "accent",
+    "pub_theme_show_blog_search": "0",
+    "pub_theme_show_post_dates": "1",
+    "pub_theme_show_list_featured": "1",
+    "pub_theme_chrome": "default",
+    "pub_theme_blog_kicker": "THIS WEEK",
+    "pub_theme_date_format": "human",
+    "pub_theme_show_site_tagline": "1"
+  },
+  "extra_css": "extra.css",
+  "widgets": {
+    "header": [
+      {
+        "widget_type": "search",
+        "title": "",
+        "is_enabled": true,
+        "config": {}
+      }
+    ],
+    "after_header": [
+      {
+        "widget_type": "cta",
+        "title": "",
+        "is_enabled": true,
+        "config": {
+          "headline": "Stories worth sharing",
+          "text": "New posts, local notes, and links from around the community.",
+          "label": "Read the blog",
+          "url": "/blog"
+        }
+      }
+    ],
+    "home": [
+      {
+        "widget_type": "featured_posts",
+        "title": "Latest stories",
+        "is_enabled": true,
+        "config": {
+          "count": 3
+        }
+      }
+    ],
+    "after_content": [
+      {
+        "widget_type": "cta",
+        "title": "",
+        "is_enabled": true,
+        "config": {
+          "headline": "Keep exploring",
+          "text": "Browse pages or jump back to the latest posts.",
+          "label": "All posts",
+          "url": "/blog"
+        }
+      },
+      {
+        "widget_type": "pages",
+        "title": "Pages",
+        "is_enabled": true,
+        "config": {}
+      }
+    ]
+  }
+}

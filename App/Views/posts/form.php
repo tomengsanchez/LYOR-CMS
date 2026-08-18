@@ -37,7 +37,23 @@ ob_start();
     </div>
     <?php endif; ?>
 </div>
-<div class="mb-3"><label class="form-label">Status</label><select name="status" class="form-select"><option value="draft" <?= ($post->status ?? '') === 'draft' ? 'selected' : '' ?>>Draft</option><option value="published" <?= ($post->status ?? '') === 'published' ? 'selected' : '' ?>>Published</option></select></div>
+<div class="mb-3"><label class="form-label">Status</label><select name="status" class="form-select"><option value="draft" <?= ($post->status ?? '') === 'draft' ? 'selected' : '' ?>>Draft</option><option value="published" <?= ($post->status ?? '') === 'published' ? 'selected' : '' ?>>Published</option></select>
+<small class="text-muted d-block mt-1">A future publish time keeps the post hidden until then (scheduled).</small></div>
+<div class="mb-3">
+    <label class="form-label" for="postPublishedAt">Publish at</label>
+    <input type="datetime-local" name="published_at" id="postPublishedAt" class="form-control" value="<?= htmlspecialchars(!empty($post->published_at) ? \App\UserTime::format((string) $post->published_at, \App\UserTime::KIND_SYSTEM, 'Y-m-d\\TH:i') : '') ?>">
+</div>
+<div class="mb-3 form-check">
+    <input type="hidden" name="is_sticky" value="0">
+    <input type="checkbox" class="form-check-input" name="is_sticky" value="1" id="postSticky" <?= !empty($post->is_sticky) ? 'checked' : '' ?>>
+    <label class="form-check-label" for="postSticky">Pin to top of the blog (sticky)</label>
+</div>
+<?php
+$entity = $post;
+$passwordInputId = 'postContentPassword';
+$passwordRemoveId = 'postRemoveContentPassword';
+require __DIR__ . '/../partials/content_password_field.php';
+?>
 <div class="mb-3">
     <label class="form-label">Content width (public)</label>
     <select name="content_layout" class="form-select">

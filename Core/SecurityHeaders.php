@@ -4,8 +4,8 @@ namespace Core;
 /**
  * Sends baseline HTTP security headers for browser responses.
  * CSP allows first-party assets plus known CDNs used by the layout (jsDelivr, jQuery CDN).
- * frame-src also allows Google Maps embeds used by the Structure GPS dialog.
- * img-src includes https: so Media “Register URL” / layout hotlinks (Unsplash, etc.) can render.
+ * frame-src: self, Google Maps, and layout Video embeds / section video backgrounds (YouTube nocookie + Vimeo player only).
+ * media-src allows HTTPS video files for the Video module and section file backgrounds. img-src includes https: for hotlinks.
  */
 class SecurityHeaders
 {
@@ -31,7 +31,8 @@ class SecurityHeaders
                 . "base-uri 'self'; "
                 . "form-action 'self'; "
                 . "frame-ancestors 'self'; "
-                . "frame-src 'self' https://maps.google.com https://www.google.com; "
+                . "frame-src 'self' https://maps.google.com https://www.google.com https://www.youtube-nocookie.com https://player.vimeo.com; "
+                . "media-src 'self' https:; "
                 . "img-src 'self' data: blob: https:; "
                 . "font-src 'self' data: https://cdn.jsdelivr.net; "
                 . "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "

@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder Accordion and Video modules",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Catalog/normalize/render Accordion (details/summary) and Video (YouTube nocookie, Vimeo player, HTTPS file). parseVideoUrl builds iframe src; unknown hosts and javascript: URLs are dropped."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Accordion Content uses data-acc-idx/data-acc-field (not carousel slide attrs). Canvas lists titles and a video placeholder — no iframe. Video fields come from the catalog."
+    },
+    {
+      "area": "Security",
+      "summary": "Default CSP frame-src adds youtube-nocookie.com and player.vimeo.com; media-src allows HTTPS video files. Custom HTML modules still strip iframes."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Accordion items and Video URLs live in layout_json and restore with the SQL dump."
+    }
+  ]
+}

@@ -14,19 +14,19 @@ This guide describes structure, routing, database schema, settings, and conventi
 |--------|-------|--------|-------|
 | **Home** | — | `/` | Static page (Reading settings) or latest posts |
 | **Pages** | `/admin/pages` | `/p/{slug}`, plain permalinks, `/index.json` | Visual layout + block builder, SEO, hierarchy |
-| **Posts** | `/admin/posts` | `/blog`, `/blog/{slug}`, custom permalinks | Visual layout, comments, tags, featured image |
+| **Posts** | `/admin/posts` | `/blog`, `/blog/{slug}`, archives, author, custom permalinks | Visual layout, comments, tags, sticky, schedule |
 | **Categories** | `/admin/categories` | `/blog/category/{slug}` | |
 | **Tags** | `/admin/tags` | `/blog/tag/{slug}` | Comma-separated on post form |
 | **Comments** | `/admin/comments` | Form on posts | Moderation, replies, rate limit |
 | **Menus** | `/admin/menus` | Primary header nav | |
-| **Widgets** | `/admin/widgets` | Sidebar + footer | Drag to reorder |
+| **Widgets** | `/admin/widgets` | Header, after header, homepage, sidebar, after content, footer | Drag to reorder |
 | **Media** | `/admin/media` | `/share/media/{id}` (external → redirect to `source_url`) | Upload or **Register URL** (no download); `caption` / `source_url` on `cms_media` |
-| **General** | `/admin/system/general` | Theme, reading, discussion, permalinks, SEO | |
+| **General** | `/admin/system/general` | Theme, reading, discussion, newsletter, permalinks, SEO | |
 | **Users / Roles** | `/admin/users`, `/admin/users/roles` | — | Capabilities in `App\Capabilities` |
 
 Legacy paths (`/login`, `/pages`, …) **301 redirect** to `/admin/...` via `LegacyRedirectController`.
 
-**Public syndication:** `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/llms-full.txt`, `/feed.xml`, `/site.json`, `/blog.json`, `/blog/{slug}.json` (when enabled in General → SEO).
+**Public syndication:** `/sitemap.xml`, `/robots.txt`, `/llms.txt`, `/llms-full.txt`, `/feed.xml`, `/site.json`, `/blog.json`, `/blog/{slug}.json` (when enabled in General → SEO). **Site search:** `/search`. **Archives:** `/blog/archive/{year}` / `{month}`, `/blog/author/{username}`. Editors preview unpublished content with `?preview=1`.
 
 ---
 
@@ -45,10 +45,11 @@ Legacy paths (`/login`, `/pages`, …) **301 redirect** to `/admin/...` via `Leg
 │   ├── Permalink.php         # URL generation + catch-all resolver
 │   ├── ReadingSettings.php   # Homepage / posts per page
 │   ├── DiscussionSettings.php
+│   ├── NewsletterSettings.php
 │   ├── PermalinkSettings.php
-    │   ├── PublicTheme.php       # Site theme customizer
-    │   ├── ThemeStylePack.php    # Style pack zip import/export
-    │   ├── ThemeStylePack.php    # Style pack zip import/export
+│   ├── PublicTheme.php       # Site theme customizer
+│   ├── ThemeStylePack.php    # Style pack zip import/export
+│   ├── PublicToc.php         # Heading ids + on-page TOC
 │   ├── PublicSeo.php         # SEO, JSON-LD, JSON exports
 │   ├── MediaImageSizes.php   # Responsive sizes + srcset (WP-style)
 │   └── CommentRateLimit.php  # Per-IP comment throttle
@@ -57,7 +58,7 @@ Legacy paths (`/login`, `/pages`, …) **301 redirect** to `/admin/...` via `Leg
 │   ├── database.php          # MySQL/MariaDB (copy from database-sample.php)
 │   └── app.php               # base_url, security headers (optional)
 ├── database/
-│   ├── migration_000 … 017   # Active CMS migrations
+│   ├── migration_000 … 025   # Active CMS migrations
 │   └── migrations_legacy/    # Archived PAPeR migrations
 ├── public/
 │   ├── index.php             # All routes
@@ -115,17 +116,18 @@ API handlers: `'Api\PostController@listApi'` → `App\Controllers\Api\PostContro
 
 | Table | Purpose |
 |-------|---------|
-| `cms_pages` | Static pages; `parent_id`, `blocks_json`, SEO columns |
-| `cms_posts` | Blog posts; `category_id`, `featured_image_id`, `blocks_json` |
+| `cms_pages` | Static pages; `parent_id`, `blocks_json`, SEO columns, optional `password_hash` |
+| `cms_posts` | Blog posts; `category_id`, `featured_image_id`, `blocks_json`, `is_sticky`, optional `password_hash` |
 | `cms_categories` | Post categories |
 | `cms_tags`, `cms_post_tags` | Post tags (many-to-many) |
 | `cms_media` | Uploads library |
 | `cms_media_sizes` | Intermediate image sizes (thumbnail, medium, large, …) |
 | `cms_menus`, `cms_menu_items` | Navigation menus |
 | `cms_comments` | Post comments (moderation statuses) |
-| `cms_widgets` | Sidebar/footer widgets |
+| `cms_widgets` | Public widget areas (header / after_header / home / sidebar / after_content / footer) |
+| `cms_newsletter_subscribers` | Newsletter list (pending / confirmed / unsubscribed + confirm/unsub tokens) |
 
-Settings for reading, discussion, permalinks, and public theme are stored in **app_settings** (not separate tables).
+Settings for reading, discussion, newsletter, permalinks, and public theme are stored in **app_settings** (not separate tables).
 
 ---
 
@@ -159,7 +161,11 @@ Active CMS migrations:
 | `migration_017_revisions_redirects` | cms_content_revisions + cms_redirects |
 | `migration_018_layout_templates` | cms_layout_templates (reusable builder layouts) |
 | `migration_019_content_width_full_default` | Default public content width → full (1320px) |
-| `migration_020_hide_public_admin_link` | Hide public Admin login links by default |
+| `migration_021_ai_citation_bluf` | citation_snippet + faq_json on pages/posts |
+| `migration_022_media_source_caption` | cms_media source_url + caption |
+| `migration_023_post_sticky` | cms_posts.is_sticky |
+| `migration_024_content_password` | Optional password_hash on cms_pages / cms_posts |
+| `migration_025_newsletter_subscribers` | cms_newsletter_subscribers (email list + tokens) |
 
 Format: PHP file returning `name`, `up`, `down` callables. DDL steps should be idempotent where practical (`SHOW COLUMNS` guards).
 
@@ -172,11 +178,13 @@ Format: PHP file returning `name`, `up`, `down` callables. DDL steps should be i
 | Branding | `App\Models\AppSettings` | app_name, company_name, logo |
 | Reading | `ReadingSettings` | homepage static vs posts, posts_per_page |
 | Discussion | `DiscussionSettings` | comments, moderation, sidebar, **comment_rate_limit** |
+| Newsletter | `NewsletterSettings` | enabled, double opt-in, **rate_limit** |
 | Permalinks | `PermalinkSettings` | page/post URL patterns |
 | Public theme | `PublicTheme` / `ThemeStylePack` | presets, fonts, widths, color mode; style-pack zip import/export |
 | Site SEO | `AppSettings::getSiteSeoConfig()` | sitemap, RSS, JSON export, llms.txt, AI crawlers, OG defaults, AI citation/E-E-A-T/topic clusters |
+| Content unlock | `ContentPassword` | `cms_content_pass_key` (HMAC for visitor unlock cookies; created on first use) |
 
-Preview unsaved theme: `/?theme_preview=1` (admin only). **Customizer:** `/admin/customize` — sidebar controls + iframe (`customize_frame=1`), session sync via `POST /admin/customize/preview`, publish via `POST /admin/customize/publish` (`CustomizeController`, `theme-preview-bridge.js`). **Style packs:** library at `public/uploads/theme-packs/library/{id}/`; activate/delete/install-bundled + import/export/sample routes on `/admin/customize/*-style-pack`. Bundled zips: example, Play · Build · Sound, **Manly**. Rebuild zips: `php cli/build_style_pack.php`.
+Preview unsaved theme: `/?theme_preview=1` (admin only). **Customizer:** `/admin/customize` — sidebar controls + iframe (`customize_frame=1`), session sync via `POST /admin/customize/preview`, publish via `POST /admin/customize/publish` (`CustomizeController`, `theme-preview-bridge.js`). **Style packs:** library at `public/uploads/theme-packs/library/{id}/`; activate/delete/install-bundled + import/export/sample routes on `/admin/customize/*-style-pack`. Bundled zips: example, Play · Build · Sound, **Manly**, **Pulse**, **Enterprise** (can seed empty widget areas). Rebuild zips: `php cli/build_style_pack.php`.
 
 ---
 
@@ -192,7 +200,7 @@ Key CMS capabilities: `view_pages`, `view_posts`, `moderate_comments`, `manage_c
 
 **External files only** under `public/assets/js/`. Views may output JSON config blocks for JS; no inline `onclick` / behavior scripts.
 
-Examples: `public/assets/js/content/blocks.js`, `public/assets/js/builder/*.js` (boot `editor.js` plus `ns.js`, `history.js`, `model.js`, `styles.js`, `canvas.js`, `layers.js`, `dnd.js`, `actions.js`, `panel.js`, `save.js`, `ui.js`), `public/assets/js/widgets/form.js`, `public/assets/js/public/comments.js`.
+Examples: `public/assets/js/content/blocks.js`, `public/assets/js/content/bulk-list.js`, `public/assets/js/builder/*.js` (boot `editor.js` plus `ns.js`, `history.js`, `model.js`, `styles.js`, `canvas.js`, `layers.js`, `dnd.js`, `actions.js`, `wysiwyg.js`, `panel.js`, `save.js`, `ui.js`), `public/assets/js/widgets/form.js`, `public/assets/js/public/comments.js`, `public/assets/js/public/enhance.js`.
 
 ### Content revisions
 
@@ -208,16 +216,18 @@ Snapshots in `cms_content_revisions` (max 50 per page/post). Recorded before `Pa
 
 ### Visual layout builder (Divi-style)
 
-JSON stored in `layout_json` on pages/posts (migration **016**). Structure: Section → Row → Column → Module. Phase 1 modules: heading, text, image, button, CTA, spacer, divider, HTML, blurb, **carousel** (multi-slide images with autoplay/arrows/dots).
+JSON stored in `layout_json` on pages/posts (migration **016**). Structure: Section → Row → Column → Module. Modules: heading, text, image, button, CTA, spacer, divider, HTML, blurb, **carousel**, **accordion** (`<details>`), **tabs** (CSS radios), **icon list**, **gallery** (2–4 col grid), **testimonials**, **video** (YouTube nocookie / Vimeo / HTTPS file), **inner row** (one nested column row; further nesting stripped on normalize).
 
 - **Admin:** `GET /admin/builder/page/{id}` / `GET /admin/builder/post/{id}`; save via `POST .../save` (FormData `layout_json` + CSRF, check without rotate).
 - **Entry:** “Edit via Frontend editor” on page/post forms (after the entity is saved).
 - **Device preview:** Desktop / Tablet / Mobile toolbar toggles set canvas `max-width` (1100 / 768 / 390) and which Design bag is edited (`settings` vs `settings_tablet` / `settings_mobile`, same for `design_*`). Public CSS: `@media (max-width: 1023.98px)` / `767.98px`. Editor preview prefixes rules with `[data-device]` because the canvas is not an iframe.
 - **Theme colors:** Design color fields accept `#hex` or tokens (`accent`, `accent-soft`, `text`, `muted`, `surface`, `bg`, `border`) compiled to `var(--pub-…)`. Tokens follow Appearance → Customize without rewriting each module.
 - **Background image:** Section / row / column Design can set `bg_media_id` / `bg_image` plus overlay color and 0–80% strength. Compiled to `background-image` (optional `linear-gradient` overlay + `url("…")`). URLs are sanitized (no quotes/parentheses). Image is site-wide; overlay can be per-device.
+- **Section extras:** Allowlisted shape dividers (`wave`/`tilt`/`curve`/`triangle` hardcoded SVG; color/height keys compile to child CSS). Section `bg_video_url` uses `parseVideoUrl` then a constructed mute/loop youtube-nocookie or Vimeo background iframe (or `<video>`); overflow is clipped on `.cms-layout-section-bg`, not the section (sticky still works). The canvas never loads the iframe. Row `col_reverse_mobile` adds `cms-layout-row--reverse-mobile` (public `@media` below 768px; editor Mobile preview). Shape type, video URL, and reverse are site-wide (not tablet/mobile bags).
+- **Design text-align:** Compiled onto `.cms-el-*` and `.cms-el-* > *` so inner wrappers (Blurb’s nested `.cms-mod-blurb`) cannot keep a hardcoded align. Blurb default remains centered when Design align is empty; blurb images follow text-align (no `margin:auto`). Heading, text, CTA, button, testimonials, and icon list did not hardcode `text-align`.
 - **Templates:** Shared library in `cms_layout_templates` (migration **018**). Toolbar **Templates** → load / save current / delete. Endpoints: `GET|POST /admin/builder/templates`, `GET /admin/builder/templates/{id}`, `POST .../{id}/delete`.
-- **Row columns:** Content panel layout picker (1–4 equal + common splits); row chrome **Columns** opens it. Individual columns: **1–12** width slider + **min height** / vertical align. Drag the edge between two columns to split widths. Modules are preserved when the row layout changes.
-- **Modules:** Side-panel type picker with short descriptions and a filter box (`LayoutBuilder::moduleCatalog()` via editor `data-modules` also carries Content **fields** and **defaults**; carousel uses `custom: carousel`; media/html preview stay special in `panel.js`); empty-column **+ Add module** or **+** after a module; PHP `normalizeModuleData` / `renderModuleInner` remain type switches. Content / Design / Advanced inspector; Design **Normal / Hover** (hover stored in `design_hover`, same CSS on every device; compiled `:hover` includes `.btn` / `.public-site` so button themes do not win); **Copy style** / **Paste style** (appearance bags only); drag **⋮⋮** to reorder; **Layers** tree (search box; drag rows to reorder; hover previews on the canvas); click heading/text on canvas to type in place; **Copy** / **Paste** toolbar, right-click menu, and Ctrl/Cmd+C/V/X (in-memory only); **?** for shortcuts; Alt+arrows to nudge; 85/100/115% zoom; **Undo / Redo**; autosave about every 12s when dirty (deferred while typing; does not rebuild the canvas). Zoom / device / Layers stay for the browser tab (`sessionStorage`). Confirm before delete. Button and CTA support `style` (`primary|secondary|outline`) and `new_tab`. Column settings `min_height` and `valign` live in `layout_json` (backup via SQL dump). **Design / settings CSS** (colors including theme tokens, spacing as TRBL that stores a shorthand string, min-height, text align, font size/weight/line-height, border/radius, allowlisted box-shadow, section background image + overlay, module hover) patches that node’s rules in `#cmsBuilderLiveCss` without rebuilding the canvas, including per-device overrides; width, valign, and hide-on-device patch classes in place. **Content** edits patch the selected module’s inner HTML (carousel still rebuilds). Custom CSS class and section type still rebuild. Public HTML prepends `<style class="cms-layout-css">` compiled by `LayoutBuilder::compileStylesheet` (same safeColor / safeSpacing / safeHeight checks; not stored — derived from `layout_json`).
+- **Row columns:** Content panel layout picker (1–4 equal + common splits); row chrome **Columns** opens it. Individual columns: **1–12** width slider + **min height** / vertical align. Drag the edge between two columns to split widths. Modules are preserved when the row layout changes. **Inner row** module repeats the same picker on `mod.columns` (max one nest; nested inner_row nodes are dropped). Canvas inner columns use `cms-lb-inner-col` / `data-kind=inner_column` so outer module DnD still uses `.cms-lb-mod`.
+- **Modules:** Side-panel type picker with short descriptions and a filter box (`LayoutBuilder::moduleCatalog()` via editor `data-modules` also carries Content **fields**, **defaults**, and Design **groups**; carousel, accordion, tabs, icon_list, gallery, testimonial, and inner_row use `custom`; video uses catalog fields; media/html preview stay special in `panel.js`; Text/CTA/Blurb fields use `type: rich` with `wysiwyg.js` before `panel.js`); empty-column **+ Add module** or **+** after a module; PHP `normalizeModuleData` / `renderModuleInner` remain type switches (`inner_row` stores columns on the module and `renderColumn`s them). Accordion renders as `<details>` on the public site (no extra JS). Tabs use radio inputs + CSS (no extra JS). Icon list text/icons are escaped. Accordion/Tabs **bodies** and Text/CTA/Blurb copy use `sanitizeRichText` (allowlisted tags; heading stays escaped). Gallery captions/links are sanitized like carousel slides. Testimonials quotes/names are escaped. Video URLs are parsed to a constructed YouTube nocookie or Vimeo player iframe (or `<video>` for HTTPS files); the canvas never loads those iframes. Default CSP (`Core\SecurityHeaders`) allows `frame-src` youtube-nocookie + player.vimeo.com and `media-src` HTTPS. Content / Design / Advanced inspector (Design packs are per module type — Spacer is spacing only; Hover only if color/type/chrome; Advanced also has relative/sticky and z-index 1–100 on design/settings, never hover; Copy style skips them); Design **Normal / Hover** (hover stored in `design_hover`, same CSS on every device; compiled `:hover` includes `.btn` / `.public-site` so button themes do not win); **Copy style** / **Paste style** (appearance bags only; reverse-columns is omitted); drag **⋮⋮** to reorder; **Layers** tree (search box; drag rows to reorder; hover previews on the canvas; inner column/module layers are not draggable); click heading/text on canvas to type in place (text modules save inner HTML); **Copy** / **Paste** toolbar, right-click menu, and Ctrl/Cmd+C/V/X (in-memory only); **?** for shortcuts; Alt+arrows to nudge; 85/100/115% zoom; **Undo / Redo**; autosave about every 12s when dirty (deferred while typing; does not rebuild the canvas). Zoom / device / Layers stay for the browser tab (`sessionStorage`). Confirm before delete. Button and CTA support `style` (`primary|secondary|outline`) and `new_tab`. Column settings `min_height` and `valign` live in `layout_json` (backup via SQL dump). **Design / settings CSS** (colors including theme tokens, spacing as TRBL that stores a shorthand string, min-height, text align, font size/weight/line-height, allowlisted font-family / letter-spacing / text-transform keys, relative/sticky position + z-index 1–100, border/radius, allowlisted box-shadow, section background image + overlay, shape divider color/height, module hover) patches that node’s rules in `#cmsBuilderLiveCss` without rebuilding the canvas, including per-device overrides; width, valign, and hide-on-device patch classes in place. Shape type, video URL, reverse-columns, custom CSS class, and section type still rebuild. **Content** edits patch the selected module’s inner HTML (carousel and accordion/tabs/icon-list/gallery/testimonial add/remove still rebuild; inner_row always rebuilds). Public HTML prepends `<style class="cms-layout-css">` compiled by `LayoutBuilder::compileStylesheet` (same safeColor / safeSpacing / safeHeight checks; not stored — derived from `layout_json`; walks inner_row columns).
 - **PHP:** `App\LayoutBuilder` facade plus `App/LayoutBuilder/` (`ModuleCatalog`, `Normalizer`, `Renderer`, `Sanitize`, `Css`); `App\Models\LayoutTemplate`; assets `public/assets/js/builder/` (split modules including `styles.js`, boot `editor.js`) and `public/assets/css/admin/builder.css`.
 - **Public precedence** (`ContentBlocks::renderEntity`): `layout_json` → `blocks_json` → HTML `body`.
 - **Backup:** `layout_json` and `cms_layout_templates` included in full DB dump; no special restore steps.
@@ -238,14 +248,20 @@ JPG/PNG/WebP uploads generate intermediate files via `App\MediaImageSizes` (GD).
 
 Plain page/post slugs cannot collide across `cms_pages` and `cms_posts` (`CmsSlug::conflictsWithOtherContent`).
 
+Published pages/posts may set a visitor password (`ContentPassword`, `password_hash`). Unlock: `POST /unlock/page/{id}` and `/unlock/post/{id}`. Editors with `edit_pages` / `edit_posts` bypass. Do not return hashes on the API.
+
 ### Comments
 
 Public submit: `POST /comment/post/{id}`. Honeypot field `website`. Rate limit: `CommentRateLimit` counts submissions per IP in the last hour (`discussion_comment_rate_limit`, default 10; 0 = unlimited).
 
+### Newsletter
+
+Public form: `GET/POST /subscribe`, confirm `GET /subscribe/confirm/{token}`, unsubscribe `GET/POST /unsubscribe/{token}`. Widget type `newsletter`. Table `cms_newsletter_subscribers`. Default double opt-in via `NewsletterMail` / `Mailer::send`. Honeypot `website`, consent checkbox, per-IP/session rate limit. Admin: `/admin/subscribers`. Capabilities `view_subscribers`, `manage_subscribers`, `export_subscribers`.
+
 ### Backup / restore
 
 - **Backup:** `php cli/backup.php` or System → Backup & Restore (full DB dump + uploads).
-- **Restore:** CLI only — `php cli/restore.php --from=path/to.zip`. Includes all `cms_*` tables and `app_settings`.
+- **Restore:** CLI only — `php cli/restore.php --from=path/to.zip`. Includes all `cms_*` tables and `app_settings` (visitor password hashes and `cms_content_pass_key`; newsletter rows and `newsletter_*` keys).
 - **Verify:** `npm run test:backup-restore` (when configured).
 
 ### Fresh-install truncate (destructive, never production)
@@ -278,7 +294,7 @@ Registered in `public/index.php` under `/api/`. JSON envelope: `{ success, data,
 | `POST /api/pages`, `POST /api/posts` | Bearer (`add_*`) | Create (JSON body; optional `layout` / `layout_json`) |
 | `PATCH /api/pages/{id}`, `PATCH /api/posts/{id}` | Bearer (`edit_*`) | Update (partial merge; optional layout) |
 | `DELETE /api/pages/{id}`, `DELETE /api/posts/{id}` | Bearer (`delete_*`) | Soft-delete |
-| `GET /api/system/general` | Bearer (admin) | Branding, SEO, reading, discussion, permalinks |
+| `GET /api/system/general` | Bearer (admin) | Branding, SEO, reading, discussion, newsletter, permalinks |
 | `GET /api/settings/ui` | Bearer | User UI prefs |
 
 Postman: `docs/postman/Simple-CMS-API.postman_collection.json`.
@@ -292,6 +308,9 @@ Postman: `docs/postman/Simple-CMS-API.postman_collection.json`.
 ```bash
 php tests/cli/cms_wp_features_smoke_test.php
 php tests/cli/cms_wp_extended_smoke_test.php
+php tests/cli/cms_theme_style_pack_smoke_test.php
+php tests/cli/cms_pages_smoke_test.php
+php tests/cli/cms_routes_smoke_test.php
 php tests/cli/cms_rss_smoke_test.php
 php tests/cli/cms_llm_discovery_smoke_test.php
 php tests/cli/cms_media_responsive_smoke_test.php
@@ -299,7 +318,7 @@ php tests/cli/cms_revisions_redirects_search_smoke_test.php
 php tests/cli/cms_builder_templates_write_api_smoke_test.php
 ```
 
-Or: `npm run test:cms-wp-features`, `npm run test:cms-wp-extended`, `npm run test:cms-rss`, `npm run test:cms-llm`, `npm run test:cms-media-responsive`, `npm run test:cms-inline-media`, `npm run test:cms-revisions-redirects-search`, `npm run test:cms-builder-templates-write-api`.
+Or: `npm run test:cms-wp-features`, `npm run test:cms-wp-extended`, `npm run test:cms-newsletter`, `npm run test:cms-rss`, `npm run test:cms-llm`, `npm run test:cms-media-responsive`, `npm run test:cms-inline-media`, `npm run test:cms-revisions-redirects-search`, `npm run test:cms-builder-templates-write-api`.
 
 ### Playwright E2E
 
@@ -312,8 +331,10 @@ ADMIN_PASS=admin123
 ```
 
 ```bash
-npm run test:e2e:cms          # headless
+npm run test:e2e:cms          # headless (smoke + wp-extended + pulse UX + newsletter)
 npm run test:e2e:cms:headed # watch mode
+npm run test:e2e:cms-pulse-ux             # Pulse widgets through password-protect (BASE_URL)
+npm run test:e2e:cms-newsletter           # Subscribe form + admin list/confirm/delete (BASE_URL)
 npm run test:e2e:cms-builder-tomeng       # sample post with all column layouts
 npm run test:e2e:cms-builder-drag-column-size  # headed: drag reorder, width 1–12, edge resize, min-height
 npm run test:e2e:cms-pages-layouts-menu   # sample pages (distinct layouts) + Primary Menu

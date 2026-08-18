@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder section extras",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Section settings store allowlisted shape_top/shape_bottom (wave|tilt|curve|triangle), colors/heights, flips, and bg_video_url. Public markup uses hardcoded SVG siblings and a constructed mute/loop youtube-nocookie or Vimeo background iframe (or native video). Unknown hosts and user SVG are dropped. Row col_reverse_mobile adds cms-layout-row--reverse-mobile."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Section Design adds video background URL (canvas placeholder, no iframe) and shape divider fields. Row Content adds reverse-on-mobile. Shape color/height patch live CSS on child selectors; type/flip/video/reverse rebuild the canvas. Copy style omits reverse (layout, not appearance). Shape type, video URL, and reverse stay site-wide (not tablet/mobile bags)."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Keys live in layout_json settings and restore with the SQL dump. Public CSS and iframe src stay derived at render time."
+    }
+  ]
+}

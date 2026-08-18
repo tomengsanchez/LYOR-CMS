@@ -1,0 +1,13 @@
+{
+  "date": "2026-08-18",
+  "title": "Enterprise style pack",
+  "summary": "Bundled Enterprise style pack with navy/slate modern professional theme. Team POGI E2E activates it after site seed.",
+  "files": [
+    "docs/samples/cms-style-pack-enterprise/cms-theme.json",
+    "docs/samples/cms-style-pack-enterprise/extra.css",
+    "App/ThemeStylePack.php",
+    "cli/build_style_pack.php",
+    "tests/e2e/cms-team-pogi-site.spec.ts",
+    "docs/changes/2026-08/CHANGES.md"
+  ]
+}

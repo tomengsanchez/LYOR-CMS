@@ -15,7 +15,7 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
         <h5 class="mb-2">1. Overview</h5>
         <p class="mb-2"><?= $appName ?> is a lightweight PHP CMS for pages, blog posts, categories, and media. The public site is served at <code>/</code>; the admin panel lives under <code>/admin</code>.</p>
         <ul class="mb-0">
-            <li><strong>Public routes</strong> – <code>/</code> (homepage), <code>/p/{slug}</code>, <code>/blog</code></li>
+            <li><strong>Public routes</strong> – <code>/</code> (homepage), <code>/p/{slug}</code>, <code>/blog</code>, <code>/search</code>, <code>/subscribe</code></li>
             <li><strong>Admin routes</strong> – <code>/admin/login</code>, <code>/admin/pages</code>, <code>/admin/posts</code>, …</li>
             <li><strong>Stack</strong> – PHP 8+, MySQL/MariaDB, Bootstrap 5, jQuery; entry point <code>public/index.php</code></li>
             <li><strong>Config</strong> – <code>config/database.php</code>, optional <code>config/app.php</code> for base URL</li>
@@ -28,7 +28,7 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
         <h5 class="mb-2">2. Content management</h5>
         <ul class="mb-0">
             <li><strong>Pages</strong> – Static HTML pages. Set homepage under System → General → Reading.</li>
-            <li><strong>Posts</strong> – Blog with categories, tags, featured images, and archives.</li>
+            <li><strong>Posts</strong> – Blog with categories, tags, featured images, sticky/scheduled publish, archives, author pages, and list bulk actions.</li>
             <li><strong>Menus</strong> – Custom public header navigation (<code>/admin/menus</code>).</li>
             <li><strong>Media</strong> – Upload in Media library or directly on page/post forms (featured + block images); public <code>/share/media/{id}</code>; responsive <code>srcset</code>.</li>
             <li><strong>Categories</strong> – Optional grouping for posts.</li>

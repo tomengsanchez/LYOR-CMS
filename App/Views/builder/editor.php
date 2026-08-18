@@ -148,7 +148,7 @@ $appName = htmlspecialchars($branding->app_name ?? 'Simple CMS');
 <script src="/public/assets/js/content/media-picker.js"></script>
 <?php
 $builderJsDir = dirname(__DIR__, 3) . '/public/assets/js/builder';
-$builderScripts = ['ns.js', 'history.js', 'model.js', 'styles.js', 'canvas.js', 'layers.js', 'dnd.js', 'actions.js', 'panel.js', 'save.js', 'ui.js', 'editor.js'];
+$builderScripts = ['ns.js', 'history.js', 'model.js', 'styles.js', 'canvas.js', 'layers.js', 'dnd.js', 'actions.js', 'wysiwyg.js', 'panel.js', 'save.js', 'ui.js', 'editor.js'];
 foreach ($builderScripts as $builderFile) {
     $builderPath = $builderJsDir . DIRECTORY_SEPARATOR . $builderFile;
     $builderVer = is_file($builderPath) ? filemtime($builderPath) : time();

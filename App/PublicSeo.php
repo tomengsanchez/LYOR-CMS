@@ -85,7 +85,7 @@ class PublicSeo
         $pageLlm = trim((string) ($page->llm_summary ?? ''));
         $siteLlm = trim((string) ($seo->llm_site_summary ?? ''));
 
-        return [
+        $seoCtx = [
             'share' => $share,
             'json_ld' => self::jsonLd($page, $branding, $share, $isHomepage, $breadcrumbs),
             'json_url' => $seo->enable_json_export && $baseUrl !== '' ? $baseUrl . $jsonPath : '',
@@ -93,6 +93,10 @@ class PublicSeo
             'llm_summary' => $pageLlm !== '' ? $pageLlm : ($isHomepage ? $siteLlm : ''),
             'citation_snippet' => trim((string) ($page->citation_snippet ?? '')),
         ];
+        if (ContentPassword::isLocked('page', $page)) {
+            return ContentPassword::redactSeo($seoCtx, $page);
+        }
+        return $seoCtx;
     }
 
     /** @return array<string, mixed> Open Graph / Twitter payload. */
@@ -108,7 +112,9 @@ class PublicSeo
         }
         $title = AppSettings::formatSeoTitle($title);
         $description = trim((string) ($page->meta_description ?? ''));
-        if ($description === '') {
+        if (ContentPassword::isLocked('page', $page)) {
+            $description = ContentPassword::gateMessage();
+        } elseif ($description === '') {
             $description = SocialShare::descriptionFromText(
                 trim((string) ($page->llm_summary ?? '')),
                 ContentBlocks::plainTextFromEntity($page)
@@ -337,6 +343,9 @@ class PublicSeo
         $branding = $branding ?? AppSettings::getBrandingConfig();
         $seo = AppSettings::getSiteSeoConfig();
         $share = self::shareMeta($page, $branding, $isHomepage);
+        if (ContentPassword::isLocked('page', $page)) {
+            return ContentPassword::publicJsonStub('page', $page, (string) ($share['url'] ?? ''));
+        }
         $summary = trim((string) ($page->llm_summary ?? ''));
         if ($summary === '' && $isHomepage) {
             $summary = trim((string) ($seo->llm_site_summary ?? ''));
@@ -390,7 +399,7 @@ class PublicSeo
         }
         $llm = trim((string) ($post->llm_summary ?? ''));
 
-        return [
+        $seoCtx = [
             'share' => $share,
             'json_ld' => self::postJsonLd($post, $branding, $share, $tagNames),
             'json_url' => $jsonUrl,
@@ -398,6 +407,10 @@ class PublicSeo
             'llm_summary' => $llm,
             'citation_snippet' => trim((string) ($post->citation_snippet ?? '')),
         ];
+        if (ContentPassword::isLocked('post', $post)) {
+            return ContentPassword::redactSeo($seoCtx, $post);
+        }
+        return $seoCtx;
     }
 
     /** @param array<int, string> $tagNames */
@@ -530,6 +543,9 @@ class PublicSeo
         $branding = $branding ?? AppSettings::getBrandingConfig();
         $seo = AppSettings::getSiteSeoConfig();
         $share = SocialShare::forPost($post, $branding);
+        if (ContentPassword::isLocked('post', $post)) {
+            return ContentPassword::publicJsonStub('post', $post, (string) ($share['url'] ?? ''));
+        }
         $bodyText = ContentBlocks::plainTextFromEntity($post);
         $blocks = ContentBlocks::parse($post->blocks_json ?? null);
         $layout = \App\LayoutBuilder::hasLayout($post)

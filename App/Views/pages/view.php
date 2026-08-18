@@ -2,13 +2,24 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?= htmlspecialchars($page->title) ?></h2>
     <div>
-        <?php if ($page->status === 'published'): ?><?php $publicUrl = \App\Models\Page::isHomepageSlug($page->slug) ? '/' : '/p/' . htmlspecialchars($page->slug); ?><a href="<?= $publicUrl ?>" class="btn btn-outline-secondary" target="_blank" rel="noopener">View public</a><?php endif; ?>
+        <?php
+        $pagePublicUrl = \App\Models\Page::isHomepageSlug($page->slug) ? '/' : '/p/' . htmlspecialchars($page->slug);
+        if ($page->status === 'published'):
+        ?>
+        <a href="<?= $pagePublicUrl ?>" class="btn btn-outline-secondary" target="_blank" rel="noopener">View public</a>
+        <?php elseif (\Core\Auth::can('edit_pages')): ?>
+        <a href="<?= $pagePublicUrl ?>?preview=1" class="btn btn-outline-secondary" target="_blank" rel="noopener">Preview</a>
+        <?php endif; ?>
         <?php if (\Core\Auth::can('edit_pages')): ?><a href="<?= admin_url('pages/edit/' . (int)$page->id ) ?>" class="btn btn-primary">Edit</a><?php endif; ?>
+        <?php if (\Core\Auth::can('add_pages')): ?>
+        <form method="post" action="<?= admin_url('pages/duplicate/' . (int)$page->id) ?>" class="d-inline"><?= \Core\Csrf::field() ?><button type="submit" class="btn btn-outline-secondary">Duplicate</button></form>
+        <?php endif; ?>
         <a href="<?= admin_url('pages') ?>" class="btn btn-outline-secondary">Back</a>
     </div>
 </div>
 <div class="card mb-3"><div class="card-body">
 <p><strong>Slug:</strong> <code><?= htmlspecialchars($page->slug) ?></code> · <strong>Status:</strong> <?= htmlspecialchars($page->status) ?>
+<?php if (\App\ContentPassword::has($page)): ?> · <span class="badge bg-warning text-dark">Password protected</span><?php endif; ?>
 <?php if (!empty($page->robots_noindex)): ?> · <span class="badge bg-secondary">noindex</span><?php endif; ?></p>
 <?php if (!empty($page->meta_title) || !empty($page->meta_description)): ?>
 <p class="mb-1"><strong>SEO title:</strong> <?= htmlspecialchars($page->meta_title ?: '—') ?></p>

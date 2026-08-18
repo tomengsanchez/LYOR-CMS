@@ -2,13 +2,26 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><?= htmlspecialchars($post->title) ?></h2>
     <div>
-        <?php if ($post->status === 'published'): ?><a href="/blog/<?= htmlspecialchars($post->slug) ?>" class="btn btn-outline-secondary" target="_blank" rel="noopener">View public</a><?php endif; ?>
+        <?php
+        $postPublicUrl = \App\Permalink::urlForPost($post);
+        $postLive = \App\Models\Post::isLive($post);
+        if ($postLive):
+        ?>
+        <a href="<?= htmlspecialchars($postPublicUrl) ?>" class="btn btn-outline-secondary" target="_blank" rel="noopener">View public</a>
+        <?php elseif (\Core\Auth::can('edit_posts')): ?>
+        <a href="<?= htmlspecialchars($postPublicUrl) ?>?preview=1" class="btn btn-outline-secondary" target="_blank" rel="noopener">Preview</a>
+        <?php endif; ?>
         <?php if (\Core\Auth::can('edit_posts')): ?><a href="<?= admin_url('posts/edit/' . (int)$post->id ) ?>" class="btn btn-primary">Edit</a><?php endif; ?>
+        <?php if (\Core\Auth::can('add_posts')): ?>
+        <form method="post" action="<?= admin_url('posts/duplicate/' . (int)$post->id) ?>" class="d-inline"><?= \Core\Csrf::field() ?><button type="submit" class="btn btn-outline-secondary">Duplicate</button></form>
+        <?php endif; ?>
         <a href="<?= admin_url('posts') ?>" class="btn btn-outline-secondary">Back</a>
     </div>
 </div>
 <div class="card"><div class="card-body">
-<p><strong>Category:</strong> <?= htmlspecialchars($post->category_name ?? '—') ?> · <strong>Status:</strong> <?= htmlspecialchars($post->status) ?>
+<p><strong>Category:</strong> <?= htmlspecialchars($post->category_name ?? '—') ?> · <strong>Status:</strong> <?= htmlspecialchars(\App\Models\Post::publicStatusLabel($post)) ?>
+<?php if (!empty($post->is_sticky)): ?> · <span class="badge bg-primary">Pinned</span><?php endif; ?>
+<?php if (\App\ContentPassword::has($post)): ?> · <span class="badge bg-warning text-dark">Password protected</span><?php endif; ?>
 <?php if (!empty($post->robots_noindex)): ?> · <span class="badge bg-secondary">noindex</span><?php endif; ?></p>
 <?php if (!empty($post->meta_title) || !empty($post->meta_description)): ?>
 <p class="mb-1"><strong>SEO title:</strong> <?= htmlspecialchars($post->meta_title ?: '—') ?></p>

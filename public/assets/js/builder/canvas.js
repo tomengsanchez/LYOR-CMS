@@ -4,6 +4,38 @@
 (function () {
     window.CmsBuilder.bind(function (ctx) {
         with (ctx) {
+            var SHAPE_SVGS = {
+                wave: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path fill="currentColor" d="M0 60C150 150 350-20 600 60 850 140 1050-20 1200 60V120H0Z"/></svg>',
+                tilt: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><polygon fill="currentColor" points="0,80 1200,0 1200,120 0,120"/></svg>',
+                curve: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path fill="currentColor" d="M0 120V40Q600 120 1200 40V120Z"/></svg>',
+                triangle: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><polygon fill="currentColor" points="0,120 600,20 1200,120"/></svg>'
+            };
+
+            function sectionBgPreviewHtml(section) {
+                var url = section && section.settings && section.settings.bg_video_url
+                    ? String(section.settings.bg_video_url).trim()
+                    : '';
+                if (!url) {
+                    return '';
+                }
+                return '<div class="cms-layout-section-bg cms-lb-section-bg-ph" aria-hidden="true"><span>Video background (preview)</span></div>';
+            }
+
+            function shapeDividerHtml(section, side) {
+                var set = section && section.settings ? section.settings : {};
+                var key = String(set['shape_' + side] || '').toLowerCase();
+                if (!SHAPE_SVGS[key]) {
+                    return '';
+                }
+                var h = String(set['shape_' + side + '_height'] || 'md').toLowerCase();
+                if (h !== 'sm' && h !== 'md' && h !== 'lg') {
+                    h = 'md';
+                }
+                var flip = set['shape_' + side + '_flip'] ? ' cms-shape--flip' : '';
+                return '<div class="cms-shape cms-shape--' + side + ' cms-shape--' + key + ' cms-shape--' + h + flip + '" aria-hidden="true">'
+                    + SHAPE_SVGS[key] + '</div>';
+            }
+
             function modulePreviewHtml(mod) {
                 var d = mod.data || {};
                 var adv = mod.advanced || {};
@@ -25,7 +57,9 @@
                         break;
                     }
                     case 'text':
-                        inner = '<div class="cms-mod-text" data-inline-field="text" contenteditable="true" spellcheck="true">' + esc(d.text || '').replace(/\n/g, '<br>') + '</div>';
+                        inner = '<div class="cms-mod-text" data-inline-field="text" data-inline-html="1" contenteditable="true" spellcheck="true">'
+                            + (typeof formatRichPreview === 'function' ? formatRichPreview(d.text) : esc(d.text || '').replace(/\n/g, '<br>'))
+                            + '</div>';
                         break;
                     case 'image': {
                         var m = d.media_id ? mediaById(d.media_id) : null;
@@ -50,7 +84,9 @@
                         break;
                     case 'cta':
                         inner = '<div class="cms-mod-cta"><h3 class="cms-mod-cta-title">' + esc(d.title || '') + '</h3>'
-                            + '<div class="cms-mod-cta-text">' + esc(d.text || '').replace(/\n/g, '<br>') + '</div>'
+                            + '<div class="cms-mod-cta-text">'
+                            + (typeof formatRichPreview === 'function' ? formatRichPreview(d.text) : esc(d.text || '').replace(/\n/g, '<br>'))
+                            + '</div>'
                             + canvasLink(d.url, btnClassFromStyle(d.style) + ' cms-mod-cta-btn', d.label || 'Go') + '</div>';
                         break;
                     case 'spacer':
@@ -76,7 +112,9 @@
                             blurbTitle = '<a href="' + esc(d.url) + '" data-cms-canvas-link="1">' + blurbTitle + '</a>';
                         }
                         inner = '<div class="cms-mod-blurb">' + mediaBit + blurbTitle
-                            + '<div class="cms-mod-blurb-text">' + esc(d.text || '').replace(/\n/g, '<br>') + '</div></div>';
+                            + '<div class="cms-mod-blurb-text">'
+                            + (typeof formatRichPreview === 'function' ? formatRichPreview(d.text) : esc(d.text || '').replace(/\n/g, '<br>'))
+                            + '</div></div>';
                         break;
                     }
                     case 'carousel': {
@@ -103,10 +141,159 @@
                         }
                         break;
                     }
+                    case 'accordion': {
+                        var accItems = Array.isArray(d.items) ? d.items : [];
+                        var accRows = '';
+                        accItems.forEach(function (item) {
+                            var t = (item && item.title) ? String(item.title) : 'Item';
+                            accRows += '<div class="cms-lb-acc-item">' + esc(t) + '</div>';
+                        });
+                        inner = accRows
+                            ? '<div class="cms-mod-accordion cms-lb-accordion-preview">' + accRows + '</div>'
+                            : '<div class="text-muted small p-3 border">Accordion — add items in the panel.</div>';
+                        break;
+                    }
+                    case 'video': {
+                        var vurl = String(d.url || '');
+                        var vkind = 'Video';
+                        if (/youtu\.be|youtube/i.test(vurl)) {
+                            vkind = 'YouTube';
+                        } else if (/vimeo/i.test(vurl)) {
+                            vkind = 'Vimeo';
+                        } else if (/\.(mp4|webm|ogg)(\?|$)/i.test(vurl)) {
+                            vkind = 'Video file';
+                        }
+                        inner = '<div class="cms-mod-video cms-lb-video-placeholder">'
+                            + '<div class="cms-lb-video-frame">' + esc(vkind) + '</div>'
+                            + (vurl ? '<div class="small text-muted mt-1">' + esc(vurl) + '</div>' : '<div class="small text-muted mt-1">Paste a YouTube, Vimeo, or HTTPS .mp4 URL</div>')
+                            + (d.caption ? '<div class="small">' + esc(d.caption) + '</div>' : '')
+                            + '</div>';
+                        break;
+                    }
+                    case 'tabs': {
+                        var tabItems = Array.isArray(d.items) ? d.items : [];
+                        var tabChips = '';
+                        tabItems.forEach(function (item, ti) {
+                            var tt = (item && item.title) ? String(item.title) : 'Tab';
+                            tabChips += '<span class="cms-lb-tab-chip' + (ti === 0 ? ' is-on' : '') + '">' + esc(tt) + '</span>';
+                        });
+                        inner = tabChips
+                            ? '<div class="cms-mod-tabs cms-lb-tabs-preview">' + tabChips + '</div>'
+                            : '<div class="text-muted small p-3 border">Tabs — add panels in the inspector.</div>';
+                        break;
+                    }
+                    case 'icon_list': {
+                        var listItems = Array.isArray(d.items) ? d.items : [];
+                        var listRows = '';
+                        listItems.forEach(function (item) {
+                            var ic = (item && item.icon) ? String(item.icon) : '•';
+                            var tx = (item && item.text) ? String(item.text) : '';
+                            listRows += '<div class="cms-lb-ilist-item"><span class="cms-lb-ilist-icon">' + esc(ic)
+                                + '</span><span>' + esc(tx) + '</span></div>';
+                        });
+                        inner = listRows
+                            ? '<div class="cms-mod-icon-list cms-lb-ilist-preview">' + listRows + '</div>'
+                            : '<div class="text-muted small p-3 border">Icon list — add points in the inspector.</div>';
+                        break;
+                    }
+                    case 'gallery': {
+                        var galItems = Array.isArray(d.items) ? d.items : [];
+                        var galThumbs = '';
+                        var galShown = 0;
+                        galItems.forEach(function (item) {
+                            if (galShown >= 4) {
+                                return;
+                            }
+                            var gm = item.media_id ? mediaById(item.media_id) : null;
+                            var gsrc = (gm && (gm.preview || gm.url)) || item.url || '';
+                            if (gsrc) {
+                                galThumbs += '<img src="' + esc(gsrc) + '" alt="' + esc(item.alt || '') + '" class="cms-lb-carousel-thumb">';
+                                galShown += 1;
+                            }
+                        });
+                        inner = galThumbs
+                            ? '<div class="cms-mod-gallery cms-lb-gallery-preview">' + galThumbs
+                                + (galItems.length > galShown ? '<span class="small text-muted">+' + (galItems.length - galShown) + ' more</span>' : '')
+                                + '</div>'
+                            : '<div class="text-muted small p-3 border">Gallery — add images in the inspector.</div>';
+                        break;
+                    }
+                    case 'testimonial': {
+                        var tItems = Array.isArray(d.items) ? d.items : [];
+                        var tRows = '';
+                        tItems.forEach(function (item) {
+                            var nm = (item && item.name) ? String(item.name) : 'Name';
+                            var qt = (item && item.quote) ? String(item.quote) : '';
+                            tRows += '<div class="cms-lb-tml-item"><strong>' + esc(nm) + '</strong>'
+                                + (qt ? '<div class="small text-muted">' + esc(qt) + '</div>' : '') + '</div>';
+                        });
+                        inner = tRows
+                            ? '<div class="cms-mod-testimonials cms-lb-tml-preview">' + tRows + '</div>'
+                            : '<div class="text-muted small p-3 border">Testimonials — add quotes in the inspector.</div>';
+                        break;
+                    }
                     default:
                         inner = '<em>' + esc(mod.type) + '</em>';
                 }
                 return wrapOpen + inner + wrapClose;
+            }
+
+            function innerRowCanvasHtml(mod, si, ri, ci, mi) {
+                var mid = ensureNodeId(mod);
+                var wrapCls = 'cms-layout-module cms-mod-inner-row' + (elementCssClass(mid) ? ' ' + elementCssClass(mid) : '');
+                var html = '<div class="' + wrapCls + '"' + (mid ? ' data-el-id="' + esc(mid) + '"' : '') + '>';
+                html += '<div class="cms-lb-inner-row row g-3">';
+                var cols = mod.columns || [];
+                if (!cols.length) {
+                    html += '<p class="small text-muted mb-0">Choose a column layout in the inspector.</p>';
+                }
+                cols.forEach(function (icol, ici) {
+                    var w = Number(icol.width) || 12;
+                    var icsel = selection.kind === 'inner_column'
+                        && selection.sectionIdx === si && selection.rowIdx === ri && selection.colIdx === ci
+                        && selection.modIdx === mi && selIci() === ici ? ' is-selected' : '';
+                    var picking = modulePickTarget
+                        && modulePickTarget.si === si
+                        && modulePickTarget.ri === ri
+                        && modulePickTarget.ci === ci
+                        && modulePickTarget.mi === mi
+                        && modulePickTarget.ici === ici;
+                    var icid = ensureNodeId(icol);
+                    var path = 'data-si="' + si + '" data-ri="' + ri + '" data-ci="' + ci + '" data-mi="' + mi + '" data-ici="' + ici + '"';
+                    html += '<div class="cms-lb-inner-col cms-layout-column col-md-' + w + icsel + (picking ? ' is-picking' : '')
+                        + (elementCssClass(icid) ? ' ' + elementCssClass(icid) : '')
+                        + '" data-kind="inner_column" ' + path
+                        + (icid ? ' data-el-id="' + esc(icid) + '"' : '') + '>';
+                    html += chrome('Inner ' + w + '/12',
+                        chromeBtn('add-inner-mod', path, '+ Module', 'Add module in this inner column')
+                        + chromeBtn('del-inner-col', path, 'Del', 'Delete inner column'),
+                        true);
+                    var imods = icol.modules || [];
+                    if (!imods.length) {
+                        html += '<div class="cms-lb-col-empty">'
+                            + '<button type="button" class="btn btn-sm btn-outline-secondary" data-action="add-inner-mod" ' + path + '>+ Add module</button>'
+                            + '</div>';
+                    }
+                    imods.forEach(function (imod, imi) {
+                        var imsel = selection.kind === 'inner_module'
+                            && selection.sectionIdx === si && selection.rowIdx === ri && selection.colIdx === ci
+                            && selection.modIdx === mi && selIci() === ici && selImi() === imi ? ' is-selected' : '';
+                        var ipath = path + ' data-imi="' + imi + '"';
+                        html += '<div class="cms-lb-inner-mod' + imsel + '" data-kind="inner_module" ' + ipath + '>';
+                        html += chrome(moduleTypes[imod.type] || imod.type,
+                            chromeBtn('inner-mod-up', ipath, '↑', 'Move module up')
+                            + chromeBtn('inner-mod-down', ipath, '↓', 'Move module down')
+                            + chromeBtn('add-inner-mod-after', ipath, '+', 'Add module after this one')
+                            + chromeBtn('dup-inner-mod', ipath, 'Dup', 'Duplicate module')
+                            + chromeBtn('del-inner-mod', ipath, 'Del', 'Delete module'),
+                            true);
+                        html += modulePreviewHtml(imod);
+                        html += '</div>';
+                    });
+                    html += '</div>';
+                });
+                html += '</div></div>';
+                return html;
             }
             
             function sanitizePreviewHtml(html) {
@@ -123,9 +310,12 @@
                     + ' title="' + esc(title) + '" aria-label="' + esc(title) + '">' + esc(label) + '</button>';
             }
             
-            function chrome(label, buttonsHtml) {
+            function chrome(label, buttonsHtml, noDrag) {
+                var drag = noDrag
+                    ? ''
+                    : '<button type="button" class="cms-lb-chrome-btn cms-lb-drag-handle" data-drag-handle draggable="true" title="Drag to reorder" aria-label="Drag to reorder">⋮⋮</button>';
                 return '<div class="cms-lb-chrome"><span class="cms-lb-chrome-label">'
-                    + '<button type="button" class="cms-lb-chrome-btn cms-lb-drag-handle" data-drag-handle draggable="true" title="Drag to reorder" aria-label="Drag to reorder">⋮⋮</button>'
+                    + drag
                     + '<span>' + esc(label) + '</span></span><span class="cms-lb-chrome-actions">' + buttonsHtml + '</span></div>';
             }
             
@@ -166,12 +356,15 @@
                         + chromeBtn('add-row', 'data-si="' + si + '"', '+ Row', 'Add row')
                         + chromeBtn('dup-section', 'data-si="' + si + '"', 'Dup', 'Duplicate section')
                         + chromeBtn('del-section', 'data-si="' + si + '"', 'Del', 'Delete section'));
+                    html += sectionBgPreviewHtml(section);
+                    html += shapeDividerHtml(section, 'top');
                     html += '<div class="cms-layout-section-inner ' + (section.type === 'fullwidth' ? 'cms-layout-section-inner--full' : 'container') + '">';
             
                     (section.rows || []).forEach(function (row, ri) {
                         var rsel = selection.kind === 'row' && selection.sectionIdx === si && selection.rowIdx === ri ? ' is-selected' : '';
                         var rid = ensureNodeId(row);
                         html += '<div class="cms-lb-row cms-layout-row row g-3'
+                            + ((row.settings && row.settings.col_reverse_mobile) ? ' cms-layout-row--reverse-mobile' : '')
                             + (elementCssClass(rid) ? ' ' + elementCssClass(rid) : '') + rsel
                             + '" data-kind="row" data-si="' + si + '" data-ri="' + ri + '"'
                             + (rid ? ' data-el-id="' + esc(rid) + '"' : '') + '>';
@@ -224,7 +417,11 @@
                                     + chromeBtn('add-mod-after', chromeExtra, '+', 'Add module after this one')
                                     + chromeBtn('dup-mod', chromeExtra, 'Dup', 'Duplicate module')
                                     + chromeBtn('del-mod', chromeExtra, 'Del', 'Delete module'));
-                                html += modulePreviewHtml(mod);
+                                if (mod.type === 'inner_row') {
+                                    html += innerRowCanvasHtml(mod, si, ri, ci, mi);
+                                } else {
+                                    html += modulePreviewHtml(mod);
+                                }
                                 html += '</div>';
                                 html += '<button type="button" class="cms-lb-insert-between" data-action="add-mod-after" ' + chromeExtra
                                     + ' title="Insert module after" aria-label="Insert module after">+</button>';
@@ -236,7 +433,9 @@
                         html += '</div>';
                     });
             
-                    html += '</div></section>';
+                    html += '</div>';
+                    html += shapeDividerHtml(section, 'bottom');
+                    html += '</section>';
                 });
                 html += '</div><div class="cms-lb-add-bar"><button type="button" class="btn btn-outline-primary btn-sm" data-action="add-section">+ Section</button></div>';
                 canvas.innerHTML = html;
@@ -286,15 +485,17 @@
                             e.stopPropagation();
                             var fieldEl = e.target.closest('[data-inline-field]');
                             var fieldName = fieldEl.getAttribute('data-inline-field');
-                            var already = el.getAttribute('data-kind') === 'module'
-                                && selection.kind === 'module'
+                            var already = (el.getAttribute('data-kind') === 'module' || el.getAttribute('data-kind') === 'inner_module')
+                                && isModSel()
                                 && Number(el.getAttribute('data-si')) === selection.sectionIdx
                                 && Number(el.getAttribute('data-ri')) === selection.rowIdx
                                 && Number(el.getAttribute('data-ci')) === selection.colIdx
-                                && Number(el.getAttribute('data-mi')) === selection.modIdx;
+                                && Number(el.getAttribute('data-mi')) === selection.modIdx
+                                && (el.getAttribute('data-kind') !== 'inner_module'
+                                    || (selIci() === Number(el.getAttribute('data-ici')) && selImi() === Number(el.getAttribute('data-imi'))));
                             if (!already) {
                                 selectFromEl(el);
-                                var again = canvas.querySelector('.cms-lb-mod.is-selected [data-inline-field="' + fieldName + '"]');
+                                var again = canvas.querySelector((el.getAttribute('data-kind') === 'inner_module' ? '.cms-lb-inner-mod' : '.cms-lb-mod') + '.is-selected [data-inline-field="' + fieldName + '"]');
                                 if (again) {
                                     again.focus();
                                 }
@@ -320,7 +521,7 @@
                     a.addEventListener('click', function (e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        var wrap = a.closest('[data-kind="module"]');
+                        var wrap = a.closest('[data-kind="inner_module"]') || a.closest('[data-kind="module"]');
                         if (wrap) {
                             selectFromEl(wrap);
                         }
@@ -352,7 +553,7 @@
                     el.addEventListener('blur', function () {
                         applyInlineFromEl(el);
                         commitHistoryNow();
-                        if (selection.kind === 'module') {
+                        if (isModSel()) {
                             renderPanel();
                         }
                     });
@@ -360,7 +561,7 @@
             }
             
             function applyInlineFromEl(el) {
-                var wrap = el.closest('.cms-lb-mod');
+                var wrap = el.closest('.cms-lb-inner-mod') || el.closest('.cms-lb-mod');
                 if (!wrap) {
                     return;
                 }
@@ -368,13 +569,26 @@
                 var ri = Number(wrap.getAttribute('data-ri'));
                 var ci = Number(wrap.getAttribute('data-ci'));
                 var mi = Number(wrap.getAttribute('data-mi'));
-                var col = getColAt(si, ri, ci);
-                var node = col && col.modules ? col.modules[mi] : null;
+                var node;
+                if (wrap.getAttribute('data-kind') === 'inner_module') {
+                    var ici = Number(wrap.getAttribute('data-ici'));
+                    var imi = Number(wrap.getAttribute('data-imi'));
+                    var innerCol = getInnerColAt(si, ri, ci, mi, ici);
+                    node = innerCol && innerCol.modules ? innerCol.modules[imi] : null;
+                } else {
+                    var col = getColAt(si, ri, ci);
+                    node = col && col.modules ? col.modules[mi] : null;
+                }
                 if (!node || !node.data) {
                     return;
                 }
                 var field = el.getAttribute('data-inline-field') || 'text';
-                var val = (el.innerText || el.textContent || '').replace(/\u00a0/g, ' ');
+                var val;
+                if (el.getAttribute('data-inline-html') === '1') {
+                    val = typeof sanitizeRichClient === 'function' ? sanitizeRichClient(el.innerHTML) : el.innerHTML;
+                } else {
+                    val = (el.innerText || el.textContent || '').replace(/\u00a0/g, ' ');
+                }
                 if (String(node.data[field] || '') === val) {
                     return;
                 }
@@ -385,21 +599,25 @@
                 if (panelField && document.activeElement !== panelField) {
                     panelField.value = val;
                 }
+                var panelRich = panelBody ? panelBody.querySelector('.cms-lb-rich-ed[data-rich-for="' + field + '"]') : null;
+                if (panelRich && document.activeElement !== panelRich) {
+                    panelRich.innerHTML = typeof formatRichPreview === 'function' ? formatRichPreview(val) : val;
+                }
             }
 
             function patchSelectedModulePreview() {
-                if (!canvas || selection.kind !== 'module') {
+                if (!canvas || !isModSel()) {
                     return false;
                 }
                 var node = getSelectedNode();
-                if (!node || node.type === 'carousel') {
+                if (!node || node.type === 'carousel' || node.type === 'inner_row') {
                     return false;
                 }
-                var chrome = selectedChromeEl();
-                if (!chrome) {
+                var chromeEl = selectedChromeEl();
+                if (!chromeEl) {
                     return false;
                 }
-                var wrap = chrome.querySelector('.cms-layout-module');
+                var wrap = chromeEl.querySelector('.cms-layout-module');
                 if (!wrap) {
                     return false;
                 }
@@ -410,8 +628,8 @@
                     return false;
                 }
                 wrap.replaceWith(next);
-                bindCanvasLinks(chrome);
-                bindInlineEditing(chrome);
+                bindCanvasLinks(chromeEl);
+                bindInlineEditing(chromeEl);
                 if (layersEl && !layersEl.hidden) {
                     renderLayers();
                 }

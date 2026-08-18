@@ -119,6 +119,8 @@ assert(str_contains($index, 'export-style-pack'), 'export route');
 assert(str_contains($index, 'activate-style-pack'), 'activate route');
 assert(str_contains($index, 'install-bundled-style-pack'), 'install bundled route');
 assert(isset(ThemeStylePack::bundledPackLabels()['manly']), 'manly bundled label');
+assert(isset(ThemeStylePack::bundledPackLabels()['pulse']), 'pulse bundled label');
+assert(isset(ThemeStylePack::bundledPackLabels()['enterprise']), 'enterprise bundled label');
 
 // Ensure default developer template zip exists and imports.
 $build = dirname(__DIR__, 2) . '/cli/build_sample_style_pack.php';
@@ -136,6 +138,47 @@ assert($manly !== null && is_file($manly), 'manly zip path');
 $manlyImport = ThemeStylePack::importFromPath($manly);
 assert(!empty($manlyImport['ok']), 'manly zip imports: ' . ($manlyImport['message'] ?? ''));
 assert(stripos(ThemeStylePack::packName(), 'Manly') !== false, 'manly pack name');
+ThemeStylePack::clearActivePack();
+PublicTheme::saveConfig(array_merge(PublicTheme::configToPostFields(), [
+    'pub_theme_preset' => $beforePreset,
+    'public_accent_color' => $beforeAccent,
+]));
+
+$pulseAreas = [
+    \App\Models\Widget::AREA_HEADER,
+    \App\Models\Widget::AREA_AFTER_HEADER,
+    \App\Models\Widget::AREA_HOME,
+    \App\Models\Widget::AREA_AFTER_CONTENT,
+];
+$pulseWasEmpty = [];
+foreach ($pulseAreas as $area) {
+    $pulseWasEmpty[$area] = \App\Models\Widget::forArea($area, false) === [];
+}
+$pulse = ThemeStylePack::samplePackAbsolutePath('pulse');
+assert($pulse !== null && is_file($pulse), 'pulse zip path');
+$pulseImport = ThemeStylePack::importFromPath($pulse);
+assert(!empty($pulseImport['ok']), 'pulse zip imports: ' . ($pulseImport['message'] ?? ''));
+assert(stripos(ThemeStylePack::packName(), 'Pulse') !== false, 'pulse pack name');
+if (!empty($pulseWasEmpty[\App\Models\Widget::AREA_HEADER])) {
+    assert(\App\Models\Widget::areaHasWidgets(\App\Models\Widget::AREA_HEADER), 'pulse filled empty header');
+}
+foreach ($pulseWasEmpty as $area => $wasEmpty) {
+    if ($wasEmpty) {
+        \App\Models\Widget::saveAreaWidgets($area, []);
+    }
+}
+ThemeStylePack::clearActivePack();
+PublicTheme::saveConfig(array_merge(PublicTheme::configToPostFields(), [
+    'pub_theme_preset' => $beforePreset,
+    'public_accent_color' => $beforeAccent,
+]));
+
+$enterprise = ThemeStylePack::samplePackAbsolutePath('enterprise');
+assert($enterprise !== null && is_file($enterprise), 'enterprise zip path');
+$enterpriseImport = ThemeStylePack::importFromPath($enterprise);
+assert(!empty($enterpriseImport['ok']), 'enterprise zip imports: ' . ($enterpriseImport['message'] ?? ''));
+assert(stripos(ThemeStylePack::packName(), 'Enterprise') !== false, 'enterprise pack name');
+assert(AppSettings::get('pub_theme_font') === 'modern', 'enterprise modern font');
 ThemeStylePack::clearActivePack();
 PublicTheme::saveConfig(array_merge(PublicTheme::configToPostFields(), [
     'pub_theme_preset' => $beforePreset,

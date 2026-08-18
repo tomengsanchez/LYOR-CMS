@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Duplicate content and public reading basics",
+  "entries": [
+    {
+      "area": "Admin",
+      "summary": "POST /admin/pages|posts/duplicate/{id} copies to a draft including layout_json. List and view Duplicate buttons."
+    },
+    {
+      "area": "Public",
+      "summary": "Skip-to-content link, post reading minutes, related posts, 404 search + latest posts."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Duplicates are extra cms_pages/cms_posts rows with copied layout_json."
+    }
+  ]
+}

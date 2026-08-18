@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Builder Design text-align inner wrappers",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "compileStylesheet emits .cms-el-* > * { text-align } so inner module wrappers cannot override Design. Blurb site.css no longer centers images with margin:auto; images are inline-block so they follow text-align. Default .cms-mod-blurb { text-align:center } remains when Design align is unset."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Live CSS uses the same child selector. Heading/text/CTA/button/testimonial/icon-list did not hardcode text-align."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. text_align was already in layout_json; public CSS stays derived at render time."
+    }
+  ]
+}

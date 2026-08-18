@@ -62,6 +62,8 @@ $themePresets = \App\PublicTheme::presets();
                     <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($exportStylePackUrl ?? '#') ?>">Export current</a>
                     <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($sampleStylePackUrl ?? '#') ?>">Download template zip</a>
                     <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($manlyPackUrl ?? '#') ?>">Download Manly zip</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($pulsePackUrl ?? '#') ?>">Download Pulse zip</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="<?= htmlspecialchars($enterprisePackUrl ?? '#') ?>">Download Enterprise zip</a>
                     <button type="button" class="btn btn-sm btn-outline-danger" id="cmsStylePackClear">Clear active</button>
                 </div>
                 <p class="small text-muted mt-2 mb-0" id="cmsStylePackMsg" aria-live="polite"></p>

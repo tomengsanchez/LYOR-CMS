@@ -25,6 +25,7 @@ class WidgetController extends Controller
         $this->view('widgets/index', [
             'area' => $area,
             'areas' => Widget::areas(),
+            'areaHelp' => Widget::areaHelp($area),
             'widgets' => Widget::forArea($area, false),
             'widgetTypes' => Widget::types(),
             'saved' => !empty($_SESSION['widgets_saved']),

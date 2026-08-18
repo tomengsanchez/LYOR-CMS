@@ -1,0 +1,22 @@
+{
+  "date": "2026-08-17",
+  "title": "Playwright Pulse-through-password UX",
+  "entries": [
+    {
+      "area": "E2E",
+      "summary": "cms-pulse-content-ux.spec.ts covers widget areas, skip-link, 404 search, duplicate, bulk UI, sticky/TOC/share, search/archives, schedule preview, password gate. npm run test:e2e:cms-pulse-ux; BASE_URL defaults to http://cms.local."
+    },
+    {
+      "area": "Public layout",
+      "summary": "Restored skip-to-content link in public layout.php (href #public-content); matching CSS was already in site.css."
+    },
+    {
+      "area": "E2E smoke/extended",
+      "summary": "Homepage smoke no longer requires title Welcome; wp-extended covers /search and skips blog search box when the theme hides it (Pulse default)."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change."
+    }
+  ]
+}

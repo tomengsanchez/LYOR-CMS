@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder sticky and z-index",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Design/settings store position (relative|sticky), z_index (1–100), and sticky_offset keys. compileStylesheet emits position/top/z-index from hardcoded maps. fixed/absolute and out-of-range z-index are dropped. Hover bags strip position keys."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Advanced inspector adds Position, Z-index, and Sticky offset. Changes patch live CSS. Copy style omits these keys (appearance only). Never written into design_hover."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Keys live in layout_json design/settings bags and restore with the SQL dump. Public CSS stays derived at render time."
+    }
+  ]
+}

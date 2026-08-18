@@ -60,6 +60,7 @@ class SettingsController extends Controller
             'public_theme' => $publicTheme,
             'reading' => ReadingSettings::get(),
             'discussion' => DiscussionSettings::get(),
+            'newsletter' => \App\NewsletterSettings::get(),
             'permalinks' => PermalinkSettings::get(),
             'regions' => GeneralSettings::regions(),
             'timezones' => GeneralSettings::timezones(),

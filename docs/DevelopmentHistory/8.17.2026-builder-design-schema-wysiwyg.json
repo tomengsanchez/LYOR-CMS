@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Builder Design groups and small rich text",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "moduleCatalog lists design packs per type. Text/CTA/Blurb/Accordion/Tabs bodies run through sanitizeRichText (allowlisted p/br/strong/em/u/ul/ol/li/a; script and javascript: dropped). Heading stays escaped plain text."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Inspector Design tab hides packs the module does not list. wysiwyg.js (loaded before panel.js) supplies Bold/Italic/list/Link. Canvas text modules save innerHTML. normalizeModuleCatalog passes the design array through data-modules."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Rich markup lives in existing layout_json data fields and restores with the SQL dump. Public HTML is re-allowlisted at render time."
+    }
+  ]
+}

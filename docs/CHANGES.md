@@ -6,6 +6,6 @@ High-level feature and implementation history, split by **month** so each file s
 
 | Month | Entries | File |
 |-------|--------:|------|
-| August 2026 | 52 | [changes/2026-08/CHANGES.md](changes/2026-08/CHANGES.md) |
+| August 2026 | 68 | [changes/2026-08/CHANGES.md](changes/2026-08/CHANGES.md) |
 
 Detailed day-by-day notes also live under [DevelopmentHistory/](DevelopmentHistory/).

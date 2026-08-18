@@ -69,7 +69,7 @@
             "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Page\",\n  \"status\": \"draft\",\n  \"body\": \"<p>Hello</p>\"\n}"},
             "url": "{{baseUrl}}/api/pages"
           },
-          "description": "Requires add_pages. Optional layout or layout_json."
+          "description": "Requires add_pages. Optional layout or layout_json, content_password, remove_content_password. GET responses never include password_hash (password_protected flag instead)."
         },
         {
           "name": "Update Page",
@@ -82,7 +82,7 @@
             "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Page Updated\",\n  \"status\": \"draft\"\n}"},
             "url": "{{baseUrl}}/api/pages/1"
           },
-          "description": "Requires edit_pages. Partial merge with existing row."
+          "description": "Requires edit_pages. Partial merge with existing row. Optional content_password / remove_content_password. password_hash is never returned."
         },
         {
           "name": "Delete Page",
@@ -118,10 +118,10 @@
               {"key": "Authorization", "value": "Bearer {{token}}"},
               {"key": "Content-Type", "value": "application/json"}
             ],
-            "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Post\",\n  \"status\": \"draft\",\n  \"excerpt\": \"Short\",\n  \"body\": \"<p>Hello</p>\",\n  \"tags\": \"news,api\"\n}"},
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Post\",\n  \"status\": \"draft\",\n  \"excerpt\": \"Short\",\n  \"body\": \"<p>Hello</p>\",\n  \"tags\": \"news,api\",\n  \"is_sticky\": false,\n  \"published_at\": \"\"\n}"},
             "url": "{{baseUrl}}/api/posts"
           },
-          "description": "Requires add_posts. Optional layout or layout_json."
+          "description": "Requires add_posts. Optional layout or layout_json, is_sticky, published_at (future times stay off the public site), content_password, remove_content_password. GET never returns password_hash."
         },
         {
           "name": "Update Post",
@@ -131,10 +131,10 @@
               {"key": "Authorization", "value": "Bearer {{token}}"},
               {"key": "Content-Type", "value": "application/json"}
             ],
-            "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Post Updated\",\n  \"status\": \"draft\"\n}"},
+            "body": {"mode": "raw", "raw": "{\n  \"title\": \"API Post Updated\",\n  \"status\": \"draft\",\n  \"is_sticky\": true\n}"},
             "url": "{{baseUrl}}/api/posts/1"
           },
-          "description": "Requires edit_posts. Omitting tags keeps existing tags."
+          "description": "Requires edit_posts. Omitting tags keeps existing tags. Optional is_sticky, published_at, content_password, remove_content_password."
         },
         {
           "name": "Delete Post",
@@ -176,7 +176,7 @@
             "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
             "url": "{{baseUrl}}/api/system/general"
           },
-          "description": "Branding, site SEO, public theme, reading, discussion, permalinks."
+          "description": "Branding, site SEO, public theme, reading, discussion, newsletter, permalinks."
         },
         {
           "name": "Meta Error Codes",

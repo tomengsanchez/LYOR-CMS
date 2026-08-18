@@ -7,11 +7,12 @@ import { adminPass, adminUser, baseURL } from './support/config';
  * Build a Team POGI marketing site: 5 pages + 5 posts with free stock photos
  * (Lorem Picsum), then wire pages into the Primary Menu and set homepage.
  *
- * Images are downloaded from picsum.photos and uploaded into the Media library
- * (not hotlinked), so public pages stay self-hosted.
+ * Facebook: https://www.facebook.com/teampogi31/
  *
  * Run: npm run test:e2e:cms-team-pogi-site
  */
+
+const FACEBOOK_URL = 'https://www.facebook.com/teampogi31/';
 
 type MediaAsset = { key: string; picsumId: number; w: number; h: number; alt: string; file: string };
 
@@ -172,18 +173,26 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
 
   async function uploadMedia(page: Page, filePath: string, alt: string): Promise<number> {
     await page.goto(`${baseURL}/admin/media`);
-    await expect(page.locator('form[action*="media/upload"]')).toBeVisible();
-    await page.locator('input[name="file"]').setInputFiles(filePath);
-    await page.locator('input[name="alt_text"]').fill(alt);
+    const uploadForm = page.locator('form[action*="media/upload"]');
+    await expect(uploadForm).toBeVisible();
+    await uploadForm.locator('input[name="file"]').setInputFiles(filePath);
+    await uploadForm.locator('input[name="alt_text"]').fill(alt);
     await Promise.all([
       page.waitForURL(/\/admin\/media/, { timeout: 60_000 }),
-      page.locator('form[action*="media/upload"] button[type="submit"]').click(),
+      uploadForm.locator('button[type="submit"]').click(),
     ]);
     await expect(page.getByText('File uploaded')).toBeVisible({ timeout: 30_000 });
-    const src = await page.locator('img.card-img-top').first().getAttribute('src');
-    const match = (src || '').match(/\/serve\/media\/(\d+)/);
-    expect(match).toBeTruthy();
-    return Number(match![1]);
+    const ids = await page.locator('img.card-img-top').evaluateAll((imgs) =>
+      imgs
+        .map((img) => {
+          const src = img.getAttribute('src') || '';
+          const m = src.match(/\/serve\/media\/(\d+)/);
+          return m ? Number(m[1]) : 0;
+        })
+        .filter((n) => n > 0),
+    );
+    expect(ids.length).toBeGreaterThan(0);
+    return Math.max(...ids);
   }
 
   async function ensurePublishedPage(page: Page, def: PageDef): Promise<number> {
@@ -263,7 +272,7 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
 
     const media = Object.fromEntries(mediaByKey.entries());
     await page.evaluate(
-      `(({ kind, media }) => {
+      `(({ kind, media, facebookUrl }) => {
       const api = window.CmsBuilderApi;
       const uid = () => 'el_' + Math.random().toString(16).slice(2, 14);
       const heading = (text, level, align) => ({
@@ -318,7 +327,8 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
             image(media.hero, 'Team POGI hero'),
             spacer(),
             text('We build useful products, reliable networks, and a culture where craft and camaraderie travel together.', 'center'),
-            button('Read our mission', '/p/mission')
+            button('Read our mission', '/p/mission'),
+            button('Follow on Facebook', facebookUrl)
           ]], '#f7fafc'),
           section(byId('3').widths, [
             [blurb('People', 'Show up for each other — on stage, in sprints, and in the field.', '🤝')],
@@ -373,23 +383,24 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
       } else {
         sections = [
           section(byId('3-6-3').widths, [
-            [blurb('Visit', 'Weekdays — bring curiosity.', '📍')],
+            [blurb('Facebook', 'Updates, events, and conversation.', '📘')],
             [
               heading('Join Team POGI', 1),
               image(media.join, 'Join Us'),
               spacer(),
-              text('Whether you code, coach, cable, or create — if POGI resonates, say hello.', 'center'),
+              text('Whether you code, coach, cable, or create — if POGI resonates, say hello on Facebook.', 'center'),
+              button('Follow Team POGI', facebookUrl),
               button('Browse the blog', '/blog'),
               divider(),
               cta('Ready to contribute?', 'Open a page, ship a layout, or join a network night.', 'See projects', '/p/projects')
             ],
-            [blurb('Write', 'hello@teampogi.example', '✉️')]
+            [blurb('Community', 'facebook.com/teampogi31', '🌐')]
           ], '#f7fafc')
         ];
       }
 
       api.setLayout({ version: 1, sections: sections });
-    })(${JSON.stringify({ kind, media })})`,
+    })(${JSON.stringify({ kind, media, facebookUrl: FACEBOOK_URL })})`,
     );
 
     const saveResponse = page.waitForResponse(
@@ -494,11 +505,12 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
 
     async function fillRow(
       index: number,
-      opts: { label: string; type: string; pageTitle?: string },
+      opts: { label: string; type: string; pageTitle?: string; customUrl?: string },
     ): Promise<void> {
       const row = rows.nth(index);
       await row.locator('input[name="item_label[]"]').fill(opts.label);
       await row.locator('select[name="item_type[]"]').selectOption(opts.type);
+      await page.waitForTimeout(200);
       if (opts.type === 'page' && opts.pageTitle) {
         const select = row.locator('select[name="item_object_id[]"]');
         const option = select.locator('option', { hasText: opts.pageTitle });
@@ -506,6 +518,11 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
         const value = await option.first().getAttribute('value');
         expect(value).toBeTruthy();
         await select.selectOption(value!);
+      }
+      if (opts.type === 'custom' && opts.customUrl) {
+        const urlInput = row.locator('input[name="item_custom_url[]"]:not([type="hidden"])');
+        await expect(urlInput).toBeVisible({ timeout: 10_000 });
+        await urlInput.fill(opts.customUrl);
       }
     }
 
@@ -520,6 +537,12 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
         pageTitle: pages[i].title,
       });
     }
+    await page.locator('#menuAddRow').click();
+    await fillRow(2 + pages.length, {
+      label: 'Facebook',
+      type: 'custom',
+      customUrl: FACEBOOK_URL,
+    });
 
     await Promise.all([
       page.waitForURL(/\/admin\/menus/, { timeout: 30_000 }),
@@ -528,22 +551,37 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
     await expect(page.getByText('Menu saved.')).toBeVisible({ timeout: 15_000 });
   }
 
-  async function configureSite(page: Page, homePageId: number): Promise<void> {
+  async function activateEnterpriseTheme(page: Page): Promise<void> {
+    await page.goto(`${baseURL}/admin/system/general`);
+    const installBtn = page.getByRole('button', { name: 'Enterprise (modern navy & slate)' });
+    await expect(installBtn).toBeVisible({ timeout: 15_000 });
+    await Promise.all([
+      page.waitForURL(/\/admin\/system\/general/, { timeout: 60_000 }),
+      installBtn.click(),
+    ]);
+    await expect(page.locator('#cmsStylePackStatus')).toContainText('Enterprise', { timeout: 15_000 });
+  }
+
+  async function configureSite(page: Page, homePageTitle: string): Promise<void> {
     await page.goto(`${baseURL}/admin/system/general`);
     await expect(page.locator('input[name="app_name"]')).toBeVisible({ timeout: 30_000 });
     await page.fill('input[name="app_name"]', 'Team POGI');
-    const front = page.locator('select[name="reading_show_on_front"]');
-    if ((await front.count()) > 0) {
-      await front.selectOption('page');
-    }
+    await page.fill('input[name="company_name"]', 'People · Ownership · Grit · Integrity');
+    await page.locator('select[name="reading_show_on_front"]').selectOption('page');
     const homeSelect = page.locator('select[name="reading_page_on_front"]');
-    if ((await homeSelect.count()) > 0) {
-      await homeSelect.selectOption(String(homePageId));
+    const homeOption = homeSelect.locator('option', { hasText: homePageTitle });
+    await expect(homeOption.first()).toBeAttached({ timeout: 15_000 });
+    const homeValue = await homeOption.first().getAttribute('value');
+    expect(homeValue).toBeTruthy();
+    await homeSelect.selectOption(homeValue!);
+    if (await page.locator('input[name="seo_facebook_url"]').count()) {
+      await page.fill('input[name="seo_facebook_url"]', FACEBOOK_URL);
     }
     await Promise.all([
       page.waitForURL(/\/admin\/system\/general/, { timeout: 60_000 }),
-      page.locator('form[action*="system/general/save"] button[type="submit"]').click(),
+      page.locator('#generalSettingsForm button[type="submit"]').click(),
     ]);
+    await expect(page.getByText('General settings saved.')).toBeVisible({ timeout: 15_000 });
   }
 
   test('seed Team POGI site with 5 pages, 5 posts, free images, and menu', async ({
@@ -578,8 +616,9 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
     }
 
     await rebuildMenu(page, createdPages);
-    const homeId = createdPages.find((p) => p.slug === 'team-pogi')!.id;
-    await configureSite(page, homeId);
+    const homePage = createdPages.find((p) => p.slug === 'team-pogi')!;
+    await configureSite(page, homePage.title);
+    await activateEnterpriseTheme(page);
 
     await page.goto(`${baseURL}/`);
     const nav = page.locator('nav.public-nav[aria-label="Public"]');
@@ -588,10 +627,14 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
     for (const item of createdPages) {
       await expect(nav.getByRole('link', { name: item.menuLabel })).toBeVisible();
     }
+    await expect(nav.getByRole('link', { name: 'Facebook' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Team POGI', level: 1 })).toBeVisible({
+      timeout: 20_000,
+    });
     await expect(page.locator('.cms-layout img, .cms-mod-image img').first()).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByText('Team POGI').first()).toBeVisible();
+    await expect(page.getByText('People · Ownership · Grit · Integrity').first()).toBeVisible();
 
     await page.goto(`${baseURL}/blog`);
     for (const post of POSTS) {
@@ -600,6 +643,6 @@ test.describe('Team POGI website — pages, posts, images, menu', () => {
       ).toBeVisible({ timeout: 20_000 });
     }
 
-    console.log(`Team POGI site ready at ${baseURL}/`);
+    console.log(`Team POGI site ready at ${baseURL}/ (Facebook: ${FACEBOOK_URL})`);
   });
 });

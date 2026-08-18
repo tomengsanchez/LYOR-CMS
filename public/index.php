@@ -27,9 +27,13 @@ $router->get('/index.json', 'PublicController@homeJson');
 $router->get('/site.json', 'PublicController@siteJson');
 $router->get('/p/{slug}.json', 'PublicController@pageJson');
 $router->get('/p/{slug}', 'PublicController@page');
+$router->get('/search', 'PublicController@search');
 $router->get('/blog.json', 'PublicController@blogJson');
 $router->get('/blog/category/{slug}', 'PublicController@category');
 $router->get('/blog/tag/{slug}', 'PublicController@tag');
+$router->get('/blog/archive/{year}/{month}', 'PublicController@archiveMonth');
+$router->get('/blog/archive/{year}', 'PublicController@archiveYear');
+$router->get('/blog/author/{username}', 'PublicController@author');
 $router->get('/blog', 'PublicController@blog');
 $router->get('/blog/{slug}.json', 'PublicController@postJson');
 $router->get('/blog/{slug}', 'PublicController@post');
@@ -42,6 +46,13 @@ $router->get('/robots.txt', 'PublicController@robots');
 $router->get('/llms.txt', 'PublicController@llmsTxt');
 $router->get('/llms-full.txt', 'PublicController@llmsFull');
 $router->post('/comment/post/{id}', 'PublicController@commentStore');
+$router->post('/unlock/page/{id}', 'PublicController@unlockPage');
+$router->post('/unlock/post/{id}', 'PublicController@unlockPost');
+$router->get('/subscribe', 'NewsletterController@form');
+$router->post('/subscribe', 'NewsletterController@store');
+$router->get('/subscribe/confirm/{token}', 'NewsletterController@confirm');
+$router->get('/unsubscribe/{token}', 'NewsletterController@unsubscribeForm');
+$router->post('/unsubscribe/{token}', 'NewsletterController@unsubscribe');
 
 // Admin auth
 $router->get('/admin/login', 'AuthController@loginForm');
@@ -61,6 +72,8 @@ $router->post('/admin/pages/store', 'PageController@store');
 $router->get('/admin/pages/edit/{id}', 'PageController@edit');
 $router->post('/admin/pages/update/{id}', 'PageController@update');
 $router->post('/admin/pages/delete/{id}', 'PageController@delete');
+$router->post('/admin/pages/duplicate/{id}', 'PageController@duplicate');
+$router->post('/admin/pages/bulk', 'PageController@bulk');
 $router->post('/admin/pages/restore/{id}/{revisionId}', 'RevisionController@restorePage');
 
 // Visual layout builder (Divi-style)
@@ -81,6 +94,8 @@ $router->post('/admin/posts/store', 'PostController@store');
 $router->get('/admin/posts/edit/{id}', 'PostController@edit');
 $router->post('/admin/posts/update/{id}', 'PostController@update');
 $router->post('/admin/posts/delete/{id}', 'PostController@delete');
+$router->post('/admin/posts/duplicate/{id}', 'PostController@duplicate');
+$router->post('/admin/posts/bulk', 'PostController@bulk');
 $router->post('/admin/posts/restore/{id}/{revisionId}', 'RevisionController@restorePost');
 
 // Admin — Content library search
@@ -118,6 +133,13 @@ $router->get('/admin/comments', 'CommentController@index');
 $router->post('/admin/comments/approve/{id}', 'CommentController@approve');
 $router->post('/admin/comments/spam/{id}', 'CommentController@spam');
 $router->post('/admin/comments/trash/{id}', 'CommentController@trash');
+
+// Admin — Newsletter subscribers
+$router->get('/admin/subscribers', 'SubscriberController@index');
+$router->get('/admin/subscribers/export', 'SubscriberController@export');
+$router->post('/admin/subscribers/confirm/{id}', 'SubscriberController@confirm');
+$router->post('/admin/subscribers/unsubscribe/{id}', 'SubscriberController@unsubscribe');
+$router->post('/admin/subscribers/delete/{id}', 'SubscriberController@delete');
 
 // Admin — Widgets
 $router->get('/admin/widgets', 'WidgetController@index');

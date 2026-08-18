@@ -28,6 +28,12 @@ ob_start();
 <div class="mb-3"><label class="form-label">Title</label><input type="text" name="title" class="form-control" value="<?= htmlspecialchars($page->title) ?>" required id="pageTitle"></div>
 <div class="mb-3"><label class="form-label">Slug</label><input type="text" name="slug" class="form-control" value="<?= htmlspecialchars($page->slug ?? '') ?>" placeholder="auto-generated if empty"></div>
 <div class="mb-3"><label class="form-label">Status</label><select name="status" class="form-select"><option value="draft" <?= ($page->status ?? '') === 'draft' ? 'selected' : '' ?>>Draft</option><option value="published" <?= ($page->status ?? '') === 'published' ? 'selected' : '' ?>>Published</option></select></div>
+<?php
+$entity = $page;
+$passwordInputId = 'pageContentPassword';
+$passwordRemoveId = 'pageRemoveContentPassword';
+require __DIR__ . '/../partials/content_password_field.php';
+?>
 <div class="mb-3">
     <label class="form-label">Content width (public)</label>
     <select name="content_layout" class="form-select">

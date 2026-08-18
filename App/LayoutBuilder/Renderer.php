@@ -50,12 +50,16 @@ trait Renderer
             $classes[] = htmlspecialchars((string) $settings['css_class'], ENT_QUOTES, 'UTF-8');
         }
         $html = '<section class="' . implode(' ', $classes) . '">';
+        $html .= self::renderSectionMedia($settings);
+        $html .= self::renderShapeDivider($settings, 'top');
         $html .= '<div class="cms-layout-section-inner' . ($type === 'fullwidth' ? ' cms-layout-section-inner--full' : ' container') . '">';
         $rows = is_array($section['rows'] ?? null) ? $section['rows'] : [];
         foreach ($rows as $row) {
             $html .= self::renderRow($row);
         }
-        $html .= '</div></section>';
+        $html .= '</div>';
+        $html .= self::renderShapeDivider($settings, 'bottom');
+        $html .= '</section>';
         return $html;
     }
 
@@ -71,6 +75,9 @@ trait Renderer
         if (!empty($settings['css_class'])) {
             $classes[] = htmlspecialchars((string) $settings['css_class'], ENT_QUOTES, 'UTF-8');
         }
+        if (!empty($settings['col_reverse_mobile'])) {
+            $classes[] = 'cms-layout-row--reverse-mobile';
+        }
         $html = '<div class="' . implode(' ', $classes) . '">';
         $columns = is_array($row['columns'] ?? null) ? $row['columns'] : [];
         foreach ($columns as $col) {
@@ -78,6 +85,67 @@ trait Renderer
         }
         $html .= '</div>';
         return $html;
+    }
+
+    /** @param array<string, mixed> $settings */
+    private static function renderSectionMedia(array $settings): string
+    {
+        $url = (string) ($settings['bg_video_url'] ?? '');
+        $parsed = $url !== '' ? self::parseVideoUrl($url) : null;
+        if ($parsed === null) {
+            return '';
+        }
+        $src = self::videoBackgroundSrc($parsed);
+        if ($src === '') {
+            return '';
+        }
+        $esc = htmlspecialchars($src, ENT_QUOTES, 'UTF-8');
+        $html = '<div class="cms-layout-section-bg" aria-hidden="true">';
+        if ($parsed['kind'] === 'file') {
+            $html .= '<video autoplay muted loop playsinline preload="metadata" src="' . $esc . '"></video>';
+        } else {
+            $html .= '<iframe src="' . $esc . '" title="Background video" tabindex="-1" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+        }
+        $html .= '</div>';
+        return $html;
+    }
+
+    /** @param array{kind: string, id?: string, src: string} $parsed */
+    private static function videoBackgroundSrc(array $parsed): string
+    {
+        $id = preg_replace('/[^A-Za-z0-9_-]/', '', (string) ($parsed['id'] ?? '')) ?? '';
+        if (($parsed['kind'] ?? '') === 'youtube' && preg_match('/^[A-Za-z0-9_-]{11}$/', $id)) {
+            return 'https://www.youtube-nocookie.com/embed/' . $id
+                . '?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&playlist=' . $id;
+        }
+        if (($parsed['kind'] ?? '') === 'vimeo' && preg_match('/^\d{6,12}$/', $id)) {
+            return 'https://player.vimeo.com/video/' . $id . '?background=1&autoplay=1&muted=1&loop=1';
+        }
+        if (($parsed['kind'] ?? '') === 'file') {
+            return (string) ($parsed['src'] ?? '');
+        }
+        return '';
+    }
+
+    /** @param array<string, mixed> $settings */
+    private static function renderShapeDivider(array $settings, string $side): string
+    {
+        if ($side !== 'top' && $side !== 'bottom') {
+            return '';
+        }
+        $key = self::safeShapeKey((string) ($settings['shape_' . $side] ?? ''));
+        if ($key === '' || !isset(self::SHAPE_SVGS[$key])) {
+            return '';
+        }
+        $h = self::safeShapeHeightKey((string) ($settings['shape_' . $side . '_height'] ?? ''));
+        if ($h === '') {
+            $h = 'md';
+        }
+        $classes = ['cms-shape', 'cms-shape--' . $side, 'cms-shape--' . $key, 'cms-shape--' . $h];
+        if (!empty($settings['shape_' . $side . '_flip'])) {
+            $classes[] = 'cms-shape--flip';
+        }
+        return '<div class="' . implode(' ', $classes) . '" aria-hidden="true">' . self::SHAPE_SVGS[$key] . '</div>';
     }
 
     /** @param array<string, mixed> $col */
@@ -132,11 +200,31 @@ trait Renderer
         if (!empty($advanced['hide_desktop'])) {
             $classes[] = 'd-md-none';
         }
-        $inner = self::renderModuleInner($type, $data, (string) ($mod['id'] ?? ''));
+        $inner = $type === 'inner_row'
+            ? self::renderInnerRow($mod)
+            : self::renderModuleInner($type, $data, (string) ($mod['id'] ?? ''));
         if ($inner === '') {
             return '';
         }
         return '<div class="' . implode(' ', $classes) . '">' . $inner . '</div>';
+    }
+
+    /** @param array<string, mixed> $mod */
+    private static function renderInnerRow(array $mod): string
+    {
+        $columns = is_array($mod['columns'] ?? null) ? $mod['columns'] : [];
+        if ($columns === []) {
+            return '';
+        }
+        $html = '<div class="cms-mod-inner-row row g-3">';
+        foreach ($columns as $col) {
+            if (!is_array($col)) {
+                continue;
+            }
+            $html .= self::renderColumn($col);
+        }
+        $html .= '</div>';
+        return $html;
     }
 
     /** @param array<string, mixed> $data */
@@ -148,8 +236,8 @@ trait Renderer
                 $text = htmlspecialchars((string) ($data['text'] ?? ''), ENT_QUOTES, 'UTF-8');
                 return '<h' . $level . ' class="cms-mod-heading">' . $text . '</h' . $level . '>';
             case 'text':
-                $text = nl2br(htmlspecialchars((string) ($data['text'] ?? ''), ENT_QUOTES, 'UTF-8'));
-                return '<div class="cms-mod-text">' . $text . '</div>';
+                $html = self::sanitizeRichText((string) ($data['text'] ?? ''));
+                return $html === '' ? '' : '<div class="cms-mod-text">' . $html . '</div>';
             case 'image':
                 $mediaId = (int) ($data['media_id'] ?? 0);
                 $alt = (string) ($data['alt'] ?? '');
@@ -186,7 +274,7 @@ trait Renderer
                 return '<a href="' . $url . '" class="' . $btnClass . ' cms-mod-button"' . self::linkTargetAttrs(!empty($data['new_tab'])) . '>' . $label . '</a>';
             case 'cta':
                 $title = htmlspecialchars((string) ($data['title'] ?? ''), ENT_QUOTES, 'UTF-8');
-                $text = nl2br(htmlspecialchars((string) ($data['text'] ?? ''), ENT_QUOTES, 'UTF-8'));
+                $text = self::sanitizeRichText((string) ($data['text'] ?? ''));
                 $label = htmlspecialchars((string) ($data['label'] ?? 'Get started'), ENT_QUOTES, 'UTF-8');
                 $url = htmlspecialchars((string) ($data['url'] ?? '#'), ENT_QUOTES, 'UTF-8');
                 $btnClass = self::buttonClass((string) ($data['style'] ?? 'primary'));
@@ -209,7 +297,7 @@ trait Renderer
                 return '<div class="cms-mod-html">' . self::sanitizeHtml((string) ($data['html'] ?? '')) . '</div>';
             case 'blurb':
                 $title = htmlspecialchars((string) ($data['title'] ?? ''), ENT_QUOTES, 'UTF-8');
-                $text = nl2br(htmlspecialchars((string) ($data['text'] ?? ''), ENT_QUOTES, 'UTF-8'));
+                $text = self::sanitizeRichText((string) ($data['text'] ?? ''));
                 $icon = htmlspecialchars((string) ($data['icon'] ?? ''), ENT_QUOTES, 'UTF-8');
                 $link = (string) ($data['url'] ?? '');
                 $mediaId = (int) ($data['media_id'] ?? 0);
@@ -238,6 +326,18 @@ trait Renderer
                 return $html;
             case 'carousel':
                 return self::renderCarousel($data, $moduleId);
+            case 'accordion':
+                return self::renderAccordion($data);
+            case 'tabs':
+                return self::renderTabs($data, $moduleId);
+            case 'icon_list':
+                return self::renderIconList($data);
+            case 'gallery':
+                return self::renderGallery($data);
+            case 'testimonial':
+                return self::renderTestimonials($data);
+            case 'video':
+                return self::renderVideo($data);
             default:
                 return '';
         }
@@ -331,6 +431,222 @@ trait Renderer
         return $html;
     }
 
+    /** @param array<string, mixed> $data */
+    private static function renderAccordion(array $data): string
+    {
+        $items = is_array($data['items'] ?? null) ? $data['items'] : [];
+        $firstOpen = array_key_exists('first_open', $data) ? !empty($data['first_open']) : true;
+        $html = '<div class="cms-mod-accordion">';
+        $i = 0;
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $title = htmlspecialchars((string) ($item['title'] ?? 'Item'), ENT_QUOTES, 'UTF-8');
+            $body = self::sanitizeRichText((string) ($item['body'] ?? ''));
+            $open = ($i === 0 && $firstOpen) ? ' open' : '';
+            $html .= '<details class="cms-mod-accordion-item"' . $open . '>';
+            $html .= '<summary class="cms-mod-accordion-title">' . $title . '</summary>';
+            $html .= '<div class="cms-mod-accordion-body">' . $body . '</div>';
+            $html .= '</details>';
+            $i++;
+        }
+        $html .= '</div>';
+        return $i === 0 ? '' : $html;
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function renderTabs(array $data, string $moduleId = ''): string
+    {
+        $items = is_array($data['items'] ?? null) ? $data['items'] : [];
+        $clean = [];
+        foreach ($items as $item) {
+            if (is_array($item)) {
+                $clean[] = $item;
+            }
+        }
+        if ($clean === []) {
+            return '';
+        }
+        $sid = preg_replace('/[^a-zA-Z0-9_\-]/', '', $moduleId !== '' ? $moduleId : uniqid('t', true));
+        $name = 'cms-tabs-' . $sid;
+        $html = '<div class="cms-mod-tabs" id="' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '">';
+        foreach ($clean as $i => $item) {
+            $id = $name . '-' . $i;
+            $checked = $i === 0 ? ' checked' : '';
+            $title = htmlspecialchars((string) ($item['title'] ?? 'Tab'), ENT_QUOTES, 'UTF-8');
+            $html .= '<input class="cms-mod-tabs-input" type="radio" name="' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8')
+                . '" id="' . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '" value="' . $i . '"' . $checked
+                . ' aria-label="' . $title . '">';
+        }
+        $html .= '<div class="cms-mod-tabs-nav">';
+        foreach ($clean as $i => $item) {
+            $id = $name . '-' . $i;
+            $title = htmlspecialchars((string) ($item['title'] ?? 'Tab'), ENT_QUOTES, 'UTF-8');
+            $html .= '<label class="cms-mod-tabs-label" for="' . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '">' . $title . '</label>';
+        }
+        $html .= '</div><div class="cms-mod-tabs-panels">';
+        foreach ($clean as $item) {
+            $body = self::sanitizeRichText((string) ($item['body'] ?? ''));
+            $html .= '<div class="cms-mod-tabs-panel">' . $body . '</div>';
+        }
+        $html .= '</div></div>';
+        return $html;
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function renderIconList(array $data): string
+    {
+        $items = is_array($data['items'] ?? null) ? $data['items'] : [];
+        $html = '<ul class="cms-mod-icon-list">';
+        $n = 0;
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $icon = htmlspecialchars((string) ($item['icon'] ?? '•'), ENT_QUOTES, 'UTF-8');
+            $text = nl2br(htmlspecialchars((string) ($item['text'] ?? ''), ENT_QUOTES, 'UTF-8'));
+            $html .= '<li class="cms-mod-icon-list-item">';
+            $html .= '<span class="cms-mod-icon-list-icon" aria-hidden="true">' . $icon . '</span>';
+            $html .= '<span class="cms-mod-icon-list-text">' . $text . '</span>';
+            $html .= '</li>';
+            $n++;
+        }
+        $html .= '</ul>';
+        return $n === 0 ? '' : $html;
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function renderGallery(array $data): string
+    {
+        $cols = (int) ($data['columns'] ?? 3);
+        if (!in_array($cols, [2, 3, 4], true)) {
+            $cols = 3;
+        }
+        $items = is_array($data['items'] ?? null) ? $data['items'] : [];
+        $html = '<div class="cms-mod-gallery cms-mod-gallery--cols-' . $cols . '">';
+        $n = 0;
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $mediaId = (int) ($item['media_id'] ?? 0);
+            $alt = (string) ($item['alt'] ?? '');
+            $caption = trim((string) ($item['caption'] ?? ''));
+            $link = (string) ($item['link'] ?? '');
+            $img = '';
+            if ($mediaId > 0) {
+                $img = Media::responsiveImg($mediaId, [
+                    'alt' => $alt,
+                    'class' => 'cms-mod-gallery-img img-fluid',
+                    'sizes' => '(max-width: 576px) 100vw, ' . (int) round(100 / $cols) . 'vw',
+                    'preferred_width' => 800,
+                ]);
+            }
+            if ($img === '') {
+                $url = htmlspecialchars((string) ($item['url'] ?? ''), ENT_QUOTES, 'UTF-8');
+                if ($url === '') {
+                    continue;
+                }
+                $img = '<img src="' . $url . '" alt="' . htmlspecialchars($alt, ENT_QUOTES, 'UTF-8')
+                    . '" class="cms-mod-gallery-img img-fluid" loading="lazy" decoding="async">';
+            }
+            if ($link !== '') {
+                $img = '<a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '" class="cms-mod-gallery-link">' . $img . '</a>';
+            }
+            $figure = '<figure class="cms-mod-gallery-item">' . $img;
+            if ($caption !== '') {
+                $figure .= '<figcaption class="cms-mod-gallery-caption">' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</figcaption>';
+            }
+            $figure .= '</figure>';
+            $html .= $figure;
+            $n++;
+        }
+        $html .= '</div>';
+        return $n === 0 ? '' : $html;
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function renderTestimonials(array $data): string
+    {
+        $items = is_array($data['items'] ?? null) ? $data['items'] : [];
+        $html = '<div class="cms-mod-testimonials">';
+        $n = 0;
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $quote = nl2br(htmlspecialchars((string) ($item['quote'] ?? ''), ENT_QUOTES, 'UTF-8'));
+            $name = htmlspecialchars((string) ($item['name'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $role = htmlspecialchars((string) ($item['role'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $mediaId = (int) ($item['media_id'] ?? 0);
+            $photo = '';
+            if ($mediaId > 0) {
+                $photo = Media::responsiveImg($mediaId, [
+                    'alt' => (string) ($item['name'] ?? ''),
+                    'class' => 'cms-mod-testimonial-photo',
+                    'preferred_width' => 160,
+                    'sizes' => '72px',
+                ]);
+            }
+            if ($photo === '') {
+                $url = htmlspecialchars((string) ($item['url'] ?? ''), ENT_QUOTES, 'UTF-8');
+                if ($url !== '') {
+                    $photo = '<img src="' . $url . '" alt="' . $name . '" class="cms-mod-testimonial-photo" loading="lazy" decoding="async">';
+                }
+            }
+            $html .= '<blockquote class="cms-mod-testimonial">';
+            if ($photo !== '') {
+                $html .= $photo;
+            }
+            if ($quote !== '') {
+                $html .= '<p class="cms-mod-testimonial-quote">' . $quote . '</p>';
+            }
+            if ($name !== '' || $role !== '') {
+                $html .= '<footer class="cms-mod-testimonial-meta">';
+                if ($name !== '') {
+                    $html .= '<cite class="cms-mod-testimonial-name">' . $name . '</cite>';
+                }
+                if ($role !== '') {
+                    $html .= '<span class="cms-mod-testimonial-role">' . $role . '</span>';
+                }
+                $html .= '</footer>';
+            }
+            $html .= '</blockquote>';
+            $n++;
+        }
+        $html .= '</div>';
+        return $n === 0 ? '' : $html;
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function renderVideo(array $data): string
+    {
+        $parsed = self::parseVideoUrl((string) ($data['url'] ?? ''));
+        if ($parsed === null) {
+            return '';
+        }
+        $src = htmlspecialchars($parsed['src'], ENT_QUOTES, 'UTF-8');
+        $caption = trim((string) ($data['caption'] ?? ''));
+        $title = $caption !== ''
+            ? htmlspecialchars($caption, ENT_QUOTES, 'UTF-8')
+            : 'Video';
+        $frame = '<div class="cms-mod-video-frame">';
+        if ($parsed['kind'] === 'file') {
+            $frame .= '<video class="cms-mod-video-player" controls preload="metadata" src="' . $src . '" title="' . $title . '"></video>';
+        } else {
+            $frame .= '<iframe class="cms-mod-video-iframe" src="' . $src . '" title="' . $title . '"'
+                . ' loading="lazy" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
+        }
+        $frame .= '</div>';
+        $html = '<figure class="cms-mod-video">' . $frame;
+        if ($caption !== '') {
+            $html .= '<figcaption class="cms-mod-video-caption">' . nl2br(htmlspecialchars($caption, ENT_QUOTES, 'UTF-8')) . '</figcaption>';
+        }
+        $html .= '</figure>';
+        return $html;
+    }
+
     public static function plainTextFromEntity(?object $entity): string
     {
         if (!$entity || empty($entity->layout_json)) {
@@ -347,51 +663,11 @@ trait Renderer
             foreach ($section['rows'] ?? [] as $row) {
                 foreach ($row['columns'] ?? [] as $col) {
                     foreach ($col['modules'] ?? [] as $mod) {
-                        $type = (string) ($mod['type'] ?? '');
-                        $data = is_array($mod['data'] ?? null) ? $mod['data'] : [];
-                        switch ($type) {
-                            case 'heading':
-                            case 'text':
-                                if (!empty($data['text'])) {
-                                    $parts[] = (string) $data['text'];
-                                }
-                                break;
-                            case 'button':
-                                if (!empty($data['label'])) {
-                                    $parts[] = (string) $data['label'];
-                                }
-                                break;
-                            case 'cta':
-                            case 'blurb':
-                                if (!empty($data['title'])) {
-                                    $parts[] = (string) $data['title'];
-                                }
-                                if (!empty($data['text'])) {
-                                    $parts[] = (string) $data['text'];
-                                }
-                                if (!empty($data['label'])) {
-                                    $parts[] = (string) $data['label'];
-                                }
-                                break;
-                            case 'html':
-                                if (!empty($data['html'])) {
-                                    $parts[] = trim(strip_tags((string) $data['html']));
-                                }
-                                break;
-                            case 'carousel':
-                                foreach (is_array($data['slides'] ?? null) ? $data['slides'] : [] as $slide) {
-                                    if (!is_array($slide)) {
-                                        continue;
-                                    }
-                                    if (!empty($slide['caption'])) {
-                                        $parts[] = (string) $slide['caption'];
-                                    } elseif (!empty($slide['alt'])) {
-                                        $parts[] = (string) $slide['alt'];
-                                    }
-                                }
-                                break;
-                            default:
-                                break;
+                        if (!is_array($mod)) {
+                            continue;
+                        }
+                        foreach (self::modulePlainParts($mod) as $bit) {
+                            $parts[] = $bit;
                         }
                     }
                 }
@@ -399,6 +675,139 @@ trait Renderer
         }
         $text = trim(implode(' ', $parts));
         return preg_replace('/\s+/u', ' ', $text) ?? '';
+    }
+
+    /**
+     * @param array<string, mixed> $mod
+     * @return list<string>
+     */
+    private static function modulePlainParts(array $mod): array
+    {
+        $type = (string) ($mod['type'] ?? '');
+        $data = is_array($mod['data'] ?? null) ? $mod['data'] : [];
+        $parts = [];
+        if ($type === 'inner_row') {
+            foreach ($mod['columns'] ?? [] as $col) {
+                if (!is_array($col)) {
+                    continue;
+                }
+                foreach ($col['modules'] ?? [] as $inner) {
+                    if (!is_array($inner)) {
+                        continue;
+                    }
+                    foreach (self::modulePlainParts($inner) as $bit) {
+                        $parts[] = $bit;
+                    }
+                }
+            }
+            return $parts;
+        }
+        switch ($type) {
+            case 'heading':
+                if (!empty($data['text'])) {
+                    $parts[] = (string) $data['text'];
+                }
+                break;
+            case 'text':
+                if (!empty($data['text'])) {
+                    $parts[] = trim(strip_tags((string) $data['text']));
+                }
+                break;
+            case 'button':
+                if (!empty($data['label'])) {
+                    $parts[] = (string) $data['label'];
+                }
+                break;
+            case 'cta':
+            case 'blurb':
+                if (!empty($data['title'])) {
+                    $parts[] = (string) $data['title'];
+                }
+                if (!empty($data['text'])) {
+                    $parts[] = trim(strip_tags((string) $data['text']));
+                }
+                if (!empty($data['label'])) {
+                    $parts[] = (string) $data['label'];
+                }
+                break;
+            case 'html':
+                if (!empty($data['html'])) {
+                    $parts[] = trim(strip_tags((string) $data['html']));
+                }
+                break;
+            case 'carousel':
+                foreach (is_array($data['slides'] ?? null) ? $data['slides'] : [] as $slide) {
+                    if (!is_array($slide)) {
+                        continue;
+                    }
+                    if (!empty($slide['caption'])) {
+                        $parts[] = (string) $slide['caption'];
+                    } elseif (!empty($slide['alt'])) {
+                        $parts[] = (string) $slide['alt'];
+                    }
+                }
+                break;
+            case 'accordion':
+            case 'tabs':
+                foreach (is_array($data['items'] ?? null) ? $data['items'] : [] as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    if (!empty($item['title'])) {
+                        $parts[] = (string) $item['title'];
+                    }
+                    if (!empty($item['body'])) {
+                        $parts[] = trim(strip_tags((string) $item['body']));
+                    }
+                }
+                break;
+            case 'icon_list':
+                foreach (is_array($data['items'] ?? null) ? $data['items'] : [] as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    if (!empty($item['text'])) {
+                        $parts[] = (string) $item['text'];
+                    }
+                }
+                break;
+            case 'gallery':
+                foreach (is_array($data['items'] ?? null) ? $data['items'] : [] as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    if (!empty($item['caption'])) {
+                        $parts[] = (string) $item['caption'];
+                    } elseif (!empty($item['alt'])) {
+                        $parts[] = (string) $item['alt'];
+                    }
+                }
+                break;
+            case 'testimonial':
+                foreach (is_array($data['items'] ?? null) ? $data['items'] : [] as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    if (!empty($item['quote'])) {
+                        $parts[] = (string) $item['quote'];
+                    }
+                    if (!empty($item['name'])) {
+                        $parts[] = (string) $item['name'];
+                    }
+                    if (!empty($item['role'])) {
+                        $parts[] = (string) $item['role'];
+                    }
+                }
+                break;
+            case 'video':
+                if (!empty($data['caption'])) {
+                    $parts[] = (string) $data['caption'];
+                }
+                break;
+            default:
+                break;
+        }
+        return $parts;
     }
 
     /** Default starter layout for empty editor. */

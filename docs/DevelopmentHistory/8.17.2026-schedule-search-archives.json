@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Schedule, sticky, search, archives, reading UX",
+  "entries": [
+    {
+      "area": "Publishing",
+      "summary": "cms_posts.is_sticky (migration 023). Future published_at hides from liveSql (lists, RSS, sitemap, public slug). Preview ?preview=1 for edit_posts/edit_pages only."
+    },
+    {
+      "area": "Public",
+      "summary": "/search pages+posts, /blog/archive/YYYY(/MM), /blog/author/{username}. TOC, prev/next, share, print CSS, back-to-top. Archives widget. Search widget posts to /search."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "is_sticky column is in the SQL dump with published_at. Archives and TOC are derived at render time."
+    }
+  ]
+}

@@ -15,6 +15,7 @@ Source of truth is `App\Capabilities`. **Administrator** bypasses capability che
 |--------|------------|-----------------|
 | Pages | `view_pages`, `add_pages`, `edit_pages`, `delete_pages` | `/admin/pages`, visual builder, API pages |
 | Posts | `view_posts`, `add_posts`, `edit_posts`, `delete_posts`, `moderate_comments` | `/admin/posts`, comments |
+| Newsletter | `view_subscribers`, `manage_subscribers`, `export_subscribers` | `/admin/subscribers`, CSV export |
 | Categories | `view_categories`, `manage_categories` | Categories + tags |
 | Media | `view_media`, `upload_media`, `delete_media` | Media library, builder uploads |
 | Settings | `view_settings`, `manage_settings` | General, widgets, menus, customize, backup |

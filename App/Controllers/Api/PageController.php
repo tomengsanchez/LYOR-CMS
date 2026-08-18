@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers\Api;
 
+use App\ContentPassword;
 use App\Models\Page;
 use Core\Controller;
 
@@ -12,7 +13,7 @@ class PageController extends Controller
             return;
         }
         $items = Page::allActive();
-        $this->apiSuccess(['items' => $items]);
+        $this->apiSuccess(['items' => ContentPassword::withoutHashList($items)]);
     }
 
     public function getApi(int $id): void
@@ -25,7 +26,7 @@ class PageController extends Controller
             $this->apiNotFound('Page not found.');
             return;
         }
-        $this->apiSuccess($page);
+        $this->apiSuccess(ContentPassword::withoutHash($page));
     }
 
     public function createApi(): void
@@ -39,7 +40,13 @@ class PageController extends Controller
             $this->apiValidationError('title is required.');
             return;
         }
-        $id = Page::create($this->pagePayload($body));
+        $payload = $this->pagePayload($body);
+        $pwError = ContentPassword::writeError($payload);
+        if ($pwError !== null) {
+            $this->apiValidationError($pwError);
+            return;
+        }
+        $id = Page::create($payload);
         if ($id <= 0) {
             $this->apiConflict('Could not create page (slug conflict or invalid data).');
             return;
@@ -52,7 +59,7 @@ class PageController extends Controller
             }
         }
         $page = Page::find($id);
-        $this->apiSuccess($page, 201);
+        $this->apiSuccess(ContentPassword::withoutHash($page), 201);
     }
 
     public function updateApi(int $id): void
@@ -67,6 +74,11 @@ class PageController extends Controller
         }
         $body = $this->readJsonBody();
         $merged = $this->pagePayload($body, $existing);
+        $pwError = ContentPassword::writeError($merged);
+        if ($pwError !== null) {
+            $this->apiValidationError($pwError);
+            return;
+        }
         if (trim((string) ($merged['title'] ?? '')) === '') {
             $this->apiValidationError('title is required.');
             return;
@@ -82,7 +94,7 @@ class PageController extends Controller
                 return;
             }
         }
-        $this->apiSuccess(Page::find($id));
+        $this->apiSuccess(ContentPassword::withoutHash(Page::find($id)));
     }
 
     public function deleteApi(int $id): void
@@ -123,7 +135,7 @@ class PageController extends Controller
             }
             return $default;
         };
-        return [
+        $payload = [
             'title' => (string) $get('title', ''),
             'slug' => (string) $get('slug', $existing->slug ?? ''),
             'body' => (string) $get('body', ''),
@@ -139,6 +151,13 @@ class PageController extends Controller
             'content_layout' => $get('content_layout'),
             'parent_id' => $get('parent_id'),
         ];
+        if (array_key_exists('content_password', $body)) {
+            $payload['content_password'] = (string) $body['content_password'];
+        }
+        if (!empty($body['remove_content_password'])) {
+            $payload['remove_content_password'] = true;
+        }
+        return $payload;
     }
 
     /** @param array<string, mixed> $body */

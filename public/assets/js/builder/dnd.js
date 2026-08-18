@@ -10,12 +10,16 @@
                     si: Number(el.getAttribute('data-si')),
                     ri: el.hasAttribute('data-ri') ? Number(el.getAttribute('data-ri')) : -1,
                     ci: el.hasAttribute('data-ci') ? Number(el.getAttribute('data-ci')) : -1,
-                    mi: el.hasAttribute('data-mi') ? Number(el.getAttribute('data-mi')) : -1
+                    mi: el.hasAttribute('data-mi') ? Number(el.getAttribute('data-mi')) : -1,
+                    ici: el.hasAttribute('data-ici') ? Number(el.getAttribute('data-ici')) : -1,
+                    imi: el.hasAttribute('data-imi') ? Number(el.getAttribute('data-imi')) : -1
                 };
             }
             
             function locEqual(a, b) {
-                return a && b && a.kind === b.kind && a.si === b.si && a.ri === b.ri && a.ci === b.ci && a.mi === b.mi;
+                return a && b && a.kind === b.kind && a.si === b.si && a.ri === b.ri && a.ci === b.ci && a.mi === b.mi
+                    && (a.ici == null ? -1 : a.ici) === (b.ici == null ? -1 : b.ici)
+                    && (a.imi == null ? -1 : a.imi) === (b.imi == null ? -1 : b.imi);
             }
             
             function getColAt(si, ri, ci) {

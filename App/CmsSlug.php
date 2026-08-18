@@ -25,7 +25,7 @@ class CmsSlug
         return $slug;
     }
 
-    private static function exists(\PDO $db, string $table, string $slug, ?int $excludeId): bool
+    private static function exists(\PDO $db, string $table, string $slug, ?int $excludeId, bool $includeDeleted = true): bool
     {
         $allowed = ['cms_pages', 'cms_posts', 'cms_categories', 'cms_tags'];
         if (!in_array($table, $allowed, true)) {
@@ -33,7 +33,8 @@ class CmsSlug
         }
         $sql = "SELECT id FROM {$table} WHERE slug = ?";
         $params = [$slug];
-        if (!in_array($table, ['cms_categories', 'cms_tags'], true)) {
+        $hasSoftDelete = !in_array($table, ['cms_categories', 'cms_tags'], true);
+        if ($hasSoftDelete && !$includeDeleted) {
             $sql .= ' AND deleted_at IS NULL';
         }
         if ($excludeId !== null) {
@@ -52,6 +53,6 @@ class CmsSlug
             return false;
         }
         $other = $ownTable === 'cms_pages' ? 'cms_posts' : 'cms_pages';
-        return self::exists($db, $other, $slug, null);
+        return self::exists($db, $other, $slug, null, false);
     }
 }

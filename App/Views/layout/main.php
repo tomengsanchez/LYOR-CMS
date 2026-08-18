@@ -52,6 +52,7 @@ $helpFrom = $currentPage !== '' ? $currentPage : 'dashboard';
             <?php if (\Core\Auth::can('manage_categories')): ?><a href="<?= admin_url('tags') ?>" class="nav-sub <?= $currentPage === 'tags' ? 'active' : '' ?>">Tags</a><?php endif; ?>
             <?php if (\Core\Auth::isAdmin()): ?><a href="<?= admin_url('menus') ?>" class="nav-sub <?= $currentPage === 'menus' ? 'active' : '' ?>">Menus</a><?php endif; ?>
             <?php if (\Core\Auth::can('moderate_comments')): ?><a href="<?= admin_url('comments') ?>" class="nav-sub <?= $currentPage === 'comments' ? 'active' : '' ?>">Comments</a><?php endif; ?>
+            <?php if (\Core\Auth::can('view_subscribers')): ?><a href="<?= admin_url('subscribers') ?>" class="nav-sub <?= $currentPage === 'subscribers' ? 'active' : '' ?>">Subscribers</a><?php endif; ?>
             <?php if (\Core\Auth::can('view_media')): ?><a href="<?= admin_url('media') ?>" class="nav-sub <?= $currentPage === 'media' ? 'active' : '' ?>">Media</a><?php endif; ?>
             <div class="nav-label">Appearance</div>
             <?php if (\Core\Auth::isAdmin()): ?><a href="<?= admin_url('customize') ?>" class="nav-sub <?= $currentPage === 'customize' ? 'active' : '' ?>">Customize</a><?php endif; ?>

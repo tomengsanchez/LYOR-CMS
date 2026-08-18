@@ -4,6 +4,7 @@ namespace App\Models;
 use App\AuditLog;
 use App\CmsSlug;
 use App\ContentBlocks;
+use App\ContentPassword;
 use App\ContentRevision;
 use App\LayoutBuilder;
 use App\PublicSeo;
@@ -78,6 +79,29 @@ class Page
             WHERE deleted_at IS NULL AND status = 'published'
             ORDER BY title
         ")->fetchAll(\PDO::FETCH_OBJ);
+    }
+
+    /**
+     * @return list<object>
+     */
+    public static function searchPublished(string $query, int $limit = 20): array
+    {
+        $query = trim($query);
+        if ($query === '') {
+            return [];
+        }
+        $limit = max(1, min(50, $limit));
+        $like = '%' . $query . '%';
+        $stmt = Database::getInstance()->prepare('
+            SELECT id, title, slug, meta_description, updated_at
+            FROM cms_pages
+            WHERE deleted_at IS NULL AND status = \'published\'
+              AND ' . ContentPassword::openSql('') . '
+              AND (title LIKE ? OR body LIKE ? OR meta_description LIKE ? OR llm_summary LIKE ?)
+            ORDER BY updated_at DESC
+            LIMIT ' . $limit);
+        $stmt->execute([$like, $like, $like, $like]);
+        return $stmt->fetchAll(\PDO::FETCH_OBJ);
     }
 
     /** @return array<int, object> for parent dropdown (excludes self/descendants) */
@@ -174,6 +198,7 @@ class Page
             SELECT id, slug, title, meta_description, llm_summary, citation_snippet, body, blocks_json, layout_json, updated_at
             FROM cms_pages
             WHERE deleted_at IS NULL AND status = 'published' AND robots_noindex = 0
+              AND " . ContentPassword::openSql('') . "
             ORDER BY title ASC
         ")->fetchAll(\PDO::FETCH_OBJ);
     }
@@ -189,8 +214,8 @@ class Page
             !empty($data['featured_image_id']) ? (int) $data['featured_image_id'] : null
         );
         $stmt = $db->prepare('
-            INSERT INTO cms_pages (title, slug, body, blocks_json, status, meta_title, meta_description, featured_image_id, llm_summary, citation_snippet, faq_json, robots_noindex, content_layout, parent_id, author_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO cms_pages (title, slug, body, blocks_json, status, password_hash, meta_title, meta_description, featured_image_id, llm_summary, citation_snippet, faq_json, robots_noindex, content_layout, parent_id, author_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $stmt->execute([
             trim($data['title'] ?? ''),
@@ -198,6 +223,7 @@ class Page
             $data['body'] ?? '',
             ContentBlocks::normalizeJson($data['blocks_json'] ?? null),
             in_array($data['status'] ?? '', ['published', 'draft'], true) ? $data['status'] : 'draft',
+            ContentPassword::hashFromWrite($data, null),
             PublicSeo::normalizeMetaTitle($data['meta_title'] ?? ''),
             PublicSeo::normalizeMetaDescription($data['meta_description'] ?? ''),
             $featuredId,
@@ -212,6 +238,41 @@ class Page
         $id = (int) $db->lastInsertId();
         AuditLog::record('page', $id, 'created');
         return $id;
+    }
+
+    public static function duplicate(int $id): int
+    {
+        $src = self::find($id);
+        if (!$src) {
+            return 0;
+        }
+        $newId = self::create([
+            'title' => 'Copy of ' . (string) $src->title,
+            'body' => (string) ($src->body ?? ''),
+            'blocks_json' => $src->blocks_json ?? null,
+            'status' => 'draft',
+            'meta_title' => (string) ($src->meta_title ?? ''),
+            'meta_description' => (string) ($src->meta_description ?? ''),
+            'featured_image_id' => $src->featured_image_id ?? null,
+            'llm_summary' => (string) ($src->llm_summary ?? ''),
+            'citation_snippet' => (string) ($src->citation_snippet ?? ''),
+            'faq_json' => $src->faq_json ?? null,
+            'robots_noindex' => !empty($src->robots_noindex),
+            'content_layout' => $src->content_layout ?? '',
+            'parent_id' => $src->parent_id ?? null,
+        ]);
+        if ($newId <= 0) {
+            return 0;
+        }
+        if (!empty($src->layout_json)) {
+            $stmt = Database::getInstance()->prepare('UPDATE cms_pages SET layout_json = ? WHERE id = ? AND deleted_at IS NULL');
+            $stmt->execute([(string) $src->layout_json, $newId]);
+        }
+        if (ContentPassword::has($src)) {
+            ContentPassword::persistHash('cms_pages', $newId, ContentPassword::storedHash($src));
+        }
+        AuditLog::record('page', $newId, 'duplicated', ['source_id' => $id]);
+        return $newId;
     }
 
     public static function update(int $id, array $data): bool
@@ -234,7 +295,7 @@ class Page
             !empty($data['featured_image_id']) ? (int) $data['featured_image_id'] : null
         );
         $stmt = $db->prepare('
-            UPDATE cms_pages SET title = ?, slug = ?, body = ?, blocks_json = ?, status = ?, meta_title = ?, meta_description = ?,
+            UPDATE cms_pages SET title = ?, slug = ?, body = ?, blocks_json = ?, status = ?, password_hash = ?, meta_title = ?, meta_description = ?,
                 featured_image_id = ?, llm_summary = ?, citation_snippet = ?, faq_json = ?, robots_noindex = ?, content_layout = ?, parent_id = ?
             WHERE id = ? AND deleted_at IS NULL
         ');
@@ -244,6 +305,7 @@ class Page
             $data['body'] ?? '',
             ContentBlocks::normalizeJson($data['blocks_json'] ?? null),
             in_array($data['status'] ?? '', ['published', 'draft'], true) ? $data['status'] : 'draft',
+            ContentPassword::hashFromWrite($data, (string) ($existing->password_hash ?? '')),
             PublicSeo::normalizeMetaTitle($data['meta_title'] ?? ''),
             PublicSeo::normalizeMetaDescription($data['meta_description'] ?? ''),
             $featuredId,
@@ -311,7 +373,7 @@ class Page
             !empty($snap['featured_image_id']) ? (int) $snap['featured_image_id'] : null
         );
         $stmt = $db->prepare('
-            UPDATE cms_pages SET title = ?, slug = ?, body = ?, blocks_json = ?, layout_json = ?, status = ?,
+            UPDATE cms_pages SET title = ?, slug = ?, body = ?, blocks_json = ?, layout_json = ?, status = ?, password_hash = ?,
                 meta_title = ?, meta_description = ?, featured_image_id = ?, llm_summary = ?, citation_snippet = ?, faq_json = ?, robots_noindex = ?,
                 content_layout = ?, parent_id = ?
             WHERE id = ? AND deleted_at IS NULL
@@ -323,6 +385,7 @@ class Page
             ContentBlocks::normalizeJson(is_string($blocks) ? $blocks : null),
             $layout,
             in_array((string) ($snap['status'] ?? ''), ['published', 'draft'], true) ? $snap['status'] : 'draft',
+            ContentPassword::storedHash((object) ['password_hash' => $snap['password_hash'] ?? null]),
             PublicSeo::normalizeMetaTitle($snap['meta_title'] ?? ''),
             PublicSeo::normalizeMetaDescription($snap['meta_description'] ?? ''),
             $featuredId,
@@ -336,6 +399,42 @@ class Page
         ]);
         AuditLog::record('page', $id, 'restored', ['revision_id' => $revisionId, 'revision_no' => (int) $rev->revision_no]);
         return true;
+    }
+
+    public static function bulkSetStatus(array $ids, string $status): int
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn ($id) => $id > 0));
+        if ($ids === [] || !in_array($status, ['published', 'draft'], true)) {
+            return 0;
+        }
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $params = $ids;
+        $sql = 'UPDATE cms_pages SET status = ? WHERE id IN (' . $in . ') AND deleted_at IS NULL';
+        array_unshift($params, $status);
+        $stmt = Database::getInstance()->prepare($sql);
+        $stmt->execute($params);
+        $n = $stmt->rowCount();
+        if ($n > 0) {
+            AuditLog::record('page', $ids[0], 'bulk_status', ['status' => $status, 'ids' => $ids, 'count' => $n]);
+        }
+        return $n;
+    }
+
+    /** @param list<int> $ids */
+    public static function bulkSoftDelete(array $ids): int
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn ($id) => $id > 0));
+        if ($ids === []) {
+            return 0;
+        }
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = Database::getInstance()->prepare('UPDATE cms_pages SET deleted_at = NOW() WHERE id IN (' . $in . ') AND deleted_at IS NULL');
+        $stmt->execute($ids);
+        $n = $stmt->rowCount();
+        if ($n > 0) {
+            AuditLog::record('page', $ids[0], 'bulk_deleted', ['ids' => $ids, 'count' => $n]);
+        }
+        return $n;
     }
 
     public static function softDelete(int $id): bool

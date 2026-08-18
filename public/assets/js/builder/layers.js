@@ -26,6 +26,14 @@
                     sel = '.cms-lb-row[data-si="' + btn.getAttribute('data-si') + '"][data-ri="' + btn.getAttribute('data-ri') + '"]';
                 } else if (kind === 'column') {
                     sel = '.cms-lb-col[data-si="' + btn.getAttribute('data-si') + '"][data-ri="' + btn.getAttribute('data-ri') + '"][data-ci="' + btn.getAttribute('data-ci') + '"]';
+                } else if (kind === 'inner_column') {
+                    sel = '.cms-lb-inner-col[data-si="' + btn.getAttribute('data-si') + '"][data-ri="' + btn.getAttribute('data-ri')
+                        + '"][data-ci="' + btn.getAttribute('data-ci') + '"][data-mi="' + btn.getAttribute('data-mi')
+                        + '"][data-ici="' + btn.getAttribute('data-ici') + '"]';
+                } else if (kind === 'inner_module') {
+                    sel = '.cms-lb-inner-mod[data-si="' + btn.getAttribute('data-si') + '"][data-ri="' + btn.getAttribute('data-ri')
+                        + '"][data-ci="' + btn.getAttribute('data-ci') + '"][data-mi="' + btn.getAttribute('data-mi')
+                        + '"][data-ici="' + btn.getAttribute('data-ici') + '"][data-imi="' + btn.getAttribute('data-imi') + '"]';
                 } else if (kind === 'module') {
                     sel = '.cms-lb-mod[data-si="' + btn.getAttribute('data-si') + '"][data-ri="' + btn.getAttribute('data-ri') + '"][data-ci="' + btn.getAttribute('data-ci') + '"][data-mi="' + btn.getAttribute('data-mi') + '"]';
                 }
@@ -59,7 +67,7 @@
             }
             
             function layerLabel(kind, node, fallback) {
-                if (kind === 'module') {
+                if (kind === 'inner_module' || kind === 'module') {
                     var t = moduleTypes[node.type] || node.type;
                     var bit = (node.data && (node.data.text || node.data.title || node.data.label)) || '';
                     bit = String(bit).replace(/\s+/g, ' ').trim();
@@ -68,8 +76,8 @@
                     }
                     return bit ? t + ': ' + bit : t;
                 }
-                if (kind === 'column') {
-                    return 'Col ' + (Number(node.width) || 12) + '/12';
+                if (kind === 'inner_column' || kind === 'column') {
+                    return (kind === 'inner_column' ? 'Inner ' : 'Col ') + (Number(node.width) || 12) + '/12';
                 }
                 return fallback;
             }
@@ -94,7 +102,26 @@
                             html += '<button type="button" class="cms-lb-layer cms-lb-layer--column' + (colOn ? ' is-current' : '') + '" data-kind="column" data-si="' + si + '" data-ri="' + ri + '" data-ci="' + ci + '">' + esc(layerLabel('column', col, 'Column')) + '</button>';
                             (col.modules || []).forEach(function (mod, mi) {
                                 var modOn = selection.kind === 'module' && selection.sectionIdx === si && selection.rowIdx === ri && selection.colIdx === ci && selection.modIdx === mi;
-                            html += '<button type="button" class="cms-lb-layer cms-lb-layer--module' + (modOn ? ' is-current' : '') + '" data-kind="module" data-si="' + si + '" data-ri="' + ri + '" data-ci="' + ci + '" data-mi="' + mi + '">' + esc(layerLabel('module', mod, 'Module')) + esc(layerVisHint(mod)) + '</button>';
+                                html += '<button type="button" class="cms-lb-layer cms-lb-layer--module' + (modOn ? ' is-current' : '') + '" data-kind="module" data-si="' + si + '" data-ri="' + ri + '" data-ci="' + ci + '" data-mi="' + mi + '">' + esc(layerLabel('module', mod, 'Module')) + esc(layerVisHint(mod)) + '</button>';
+                                if (mod.type === 'inner_row') {
+                                    (mod.columns || []).forEach(function (icol, ici) {
+                                        var icOn = selection.kind === 'inner_column'
+                                            && selection.sectionIdx === si && selection.rowIdx === ri && selection.colIdx === ci
+                                            && selection.modIdx === mi && selIci() === ici;
+                                        html += '<button type="button" class="cms-lb-layer cms-lb-layer--inner-column' + (icOn ? ' is-current' : '')
+                                            + '" data-kind="inner_column" data-si="' + si + '" data-ri="' + ri + '" data-ci="' + ci
+                                            + '" data-mi="' + mi + '" data-ici="' + ici + '">' + esc(layerLabel('inner_column', icol, 'Inner col')) + '</button>';
+                                        (icol.modules || []).forEach(function (imod, imi) {
+                                            var imOn = selection.kind === 'inner_module'
+                                                && selection.sectionIdx === si && selection.rowIdx === ri && selection.colIdx === ci
+                                                && selection.modIdx === mi && selIci() === ici && selImi() === imi;
+                                            html += '<button type="button" class="cms-lb-layer cms-lb-layer--inner-module' + (imOn ? ' is-current' : '')
+                                                + '" data-kind="inner_module" data-si="' + si + '" data-ri="' + ri + '" data-ci="' + ci
+                                                + '" data-mi="' + mi + '" data-ici="' + ici + '" data-imi="' + imi + '">'
+                                                + esc(layerLabel('inner_module', imod, 'Module')) + esc(layerVisHint(imod)) + '</button>';
+                                        });
+                                    });
+                                }
                             });
                         });
                     });
@@ -170,6 +197,10 @@
                     return;
                 }
                 layersBody.querySelectorAll('[data-kind]').forEach(function (btn) {
+                    var kind = btn.getAttribute('data-kind');
+                    if (kind === 'inner_column' || kind === 'inner_module') {
+                        return;
+                    }
                     btn.setAttribute('draggable', 'true');
                     btn.addEventListener('dragstart', function (e) {
                         e.stopPropagation();

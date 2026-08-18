@@ -1,0 +1,14 @@
+{
+  "date": "2026-08-17",
+  "title": "Bulk actions on pages and posts lists",
+  "entries": [
+    {
+      "area": "Admin lists",
+      "summary": "POST /admin/pages|posts/bulk with ids[] and bulk_action. Publish/draft/delete (pages) plus pin/unpin (posts). Homepage skipped for draft/delete. Max 100 ids. Checkboxes associated via form= so row action forms stay separate."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Soft-delete and status/sticky live in existing cms_pages/cms_posts columns."
+    }
+  ]
+}

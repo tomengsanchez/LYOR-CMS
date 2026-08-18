@@ -15,6 +15,12 @@
                 font_size: 1,
                 font_weight: 1,
                 line_height: 1,
+                font_family: 1,
+                letter_spacing: 1,
+                text_transform: 1,
+                position: 1,
+                z_index: 1,
+                sticky_offset: 1,
                 border_width: 1,
                 border_style: 1,
                 border_color: 1,
@@ -27,7 +33,11 @@
                 bg_media_id: 1,
                 bg_image: 1,
                 bg_overlay: 1,
-                bg_overlay_opacity: 1
+                bg_overlay_opacity: 1,
+                shape_top_color: 1,
+                shape_bottom_color: 1,
+                shape_top_height: 1,
+                shape_bottom_height: 1
             };
 
             var BOX_SHADOWS = {
@@ -35,6 +45,37 @@
                 md: '0 4px 12px rgba(0,0,0,.12)',
                 lg: '0 12px 28px rgba(0,0,0,.16)',
                 none: 'none'
+            };
+
+            var FONT_FAMILIES = {
+                system: 'system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
+                sans: 'ui-sans-serif,system-ui,sans-serif',
+                serif: 'Georgia,"Times New Roman",Times,serif',
+                mono: 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace'
+            };
+
+            var LETTER_SPACINGS = {
+                tight: '-0.03em',
+                snug: '-0.015em',
+                normal: '0',
+                wide: '0.05em',
+                wider: '0.12em'
+            };
+
+            var Z_INDEXES = { '1': 1, '2': 1, '5': 1, '10': 1, '20': 1, '50': 1, '100': 1 };
+
+            var STICKY_OFFSETS = {
+                '0': '0',
+                xs: '0.5rem',
+                sm: '1rem',
+                md: '2rem',
+                lg: '4.5rem'
+            };
+
+            var SHAPE_HEIGHTS = {
+                sm: '32px',
+                md: '56px',
+                lg: '88px'
             };
 
             var COLOR_TOKENS = {
@@ -207,6 +248,67 @@
                 return n >= 1 && n <= 2.5 ? v : '';
             }
 
+            function cssSafeFontFamilyKey(v) {
+                v = String(v || '').trim().toLowerCase();
+                return FONT_FAMILIES[v] ? v : '';
+            }
+
+            function cssSafeLetterSpacingKey(v) {
+                v = String(v || '').trim().toLowerCase();
+                return LETTER_SPACINGS[v] ? v : '';
+            }
+
+            function cssSafeTextTransform(v) {
+                v = String(v || '').trim().toLowerCase();
+                return v === 'none' || v === 'uppercase' || v === 'lowercase' || v === 'capitalize' ? v : '';
+            }
+
+            function cssSafePosition(v) {
+                v = String(v || '').trim().toLowerCase();
+                return v === 'relative' || v === 'sticky' ? v : '';
+            }
+
+            function cssSafeZIndex(v) {
+                v = String(v || '').trim();
+                return Z_INDEXES[v] ? v : '';
+            }
+
+            function cssSafeStickyOffsetKey(v) {
+                v = String(v || '').trim().toLowerCase();
+                return STICKY_OFFSETS[v] ? v : '';
+            }
+
+            function cssSafeShapeHeightKey(v) {
+                v = String(v || '').trim().toLowerCase();
+                return SHAPE_HEIGHTS[v] ? v : '';
+            }
+
+            function isPositionField(name) {
+                return name === 'position' || name === 'z_index' || name === 'sticky_offset';
+            }
+
+            function appendPositionDecls(parts, bag, override) {
+                bag = bag || {};
+                var pos = cssSafePosition(bag.position);
+                var z = cssSafeZIndex(bag.z_index);
+                var topKey = cssSafeStickyOffsetKey(bag.sticky_offset);
+                var touchesPos = Object.prototype.hasOwnProperty.call(bag, 'position')
+                    || Object.prototype.hasOwnProperty.call(bag, 'sticky_offset');
+                if (pos === 'sticky') {
+                    parts.push('position:sticky');
+                    parts.push('top:' + (topKey ? STICKY_OFFSETS[topKey] : '0'));
+                } else if (pos === 'relative') {
+                    parts.push('position:relative');
+                } else if (z && !pos) {
+                    parts.push('position:relative');
+                } else if (override && Object.prototype.hasOwnProperty.call(bag, 'position') && !pos) {
+                    parts.push('position:unset', 'top:unset');
+                } else if (override && touchesPos && pos !== 'sticky') {
+                    parts.push('top:unset');
+                }
+                pushDecl(parts, 'z-index', z, override, Object.prototype.hasOwnProperty.call(bag, 'z_index'));
+            }
+
             function appendChromeDecls(parts, bag, override) {
                 bag = bag || {};
                 var width = cssSafeSpacing(bag.border_width);
@@ -252,6 +354,7 @@
                     }
                 }
                 appendBackgroundDecls(parts, settings, override, base);
+                appendPositionDecls(parts, settings, override);
                 appendChromeDecls(parts, settings, override);
                 return parts.join(';');
             }
@@ -272,6 +375,12 @@
                 pushDecl(parts, 'font-size', cssSafeFontSize(design.font_size), override, Object.prototype.hasOwnProperty.call(design, 'font_size'));
                 pushDecl(parts, 'font-weight', cssSafeFontWeight(design.font_weight), override, Object.prototype.hasOwnProperty.call(design, 'font_weight'));
                 pushDecl(parts, 'line-height', cssSafeLineHeight(design.line_height), override, Object.prototype.hasOwnProperty.call(design, 'line_height'));
+                var fontKey = cssSafeFontFamilyKey(design.font_family);
+                pushDecl(parts, 'font-family', fontKey ? FONT_FAMILIES[fontKey] : '', override, Object.prototype.hasOwnProperty.call(design, 'font_family'));
+                var trackKey = cssSafeLetterSpacingKey(design.letter_spacing);
+                pushDecl(parts, 'letter-spacing', trackKey ? LETTER_SPACINGS[trackKey] : '', override, Object.prototype.hasOwnProperty.call(design, 'letter_spacing'));
+                pushDecl(parts, 'text-transform', cssSafeTextTransform(design.text_transform), override, Object.prototype.hasOwnProperty.call(design, 'text_transform'));
+                appendPositionDecls(parts, design, override);
                 appendChromeDecls(parts, design, override);
                 return parts.join(';');
             }
@@ -362,11 +471,23 @@
                 if (rule) {
                     base.push(rule);
                 }
+                if (kind === 'design') {
+                    rule = cssTextAlignChildRule(id, bag, false);
+                    if (rule) {
+                        base.push(rule);
+                    }
+                }
                 var t = node && node[kind + '_tablet'] ? node[kind + '_tablet'] : {};
                 decls = kind === 'design' ? declsFromDesign(t, true) : declsFromSettings(t, true, bag);
                 rule = cssRule(id, decls);
                 if (rule) {
                     tablet.push(rule);
+                }
+                if (kind === 'design') {
+                    rule = cssTextAlignChildRule(id, t, true);
+                    if (rule) {
+                        tablet.push(rule);
+                    }
                 }
                 var m = node && node[kind + '_mobile'] ? node[kind + '_mobile'] : {};
                 decls = kind === 'design' ? declsFromDesign(m, true) : declsFromSettings(m, true, bag);
@@ -374,7 +495,14 @@
                 if (rule) {
                     mobile.push(rule);
                 }
+                if (kind === 'design') {
+                    rule = cssTextAlignChildRule(id, m, true);
+                    if (rule) {
+                        mobile.push(rule);
+                    }
+                }
                 if (kind !== 'design') {
+                    addSectionExtraCss(base, tablet, mobile, id, node);
                     return;
                 }
                 var hover = node && node.design_hover ? node.design_hover : {};
@@ -387,6 +515,29 @@
                 if (rule) {
                     base.push(rule);
                 }
+                var hoverAlign = cssSafeAlign(hover.text_align);
+                if (hoverAlign) {
+                    var hoverCls = elementCssClass(id);
+                    if (hoverCls) {
+                        base.push('.' + hoverCls + ':hover>*{text-align:' + hoverAlign + '}');
+                    }
+                }
+            }
+
+            function cssTextAlignChildRule(id, bag, override) {
+                var cls = elementCssClass(id);
+                if (!cls) {
+                    return '';
+                }
+                bag = bag || {};
+                var align = cssSafeAlign(bag.text_align);
+                if (align) {
+                    return '.' + cls + '>*{text-align:' + align + '}';
+                }
+                if (override && Object.prototype.hasOwnProperty.call(bag, 'text_align')) {
+                    return '.' + cls + '>*{text-align:unset}';
+                }
+                return '';
             }
 
             function cssHoverRule(id, decls) {
@@ -397,6 +548,81 @@
                 var sel = '.' + cls + ':hover,.' + cls + ':hover .btn,.' + cls + ':hover a,.public-site .' + cls + ':hover .btn';
                 return '.' + cls + '{transition:color .15s ease,background-color .15s ease,border-color .15s ease,box-shadow .15s ease}'
                     + sel + '{' + decls + '}';
+            }
+
+            function pushShapeSideRules(target, cls, side, bag, override) {
+                bag = bag || {};
+                var colorName = 'shape_' + side + '_color';
+                var hName = 'shape_' + side + '_height';
+                var color = cssSafeColor(bag[colorName]);
+                var hKey = cssSafeShapeHeightKey(bag[hName]);
+                var h = hKey ? SHAPE_HEIGHTS[hKey] : '';
+                var touchesC = Object.prototype.hasOwnProperty.call(bag, colorName);
+                var touchesH = Object.prototype.hasOwnProperty.call(bag, hName);
+                if (override && !touchesC && !touchesH) {
+                    return;
+                }
+                var sel = '.' + cls + '>.cms-shape--' + side;
+                var decls = [];
+                if (color) {
+                    decls.push('color:' + color);
+                } else if (override && touchesC) {
+                    decls.push('color:unset');
+                }
+                if (decls.length) {
+                    target.push(sel + '{' + decls.join(';') + '}');
+                }
+                if (h) {
+                    target.push(sel + ' svg{height:' + h + '}');
+                } else if (override && touchesH) {
+                    target.push(sel + ' svg{height:unset}');
+                }
+            }
+
+            function pushVideoOverlayRule(target, cls, bag, base, override) {
+                bag = bag || {};
+                base = base || {};
+                var touches = Object.prototype.hasOwnProperty.call(bag, 'bg_overlay')
+                    || Object.prototype.hasOwnProperty.call(bag, 'bg_overlay_opacity');
+                if (override && !touches) {
+                    return;
+                }
+                var overlayColor = Object.prototype.hasOwnProperty.call(bag, 'bg_overlay') || !override
+                    ? (bag.bg_overlay || '')
+                    : (base.bg_overlay || '');
+                var overlayOp = Object.prototype.hasOwnProperty.call(bag, 'bg_overlay_opacity') || !override
+                    ? bag.bg_overlay_opacity
+                    : (base.bg_overlay_opacity || '');
+                var overlay = overlayCss(overlayColor, overlayOp);
+                var sel = '.' + cls + '>.cms-layout-section-bg::after';
+                if (!overlay) {
+                    if (override && touches) {
+                        target.push(sel + '{content:none;background:unset}');
+                    }
+                    return;
+                }
+                target.push(sel + '{content:"";position:absolute;inset:0;background:' + overlay + ';pointer-events:none}');
+            }
+
+            function addSectionExtraCss(base, tablet, mobile, id, node) {
+                var cls = elementCssClass(id);
+                if (!cls) {
+                    return;
+                }
+                var site = node && node.settings ? node.settings : {};
+                var tBag = node && node.settings_tablet ? node.settings_tablet : {};
+                var mBag = node && node.settings_mobile ? node.settings_mobile : {};
+                ['top', 'bottom'].forEach(function (side) {
+                    pushShapeSideRules(base, cls, side, site, false);
+                    pushShapeSideRules(tablet, cls, side, tBag, true);
+                    pushShapeSideRules(mobile, cls, side, mBag, true);
+                });
+                if (!site.bg_video_url) {
+                    return;
+                }
+                pushVideoOverlayRule(base, cls, site, site, false);
+                pushVideoOverlayRule(tablet, cls, tBag, site, true);
+                pushVideoOverlayRule(mobile, cls, mBag, site, true);
             }
 
             function compileLayoutCss(tree) {
@@ -424,6 +650,20 @@
                                     return;
                                 }
                                 addNodeCss(base, tablet, mobile, ensureNodeId(mod), mod, 'design');
+                                if (mod.type === 'inner_row') {
+                                    (mod.columns || []).forEach(function (innerCol) {
+                                        if (!innerCol) {
+                                            return;
+                                        }
+                                        addNodeCss(base, tablet, mobile, ensureNodeId(innerCol), innerCol, 'settings');
+                                        (innerCol.modules || []).forEach(function (innerMod) {
+                                            if (!innerMod) {
+                                                return;
+                                            }
+                                            addNodeCss(base, tablet, mobile, ensureNodeId(innerMod), innerMod, 'design');
+                                        });
+                                    });
+                                }
                             });
                         });
                     });
@@ -438,7 +678,7 @@
             }
 
             function styleFieldValue(node, kind, name) {
-                if (kind === 'design' && designState === 'hover') {
+                if (kind === 'design' && designState === 'hover' && !isPositionField(name)) {
                     var hoverBag = node && node.design_hover;
                     if (hoverBag && Object.prototype.hasOwnProperty.call(hoverBag, name)) {
                         return hoverBag[name];
@@ -454,7 +694,7 @@
             }
 
             function isStyleOverridden(node, kind, name) {
-                if (kind === 'design' && designState === 'hover') {
+                if (kind === 'design' && designState === 'hover' && !isPositionField(name)) {
                     return !!(node && node.design_hover && Object.prototype.hasOwnProperty.call(node.design_hover, name));
                 }
                 var bp = deviceStyleName();
@@ -466,7 +706,7 @@
                 if (!node) {
                     return;
                 }
-                if (kind === 'design' && designState === 'hover') {
+                if (kind === 'design' && designState === 'hover' && !isPositionField(name)) {
                     var hoverBase = node.design && node.design[name] != null ? node.design[name] : '';
                     if (String(val) === '' || String(val) === String(hoverBase)) {
                         if (node.design_hover) {
@@ -612,6 +852,12 @@
                 if (selection.kind === 'module') {
                     return canvas.querySelector('.cms-lb-mod[data-si="' + selection.sectionIdx + '"][data-ri="' + selection.rowIdx + '"][data-ci="' + selection.colIdx + '"][data-mi="' + selection.modIdx + '"]');
                 }
+                if (selection.kind === 'inner_column') {
+                    return canvas.querySelector('.cms-lb-inner-col[data-si="' + selection.sectionIdx + '"][data-ri="' + selection.rowIdx + '"][data-ci="' + selection.colIdx + '"][data-mi="' + selection.modIdx + '"][data-ici="' + selIci() + '"]');
+                }
+                if (selection.kind === 'inner_module') {
+                    return canvas.querySelector('.cms-lb-inner-mod[data-si="' + selection.sectionIdx + '"][data-ri="' + selection.rowIdx + '"][data-ci="' + selection.colIdx + '"][data-mi="' + selection.modIdx + '"][data-ici="' + selIci() + '"][data-imi="' + selImi() + '"]');
+                }
                 return null;
             }
 
@@ -620,7 +866,7 @@
                 if (!el) {
                     return;
                 }
-                if (name === 'width' && selection.kind === 'column') {
+                if (name === 'width' && isColSel()) {
                     var w = Number(val) || 12;
                     if (w < 1) {
                         w = 1;
@@ -631,18 +877,18 @@
                     el.className = el.className.replace(/\bcol-md-\d+\b/g, 'col-md-' + w);
                     var lab = el.querySelector('.cms-lb-chrome-label > span');
                     if (lab) {
-                        lab.textContent = 'Col ' + w + '/12';
+                        lab.textContent = (selection.kind === 'inner_column' ? 'Inner ' : 'Col ') + w + '/12';
                     }
                     return;
                 }
-                if (name === 'valign' && selection.kind === 'column' && currentDevice === 'desktop') {
+                if (name === 'valign' && isColSel() && currentDevice === 'desktop') {
                     el.classList.remove('cms-layout-column--valign-center', 'cms-layout-column--valign-bottom');
                     if (val === 'center' || val === 'bottom') {
                         el.classList.add('cms-layout-column--valign-' + val);
                     }
                     return;
                 }
-                if ((name === 'hide_mobile' || name === 'hide_desktop') && selection.kind === 'module') {
+                if ((name === 'hide_mobile' || name === 'hide_desktop') && isModSel()) {
                     var inner = el.querySelector('.cms-layout-module');
                     if (!inner) {
                         return;
@@ -667,6 +913,7 @@
             ctx.styleFieldValue = styleFieldValue;
             ctx.isStyleOverridden = isStyleOverridden;
             ctx.writeStyleValue = writeStyleValue;
+            ctx.isPositionField = isPositionField;
             ctx.clearDeviceStyle = clearDeviceStyle;
             ctx.hasDeviceStyle = hasDeviceStyle;
             ctx.clearHoverStyle = clearHoverStyle;

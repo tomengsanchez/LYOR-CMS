@@ -7,6 +7,8 @@
  *   php cli/build_style_pack.php example
  *   php cli/build_style_pack.php play-build-sound
  *   php cli/build_style_pack.php manly
+ *   php cli/build_style_pack.php pulse
+ *   php cli/build_style_pack.php enterprise
  */
 $root = dirname(__DIR__);
 
@@ -30,6 +32,16 @@ $known = [
         'dir' => 'cms-style-pack-manly',
         'zip' => 'cms-style-pack-manly.zip',
         'readme' => "Manly\n=====\n\nOak, iron, leather theme pack (dark lodge / magazine).\n\n1. Edit cms-theme.json + extra.css as needed.\n2. Re-zip with files at the ARCHIVE ROOT.\n3. Import in Appearance → Customize.\n\nNot a WordPress PHP theme.\n",
+    ],
+    'pulse' => [
+        'dir' => 'cms-style-pack-pulse',
+        'zip' => 'cms-style-pack-pulse.zip',
+        'readme' => "Pulse\n=====\n\nTeal civic / community pack. Header, After header, Homepage, and After content starter widgets (empty areas only).\n\n1. Edit cms-theme.json + extra.css as needed.\n2. Re-zip with files at the ARCHIVE ROOT.\n3. Import in Appearance → Customize.\n\nNot a WordPress PHP theme.\n",
+    ],
+    'enterprise' => [
+        'dir' => 'cms-style-pack-enterprise',
+        'zip' => 'cms-style-pack-enterprise.zip',
+        'readme' => "Enterprise\n==========\n\nModern navy / slate professional pack. Header, After header, Homepage, and After content starter widgets (empty areas only).\n\n1. Edit cms-theme.json + extra.css as needed.\n2. Re-zip with files at the ARCHIVE ROOT.\n3. Import in Appearance → Customize.\n\nNot a WordPress PHP theme.\n",
     ],
 ];
 

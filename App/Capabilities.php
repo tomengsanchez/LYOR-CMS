@@ -17,6 +17,11 @@ class Capabilities
             'delete_posts' => 'Delete',
             'moderate_comments' => 'Moderate comments',
         ],
+        'Newsletter' => [
+            'view_subscribers' => 'View List',
+            'manage_subscribers' => 'Manage',
+            'export_subscribers' => 'Export',
+        ],
         'Categories' => [
             'view_categories'    => 'View List',
             'manage_categories'  => 'Manage',
@@ -57,6 +62,7 @@ class Capabilities
         'pages'           => 'view_pages',
         'posts'           => 'view_posts',
         'comments'        => 'moderate_comments',
+        'subscribers'     => 'view_subscribers',
         'widgets'         => 'view_settings',
         'customize'       => 'view_settings',
         'categories'      => 'view_categories',

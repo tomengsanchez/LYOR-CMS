@@ -9,6 +9,14 @@ class ListHelper
 {
     public static function getValue(object $row, string $key)
     {
+        if ($key === 'status' && isset($row->status)) {
+            if ((string) $row->status === 'published'
+                && !empty($row->published_at)
+                && (string) $row->published_at > UserTime::nowSql()) {
+                return 'scheduled';
+            }
+            return (string) $row->status;
+        }
         if ($key === 'capabilities' && isset($row->capabilities)) {
             return is_array($row->capabilities) ? implode(' ', $row->capabilities) : (string) $row->capabilities;
         }

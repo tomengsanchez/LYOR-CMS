@@ -41,7 +41,7 @@ if (!process.env.CI) {
   process.env.ADMIN_PASS ||= "admin123";
 }
 
-const baseURL = process.env.BASE_URL || "http://eco.local";
+const baseURL = process.env.BASE_URL || "http://cms.local";
 
 /** Headed + 1200ms slowMo unless HEADLESS=true or PW_SLOW_MO_MS is set. Use `npm run test:e2e` (--headed). */
 const headless = process.env.HEADLESS === "true";

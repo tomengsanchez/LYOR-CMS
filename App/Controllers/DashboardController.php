@@ -5,6 +5,7 @@ use App\Models\Media;
 use App\Models\Page;
 use App\Models\Post;
 use App\Models\Comment;
+use App\Models\NewsletterSubscriber;
 use Core\Controller;
 use Core\Database;
 
@@ -34,6 +35,7 @@ class DashboardController extends Controller
             'postCounts' => $postCounts,
             'mediaCount' => $mediaCount,
             'pendingComments' => Comment::pendingCount(),
+            'pendingSubscribers' => NewsletterSubscriber::pendingCount(),
             'recentPendingComments' => Comment::recentPending(5),
             'recentDraftPages' => Page::recentDrafts(5),
             'recentDraftPosts' => Post::recentDrafts(5),

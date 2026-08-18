@@ -64,13 +64,18 @@
                 if (meta.defaults && typeof meta.defaults === 'object') {
                     data = JSON.parse(JSON.stringify(meta.defaults));
                 }
-                return {
+                var mod = {
                     id: uid(),
                     type: type,
                     data: data,
                     design: {},
                     advanced: {}
                 };
+                if (type === 'inner_row') {
+                    mod.columns = [emptyColumn(6), emptyColumn(6)];
+                    mod.data = {};
+                }
+                return mod;
             }
             
             /** Equal and common Divi-like column width presets (Bootstrap 12-grid). */
@@ -189,6 +194,15 @@
                 }
                 if (design.font_size) {
                     parts.push('font-size:' + design.font_size);
+                }
+                if (design.font_family === 'serif') {
+                    parts.push('font-family:Georgia,"Times New Roman",Times,serif');
+                } else if (design.font_family === 'mono') {
+                    parts.push('font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace');
+                } else if (design.font_family === 'sans') {
+                    parts.push('font-family:ui-sans-serif,system-ui,sans-serif');
+                } else if (design.font_family === 'system') {
+                    parts.push('font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif');
                 }
                 return parts.join(';');
             }

@@ -648,7 +648,7 @@ test.describe('Tomeng Sanchez website', () => {
     }
     await Promise.all([
       page.waitForURL(/\/admin\/system\/general/, { timeout: 60_000 }),
-      page.locator('form[action*="system/general/save"] button[type="submit"]').click(),
+      page.locator('#generalSettingsForm button[type="submit"]').click(),
     ]);
   }
 

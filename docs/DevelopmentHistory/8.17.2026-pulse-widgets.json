@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Pulse style pack and extra widget areas",
+  "entries": [
+    {
+      "area": "Widgets",
+      "summary": "Areas header, after_header, home, sidebar, after_content, footer. Types featured_posts, cta, pages, social. installStarterIfEmpty fills empty areas only."
+    },
+    {
+      "area": "Theme packs",
+      "summary": "Bundled Pulse pack seeds header/home widgets. Activate calls Widget::installStarterIfEmpty. Download ?pack=pulse."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "Widgets remain cms_widgets rows in the SQL dump. Pulse starter widgets restore with that table. Pack CSS is still uploads + app_settings."
+    }
+  ]
+}

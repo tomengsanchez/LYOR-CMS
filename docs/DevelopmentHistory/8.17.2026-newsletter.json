@@ -1,0 +1,26 @@
+{
+  "date": "2026-08-17",
+  "title": "Newsletter subscribers",
+  "entries": [
+    {
+      "area": "Public",
+      "summary": "GET/POST /subscribe, confirm token, GET/POST /unsubscribe/{token}. Generic success; honeypot + consent + rate limit. Default double opt-in via Mailer."
+    },
+    {
+      "area": "Admin",
+      "summary": "Content → Subscribers list, confirm/unsubscribe/delete, CSV export. Caps view/manage/export_subscribers. General Newsletter settings."
+    },
+    {
+      "area": "Widgets",
+      "summary": "New newsletter type; form.js intro/placeholder/button/consent fields. POSTs to /subscribe."
+    },
+    {
+      "area": "Schema",
+      "summary": "migration_025 cms_newsletter_subscribers (unique email VARCHAR(191), confirm/unsub tokens, status)."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "Table included in full SQL dump; newsletter_* keys in app_settings. truncate_fresh_install lists the table."
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+/**
+ * Enterprise — modern navy / slate professional theme
+ * Additive styles only. Loaded after site.css when this pack is active.
+ */
+
+.public-site {
+  --ent-navy: #0f172a;
+  --ent-slate: #334155;
+  --ent-blue: var(--pub-accent, #1e40af);
+  background-color: var(--pub-bg, #f1f5f9);
+}
+
+.public-header {
+  background: rgba(255, 255, 255, 0.97) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--ent-slate) 14%, var(--pub-border, #e2e8f0)) !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.public-brand {
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.public-brand-tagline {
+  color: var(--pub-muted, #64748b);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.public-nav a {
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.public-nav a:hover,
+.public-nav a.active {
+  color: var(--ent-blue);
+}
+
+.public-widget-area--header {
+  background: color-mix(in srgb, var(--ent-blue) 4%, var(--pub-surface, #fff));
+  border-bottom: 1px solid color-mix(in srgb, var(--ent-slate) 10%, var(--pub-border, #e2e8f0));
+}
+
+.public-widget-area--after-header .public-widget--cta {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ent-blue) 6%, var(--pub-surface, #fff)),
+    var(--pub-surface, #fff)
+  );
+  border: 1px solid color-mix(in srgb, var(--ent-slate) 12%, var(--pub-border, #e2e8f0));
+  border-radius: var(--pub-radius, 6px);
+  box-shadow: var(--pub-shadow, 0 4px 16px rgba(15, 23, 42, 0.05));
+}
+
+.public-widget--cta h2,
+.public-widget--cta .widget-cta-headline {
+  color: var(--ent-navy);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.public-widget--cta .btn-primary {
+  border-radius: var(--pub-radius, 6px);
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+}
+
+.widget-featured-card,
+.public-blog-list .card,
+.public-card {
+  border: 1px solid color-mix(in srgb, var(--ent-slate) 10%, var(--pub-border, #e2e8f0));
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.widget-featured-title {
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+.public-main .cms-layout .cms-section {
+  border-radius: var(--pub-radius, 6px);
+}
+
+.public-footer {
+  border-top: 1px solid color-mix(in srgb, var(--ent-slate) 12%, var(--pub-border, #e2e8f0));
+  color: var(--pub-muted, #64748b);
+  font-size: 0.875rem;
+}
+
+.public-widget-area--after-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.btn-primary {
+  background: var(--ent-blue);
+  border-color: var(--ent-blue);
+}
+
+.btn-primary:hover {
+  background: color-mix(in srgb, var(--ent-blue) 88%, #000);
+  border-color: color-mix(in srgb, var(--ent-blue) 88%, #000);
+}
+
+.public-prose h1,
+.public-prose h2,
+.cms-mod-heading h1,
+.cms-mod-heading h2 {
+  color: var(--ent-navy);
+  letter-spacing: -0.02em;
+}

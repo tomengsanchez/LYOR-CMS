@@ -175,6 +175,7 @@ trait Css
                             continue;
                         }
                         self::collectNodeCss($base, $tablet, $mobile, (string) ($mod['id'] ?? ''), $mod, 'design');
+                        self::collectInnerRowCss($base, $tablet, $mobile, $mod);
                     }
                 }
             }
@@ -187,6 +188,35 @@ trait Css
             $css .= '@media (max-width:' . self::CSS_MOBILE_MAX . '){' . implode('', $mobile) . '}';
         }
         return $css;
+    }
+
+    /**
+     * Nested columns/modules on an inner_row (one level).
+     *
+     * @param list<string> $base
+     * @param list<string> $tablet
+     * @param list<string> $mobile
+     * @param array<string, mixed> $mod
+     */
+    private static function collectInnerRowCss(array &$base, array &$tablet, array &$mobile, array $mod): void
+    {
+        if (($mod['type'] ?? '') !== 'inner_row') {
+            return;
+        }
+        $columns = is_array($mod['columns'] ?? null) ? $mod['columns'] : [];
+        foreach ($columns as $col) {
+            if (!is_array($col)) {
+                continue;
+            }
+            self::collectNodeCss($base, $tablet, $mobile, (string) ($col['id'] ?? ''), $col, 'settings');
+            $modules = is_array($col['modules'] ?? null) ? $col['modules'] : [];
+            foreach ($modules as $innerMod) {
+                if (!is_array($innerMod)) {
+                    continue;
+                }
+                self::collectNodeCss($base, $tablet, $mobile, (string) ($innerMod['id'] ?? ''), $innerMod, 'design');
+            }
+        }
     }
 
     /**
@@ -204,6 +234,12 @@ trait Css
         if ($rule !== '') {
             $base[] = $rule;
         }
+        if ($kind === 'design') {
+            $alignChild = self::cssTextAlignChildRule($id, is_array($node[$kind] ?? null) ? $node[$kind] : [], false);
+            if ($alignChild !== '') {
+                $base[] = $alignChild;
+            }
+        }
         $srcBase = is_array($node[$kind] ?? null) ? $node[$kind] : [];
         $t = is_array($node[$kind . '_tablet'] ?? null) ? $node[$kind . '_tablet'] : [];
         $tDecls = $kind === 'design' ? self::styleFromDesign($t, true) : self::styleFromSettings($t, true, $srcBase);
@@ -211,13 +247,26 @@ trait Css
         if ($rule !== '') {
             $tablet[] = $rule;
         }
+        if ($kind === 'design') {
+            $alignChild = self::cssTextAlignChildRule($id, $t, true);
+            if ($alignChild !== '') {
+                $tablet[] = $alignChild;
+            }
+        }
         $m = is_array($node[$kind . '_mobile'] ?? null) ? $node[$kind . '_mobile'] : [];
         $mDecls = $kind === 'design' ? self::styleFromDesign($m, true) : self::styleFromSettings($m, true, $srcBase);
         $rule = self::cssRule($id, $mDecls);
         if ($rule !== '') {
             $mobile[] = $rule;
         }
+        if ($kind === 'design') {
+            $alignChild = self::cssTextAlignChildRule($id, $m, true);
+            if ($alignChild !== '') {
+                $mobile[] = $alignChild;
+            }
+        }
         if ($kind !== 'design') {
+            self::collectSectionExtraCss($base, $tablet, $mobile, $id, $node);
             return;
         }
         $hover = is_array($node['design_hover'] ?? null) ? $node['design_hover'] : [];
@@ -233,6 +282,10 @@ trait Css
         if ($rule !== '') {
             $base[] = $rule;
         }
+        $hoverAlign = self::cssTextAlignHoverChildRule($id, $hover);
+        if ($hoverAlign !== '') {
+            $base[] = $hoverAlign;
+        }
     }
 
     private static function cssRule(string $id, string $decls): string
@@ -242,6 +295,38 @@ trait Css
             return '';
         }
         return '.' . $cls . '{' . $decls . '}';
+    }
+
+    /**
+     * Inner wrappers (e.g. .cms-mod-blurb) must not keep a hardcoded text-align over Design.
+     *
+     * @param array<string, mixed> $bag
+     */
+    private static function cssTextAlignChildRule(string $id, array $bag, bool $override): string
+    {
+        $cls = self::elementCssClass($id);
+        if ($cls === '') {
+            return '';
+        }
+        $align = (string) ($bag['text_align'] ?? '');
+        if (in_array($align, ['left', 'center', 'right', 'justify'], true)) {
+            return '.' . $cls . '>*{text-align:' . $align . '}';
+        }
+        if ($override && array_key_exists('text_align', $bag)) {
+            return '.' . $cls . '>*{text-align:unset}';
+        }
+        return '';
+    }
+
+    /** @param array<string, mixed> $hover */
+    private static function cssTextAlignHoverChildRule(string $id, array $hover): string
+    {
+        $cls = self::elementCssClass($id);
+        $align = (string) ($hover['text_align'] ?? '');
+        if ($cls === '' || !in_array($align, ['left', 'center', 'right', 'justify'], true)) {
+            return '';
+        }
+        return '.' . $cls . ':hover>*{text-align:' . $align . '}';
     }
 
     private static function cssHoverRule(string $id, string $decls): string
@@ -254,6 +339,112 @@ trait Css
 
         return '.' . $cls . '{transition:color .15s ease,background-color .15s ease,border-color .15s ease,box-shadow .15s ease}'
             . $sel . '{' . $decls . '}';
+    }
+
+    /**
+     * Shape fill/height + video overlay on a dedicated background layer (section overflow stays visible).
+     *
+     * @param list<string> $base
+     * @param list<string> $tablet
+     * @param list<string> $mobile
+     * @param array<string, mixed> $node
+     */
+    private static function collectSectionExtraCss(array &$base, array &$tablet, array &$mobile, string $id, array $node): void
+    {
+        $cls = self::elementCssClass($id);
+        if ($cls === '') {
+            return;
+        }
+        $site = is_array($node['settings'] ?? null) ? $node['settings'] : [];
+        $tBag = is_array($node['settings_tablet'] ?? null) ? $node['settings_tablet'] : [];
+        $mBag = is_array($node['settings_mobile'] ?? null) ? $node['settings_mobile'] : [];
+        foreach (['top', 'bottom'] as $side) {
+            $rule = self::shapeSideCss($cls, $side, $site, false);
+            if ($rule !== '') {
+                $base[] = $rule;
+            }
+            $rule = self::shapeSideCss($cls, $side, $tBag, true);
+            if ($rule !== '') {
+                $tablet[] = $rule;
+            }
+            $rule = self::shapeSideCss($cls, $side, $mBag, true);
+            if ($rule !== '') {
+                $mobile[] = $rule;
+            }
+        }
+        if (self::parseVideoUrl((string) ($site['bg_video_url'] ?? '')) === null) {
+            return;
+        }
+        $rule = self::videoBgOverlayCss($cls, $site, $site, false);
+        if ($rule !== '') {
+            $base[] = $rule;
+        }
+        $rule = self::videoBgOverlayCss($cls, $tBag, $site, true);
+        if ($rule !== '') {
+            $tablet[] = $rule;
+        }
+        $rule = self::videoBgOverlayCss($cls, $mBag, $site, true);
+        if ($rule !== '') {
+            $mobile[] = $rule;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $bag
+     */
+    private static function shapeSideCss(string $cls, string $side, array $bag, bool $override): string
+    {
+        $colorName = 'shape_' . $side . '_color';
+        $hName = 'shape_' . $side . '_height';
+        $color = self::colorCssValue((string) ($bag[$colorName] ?? ''));
+        $hKey = self::safeShapeHeightKey((string) ($bag[$hName] ?? ''));
+        $h = $hKey !== '' ? self::SHAPE_HEIGHTS[$hKey] : '';
+        $touchesC = array_key_exists($colorName, $bag);
+        $touchesH = array_key_exists($hName, $bag);
+        if ($override && !$touchesC && !$touchesH) {
+            return '';
+        }
+        $sel = '.' . $cls . '>.cms-shape--' . $side;
+        $css = '';
+        $parts = [];
+        if ($color !== '') {
+            $parts[] = 'color:' . $color;
+        } elseif ($override && $touchesC) {
+            $parts[] = 'color:unset';
+        }
+        if ($parts !== []) {
+            $css .= $sel . '{' . implode(';', $parts) . '}';
+        }
+        if ($h !== '') {
+            $css .= $sel . ' svg{height:' . $h . '}';
+        } elseif ($override && $touchesH) {
+            $css .= $sel . ' svg{height:unset}';
+        }
+        return $css;
+    }
+
+    /**
+     * @param array<string, mixed> $bag
+     * @param array<string, mixed> $base
+     */
+    private static function videoBgOverlayCss(string $cls, array $bag, array $base, bool $override): string
+    {
+        $touches = array_key_exists('bg_overlay', $bag) || array_key_exists('bg_overlay_opacity', $bag);
+        if ($override && !$touches) {
+            return '';
+        }
+        $overlayColor = array_key_exists('bg_overlay', $bag) || !$override
+            ? (string) ($bag['bg_overlay'] ?? '')
+            : (string) ($base['bg_overlay'] ?? '');
+        $overlayOp = array_key_exists('bg_overlay_opacity', $bag) || !$override
+            ? self::safeOpacity($bag['bg_overlay_opacity'] ?? '')
+            : self::safeOpacity($base['bg_overlay_opacity'] ?? '');
+        $overlay = self::overlayCss($overlayColor, $overlayOp);
+        $sel = '.' . $cls . '>.cms-layout-section-bg::after';
+        if ($overlay === '') {
+            return ($override && $touches) ? $sel . '{content:none;background:unset}' : '';
+        }
+        return $sel . '{content:"";position:absolute;inset:0;background:' . $overlay . ';pointer-events:none}';
     }
 
     /** @param array<string, mixed> $settings */
@@ -278,6 +469,7 @@ trait Css
             }
         }
         self::appendBackgroundDecls($parts, $settings, $override, $base);
+        self::appendPositionDecls($parts, $settings, $override);
         self::appendChromeDecls($parts, $settings, $override);
         return implode(';', $parts);
     }
@@ -299,6 +491,14 @@ trait Css
         self::pushDecl($parts, 'font-size', self::safeFontSize((string) ($design['font_size'] ?? '')), $override, array_key_exists('font_size', $design));
         self::pushDecl($parts, 'font-weight', self::safeFontWeight((string) ($design['font_weight'] ?? '')), $override, array_key_exists('font_weight', $design));
         self::pushDecl($parts, 'line-height', self::safeLineHeight((string) ($design['line_height'] ?? '')), $override, array_key_exists('line_height', $design));
+        $fontKey = self::safeFontFamilyKey((string) ($design['font_family'] ?? ''));
+        $fontCss = $fontKey !== '' ? self::FONT_FAMILIES[$fontKey] : '';
+        self::pushDecl($parts, 'font-family', $fontCss, $override, array_key_exists('font_family', $design));
+        $trackKey = self::safeLetterSpacingKey((string) ($design['letter_spacing'] ?? ''));
+        $trackCss = $trackKey !== '' ? self::LETTER_SPACINGS[$trackKey] : '';
+        self::pushDecl($parts, 'letter-spacing', $trackCss, $override, array_key_exists('letter_spacing', $design));
+        self::pushDecl($parts, 'text-transform', self::safeTextTransform((string) ($design['text_transform'] ?? '')), $override, array_key_exists('text_transform', $design));
+        self::appendPositionDecls($parts, $design, $override);
         self::appendChromeDecls($parts, $design, $override);
         return implode(';', $parts);
     }
@@ -334,6 +534,35 @@ trait Css
         $shadowKey = self::safeShadowKey((string) ($bag['box_shadow'] ?? ''));
         $shadow = $shadowKey !== '' ? self::BOX_SHADOWS[$shadowKey] : '';
         self::pushDecl($parts, 'box-shadow', $shadow, $override, array_key_exists('box_shadow', $bag));
+    }
+
+    /**
+     * relative / sticky + allowlisted z-index. Never interpolates user CSS.
+     *
+     * @param list<string> $parts
+     * @param array<string, mixed> $bag
+     */
+    private static function appendPositionDecls(array &$parts, array $bag, bool $override): void
+    {
+        $pos = self::safePosition((string) ($bag['position'] ?? ''));
+        $z = self::safeZIndex((string) ($bag['z_index'] ?? ''));
+        $topKey = self::safeStickyOffsetKey((string) ($bag['sticky_offset'] ?? ''));
+        $touchesPos = array_key_exists('position', $bag) || array_key_exists('sticky_offset', $bag);
+        if ($pos === 'sticky') {
+            $parts[] = 'position:sticky';
+            $top = $topKey !== '' ? self::STICKY_OFFSETS[$topKey] : '0';
+            $parts[] = 'top:' . $top;
+        } elseif ($pos === 'relative') {
+            $parts[] = 'position:relative';
+        } elseif ($z !== '' && $pos === '') {
+            $parts[] = 'position:relative';
+        } elseif ($override && array_key_exists('position', $bag) && $pos === '') {
+            $parts[] = 'position:unset';
+            $parts[] = 'top:unset';
+        } elseif ($override && $touchesPos && $pos !== 'sticky') {
+            $parts[] = 'top:unset';
+        }
+        self::pushDecl($parts, 'z-index', $z, $override, array_key_exists('z_index', $bag));
     }
 
     /** @param list<string> $parts */

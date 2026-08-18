@@ -4,6 +4,7 @@ namespace App\Models;
 use App\AuditLog;
 use App\CmsSlug;
 use App\ContentBlocks;
+use App\ContentPassword;
 use App\ContentRevision;
 use App\LayoutBuilder;
 use App\PublicSeo;
@@ -20,7 +21,8 @@ class Post
             SELECT p.*,
                    c.name AS category_name,
                    c.slug AS category_slug,
-                   u.username AS author_name,
+                   u.username AS author_username,
+                   COALESCE(NULLIF(u.display_name, \'\'), u.username) AS author_name,
                    fm.mime_type AS featured_mime_type,
                    fm.alt_text AS featured_alt_text,
                    fm.width AS featured_width,
@@ -31,6 +33,54 @@ class Post
             LEFT JOIN users u ON u.id = p.author_id
             LEFT JOIN cms_media fm ON fm.id = p.featured_image_id AND fm.deleted_at IS NULL
         ';
+    }
+
+    /** Live public posts: published and not scheduled in the future. */
+    public static function liveSql(string $alias = 'p'): string
+    {
+        $now = "'" . str_replace("'", "''", UserTime::nowSql()) . "'";
+        return $alias . '.deleted_at IS NULL AND ' . $alias . ".status = 'published'"
+            . ' AND (' . $alias . '.published_at IS NULL OR ' . $alias . '.published_at <= ' . $now . ')';
+    }
+
+    public static function liveOrderSql(string $alias = 'p'): string
+    {
+        return $alias . '.is_sticky DESC, ' . $alias . '.published_at DESC, ' . $alias . '.id DESC';
+    }
+
+    public static function isLive(object $post): bool
+    {
+        if ((string) ($post->status ?? '') !== 'published') {
+            return false;
+        }
+        $at = trim((string) ($post->published_at ?? ''));
+        return $at === '' || $at <= UserTime::nowSql();
+    }
+
+    public static function isScheduled(object $post): bool
+    {
+        if ((string) ($post->status ?? '') !== 'published') {
+            return false;
+        }
+        $at = trim((string) ($post->published_at ?? ''));
+        return $at !== '' && $at > UserTime::nowSql();
+    }
+
+    public static function publicStatusLabel(object $post): string
+    {
+        if (self::isScheduled($post)) {
+            return 'scheduled';
+        }
+        return (string) ($post->status ?? '');
+    }
+
+    public static function authorPublicUrl(object $post): string
+    {
+        $user = trim((string) ($post->author_username ?? ''));
+        if ($user === '') {
+            return '';
+        }
+        return '/blog/author/' . rawurlencode($user);
     }
 
     public static function allActive(): array
@@ -54,11 +104,11 @@ class Post
 
     public static function findBySlug(string $slug, bool $publishedOnly = false): ?object
     {
-        $sql = self::selectSql() . '
-            WHERE p.slug = ? AND p.deleted_at IS NULL
-        ';
+        $sql = self::selectSql() . ' WHERE p.slug = ?';
         if ($publishedOnly) {
-            $sql .= " AND p.status = 'published'";
+            $sql .= ' AND ' . self::liveSql('p');
+        } else {
+            $sql .= ' AND p.deleted_at IS NULL';
         }
         $stmt = Database::getInstance()->prepare($sql);
         $stmt->execute([$slug]);
@@ -68,18 +118,22 @@ class Post
 
     public static function findPublished(int $id): ?object
     {
-        $stmt = Database::getInstance()->prepare(self::selectSql() . "
-            WHERE p.id = ? AND p.deleted_at IS NULL AND p.status = 'published'
-        ");
+        $stmt = Database::getInstance()->prepare(self::selectSql() . '
+            WHERE p.id = ? AND ' . self::liveSql('p') . '
+        ');
         $stmt->execute([$id]);
         $row = $stmt->fetch(\PDO::FETCH_OBJ);
         return $row ?: null;
     }
 
-    public static function publishedCount(?int $categoryId = null, ?int $tagId = null, ?string $search = null): int
+    /**
+     * @param array{year?:int, month?:int, author_id?:int} $opts
+     */
+    public static function publishedCount(?int $categoryId = null, ?int $tagId = null, ?string $search = null, array $opts = []): int
     {
-        $sql = "SELECT COUNT(*) FROM cms_posts p WHERE p.deleted_at IS NULL AND p.status = 'published'";
+        $sql = 'SELECT COUNT(*) FROM cms_posts p WHERE ' . self::liveSql('p');
         $params = [];
+        $sql .= self::archiveFilterSql($opts, $params);
         if ($categoryId !== null) {
             $sql .= ' AND p.category_id = ?';
             $params[] = $categoryId;
@@ -88,19 +142,23 @@ class Post
             $sql .= ' AND EXISTS (SELECT 1 FROM cms_post_tags pt WHERE pt.post_id = p.id AND pt.tag_id = ?)';
             $params[] = $tagId;
         }
-        $searchSql = self::searchWhereClause($search, $params);
-        $sql .= $searchSql;
+        $sql .= self::searchWhereClause($search, $params);
         $stmt = Database::getInstance()->prepare($sql);
         $stmt->execute($params);
         return (int) $stmt->fetchColumn();
     }
 
-    public static function publishedList(int $limit = 20, int $offset = 0, ?int $categoryId = null, ?int $tagId = null, ?string $search = null): array
+    /**
+     * @param array{year?:int, month?:int, author_id?:int} $opts
+     * @return list<object>
+     */
+    public static function publishedList(int $limit = 20, int $offset = 0, ?int $categoryId = null, ?int $tagId = null, ?string $search = null, array $opts = []): array
     {
         $limit = max(1, min(100, $limit));
         $offset = max(0, $offset);
-        $where = "p.deleted_at IS NULL AND p.status = 'published'";
+        $where = self::liveSql('p');
         $params = [];
+        $where .= self::archiveFilterSql($opts, $params);
         if ($categoryId !== null) {
             $where .= ' AND p.category_id = ?';
             $params[] = $categoryId;
@@ -110,13 +168,190 @@ class Post
             $params[] = $tagId;
         }
         $where .= self::searchWhereClause($search, $params);
+        $order = self::liveOrderSql('p');
         $stmt = Database::getInstance()->prepare(self::selectSql() . "
             WHERE {$where}
-            ORDER BY p.published_at DESC
+            ORDER BY {$order}
             LIMIT {$limit} OFFSET {$offset}
         ");
         $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_OBJ);
+    }
+
+    /**
+     * @param array{year?:int, month?:int, author_id?:int} $opts
+     */
+    private static function archiveFilterSql(array $opts, array &$params): string
+    {
+        $sql = '';
+        $year = (int) ($opts['year'] ?? 0);
+        $month = (int) ($opts['month'] ?? 0);
+        $authorId = (int) ($opts['author_id'] ?? 0);
+        if ($year >= 2000 && $year <= 2100) {
+            $sql .= ' AND YEAR(p.published_at) = ?';
+            $params[] = $year;
+        }
+        if ($month >= 1 && $month <= 12) {
+            $sql .= ' AND MONTH(p.published_at) = ?';
+            $params[] = $month;
+        }
+        if ($authorId > 0) {
+            $sql .= ' AND p.author_id = ?';
+            $params[] = $authorId;
+        }
+        return $sql;
+    }
+
+    /**
+     * Other live posts, preferring the same category.
+     *
+     * @return list<object>
+     */
+    public static function related(object $post, int $limit = 3): array
+    {
+        $id = (int) ($post->id ?? 0);
+        $limit = max(1, min(6, $limit));
+        if ($id <= 0) {
+            return [];
+        }
+        $cat = (int) ($post->category_id ?? 0);
+        $seen = [$id => true];
+        $out = [];
+        $live = self::liveSql('p');
+        if ($cat > 0) {
+            $stmt = Database::getInstance()->prepare(self::selectSql() . '
+                WHERE ' . $live . ' AND p.id != ? AND p.category_id = ?
+                ORDER BY p.published_at DESC
+                LIMIT ' . $limit);
+            $stmt->execute([$id, $cat]);
+            foreach ($stmt->fetchAll(\PDO::FETCH_OBJ) as $row) {
+                $rid = (int) $row->id;
+                $seen[$rid] = true;
+                $out[] = $row;
+            }
+        }
+        if (count($out) >= $limit) {
+            return $out;
+        }
+        $stmt = Database::getInstance()->prepare(self::selectSql() . '
+            WHERE ' . $live . ' AND p.id != ?
+            ORDER BY p.published_at DESC
+            LIMIT ' . max($limit, 12));
+        $stmt->execute([$id]);
+        foreach ($stmt->fetchAll(\PDO::FETCH_OBJ) as $row) {
+            $rid = (int) $row->id;
+            if (isset($seen[$rid])) {
+                continue;
+            }
+            $seen[$rid] = true;
+            $out[] = $row;
+            if (count($out) >= $limit) {
+                break;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * Chronological neighbors (not sticky-ordered).
+     *
+     * @return array{previous:?object, next:?object}
+     */
+    public static function neighbors(object $post): array
+    {
+        $id = (int) ($post->id ?? 0);
+        $at = (string) ($post->published_at ?? '');
+        $live = self::liveSql('p');
+        $prev = null;
+        $next = null;
+        if ($id <= 0 || $at === '') {
+            return ['previous' => null, 'next' => null];
+        }
+        $stmt = Database::getInstance()->prepare(self::selectSql() . '
+            WHERE ' . $live . ' AND (p.published_at < ? OR (p.published_at = ? AND p.id < ?))
+            ORDER BY p.published_at DESC, p.id DESC
+            LIMIT 1');
+        $stmt->execute([$at, $at, $id]);
+        $row = $stmt->fetch(\PDO::FETCH_OBJ);
+        if ($row) {
+            $prev = $row;
+        }
+        $stmt = Database::getInstance()->prepare(self::selectSql() . '
+            WHERE ' . $live . ' AND (p.published_at > ? OR (p.published_at = ? AND p.id > ?))
+            ORDER BY p.published_at ASC, p.id ASC
+            LIMIT 1');
+        $stmt->execute([$at, $at, $id]);
+        $row = $stmt->fetch(\PDO::FETCH_OBJ);
+        if ($row) {
+            $next = $row;
+        }
+        return ['previous' => $prev, 'next' => $next];
+    }
+
+    /** @return list<object> year, month, label, count, url */
+    public static function archiveMonths(int $limit = 24): array
+    {
+        $limit = max(1, min(60, $limit));
+        $stmt = Database::getInstance()->query('
+            SELECT YEAR(p.published_at) AS yr, MONTH(p.published_at) AS mo, COUNT(*) AS cnt
+            FROM cms_posts p
+            WHERE ' . self::liveSql('p') . ' AND p.published_at IS NOT NULL
+            GROUP BY YEAR(p.published_at), MONTH(p.published_at)
+            ORDER BY yr DESC, mo DESC
+            LIMIT ' . $limit . '
+        ');
+        $out = [];
+        foreach ($stmt->fetchAll(\PDO::FETCH_OBJ) as $row) {
+            $year = (int) $row->yr;
+            $month = (int) $row->mo;
+            if ($year < 2000 || $month < 1 || $month > 12) {
+                continue;
+            }
+            $stamp = sprintf('%04d-%02d-01', $year, $month);
+            $out[] = (object) [
+                'year' => $year,
+                'month' => $month,
+                'label' => date('F Y', strtotime($stamp) ?: time()),
+                'count' => (int) $row->cnt,
+                'url' => sprintf('/blog/archive/%04d/%02d', $year, $month),
+            ];
+        }
+        return $out;
+    }
+
+    public static function findAuthorByUsername(string $username): ?object
+    {
+        $username = trim($username);
+        if ($username === '' || !preg_match('/^[A-Za-z0-9._-]{1,100}$/', $username)) {
+            return null;
+        }
+        $stmt = Database::getInstance()->prepare('
+            SELECT id, username, display_name FROM users WHERE username = ? LIMIT 1
+        ');
+        $stmt->execute([$username]);
+        $row = $stmt->fetch(\PDO::FETCH_OBJ);
+        return $row ?: null;
+    }
+
+    public static function readingMinutes(object $post): int
+    {
+        $text = ContentBlocks::plainTextFromEntity($post);
+        $excerpt = trim((string) ($post->excerpt ?? ''));
+        if ($excerpt !== '' && !str_contains($text, $excerpt)) {
+            $text = $excerpt . ' ' . $text;
+        }
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+        if ($text === '') {
+            return 0;
+        }
+        $words = preg_match_all('/[\p{L}\p{N}\']+/u', $text);
+        if (!is_int($words) || $words < 1) {
+            $words = str_word_count($text);
+        }
+        if ($words < 1) {
+            return 0;
+        }
+        return max(1, (int) ceil($words / 220));
     }
 
     /** @param array<int, mixed> $params */
@@ -129,7 +364,27 @@ class Post
         $params[] = '%' . $search . '%';
         $params[] = '%' . $search . '%';
         $params[] = '%' . $search . '%';
-        return ' AND (p.title LIKE ? OR p.excerpt LIKE ? OR p.body LIKE ?)';
+        return ' AND ' . ContentPassword::openSql('p')
+            . ' AND (p.title LIKE ? OR p.excerpt LIKE ? OR p.body LIKE ?)';
+    }
+
+    private static function normalizePublishedAt(array $data, string $status, ?string $existing): ?string
+    {
+        if ($status !== 'published') {
+            return null;
+        }
+        $raw = trim((string) ($data['published_at'] ?? ''));
+        $raw = str_replace('T', ' ', $raw);
+        if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/', $raw)) {
+            $raw .= ':00';
+        }
+        if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $raw)) {
+            return $raw;
+        }
+        if ($existing !== null && $existing !== '') {
+            return $existing;
+        }
+        return UserTime::nowSql();
     }
 
     public static function create(array $data): int
@@ -140,13 +395,14 @@ class Post
             return 0;
         }
         $status = in_array($data['status'] ?? '', ['published', 'draft'], true) ? $data['status'] : 'draft';
-        $publishedAt = ($status === 'published') ? UserTime::nowSql() : null;
+        $publishedAt = self::normalizePublishedAt($data, $status, null);
         $featuredId = \App\Models\Media::resolveImageId(
             !empty($data['featured_image_id']) ? (int) $data['featured_image_id'] : null
         );
+        $sticky = !empty($data['is_sticky']) ? 1 : 0;
         $stmt = $db->prepare('
-            INSERT INTO cms_posts (title, slug, excerpt, body, blocks_json, category_id, featured_image_id, meta_title, meta_description, llm_summary, citation_snippet, faq_json, robots_noindex, content_layout, status, published_at, author_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO cms_posts (title, slug, excerpt, body, blocks_json, category_id, featured_image_id, meta_title, meta_description, llm_summary, citation_snippet, faq_json, robots_noindex, content_layout, status, is_sticky, password_hash, published_at, author_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ');
         $catId = !empty($data['category_id']) ? (int) $data['category_id'] : null;
         $stmt->execute([
@@ -165,6 +421,8 @@ class Post
             !empty($data['robots_noindex']) ? 1 : 0,
             PublicTheme::normalizeContentLayout($data['content_layout'] ?? null),
             $status,
+            $sticky,
+            ContentPassword::hashFromWrite($data, null),
             $publishedAt,
             Auth::id(),
         ]);
@@ -172,6 +430,44 @@ class Post
         Tag::syncPostTags($id, $data['tags'] ?? '');
         AuditLog::record('post', $id, 'created');
         return $id;
+    }
+
+    public static function duplicate(int $id): int
+    {
+        $src = self::find($id);
+        if (!$src) {
+            return 0;
+        }
+        $newId = self::create([
+            'title' => 'Copy of ' . (string) $src->title,
+            'excerpt' => (string) ($src->excerpt ?? ''),
+            'body' => (string) ($src->body ?? ''),
+            'blocks_json' => $src->blocks_json ?? null,
+            'category_id' => $src->category_id ?? null,
+            'featured_image_id' => $src->featured_image_id ?? null,
+            'meta_title' => (string) ($src->meta_title ?? ''),
+            'meta_description' => (string) ($src->meta_description ?? ''),
+            'llm_summary' => (string) ($src->llm_summary ?? ''),
+            'citation_snippet' => (string) ($src->citation_snippet ?? ''),
+            'faq_json' => $src->faq_json ?? null,
+            'robots_noindex' => !empty($src->robots_noindex),
+            'content_layout' => $src->content_layout ?? '',
+            'status' => 'draft',
+            'is_sticky' => false,
+            'tags' => Tag::namesForPost($id),
+        ]);
+        if ($newId <= 0) {
+            return 0;
+        }
+        if (!empty($src->layout_json)) {
+            $stmt = Database::getInstance()->prepare('UPDATE cms_posts SET layout_json = ? WHERE id = ? AND deleted_at IS NULL');
+            $stmt->execute([(string) $src->layout_json, $newId]);
+        }
+        if (ContentPassword::has($src)) {
+            ContentPassword::persistHash('cms_posts', $newId, ContentPassword::storedHash($src));
+        }
+        AuditLog::record('post', $newId, 'duplicated', ['source_id' => $id]);
+        return $newId;
     }
 
     public static function update(int $id, array $data): bool
@@ -191,19 +487,14 @@ class Post
         }
         ContentRevision::recordPost($existing, 'Before update');
         $status = in_array($data['status'] ?? '', ['published', 'draft'], true) ? $data['status'] : 'draft';
-        $publishedAt = $existing->published_at;
-        if ($status === 'published' && !$publishedAt) {
-            $publishedAt = UserTime::nowSql();
-        }
-        if ($status === 'draft') {
-            $publishedAt = null;
-        }
+        $publishedAt = self::normalizePublishedAt($data, $status, (string) ($existing->published_at ?? ''));
         $featuredId = \App\Models\Media::resolveImageId(
             !empty($data['featured_image_id']) ? (int) $data['featured_image_id'] : null
         );
+        $sticky = !empty($data['is_sticky']) ? 1 : 0;
         $stmt = $db->prepare('
             UPDATE cms_posts SET title = ?, slug = ?, excerpt = ?, body = ?, blocks_json = ?, category_id = ?, featured_image_id = ?,
-                meta_title = ?, meta_description = ?, llm_summary = ?, citation_snippet = ?, faq_json = ?, robots_noindex = ?, content_layout = ?, status = ?, published_at = ?
+                meta_title = ?, meta_description = ?, llm_summary = ?, citation_snippet = ?, faq_json = ?, robots_noindex = ?, content_layout = ?, status = ?, is_sticky = ?, password_hash = ?, published_at = ?
             WHERE id = ? AND deleted_at IS NULL
         ');
         $catId = !empty($data['category_id']) ? (int) $data['category_id'] : null;
@@ -223,6 +514,8 @@ class Post
             !empty($data['robots_noindex']) ? 1 : 0,
             PublicTheme::normalizeContentLayout($data['content_layout'] ?? null),
             $status,
+            $sticky,
+            ContentPassword::hashFromWrite($data, (string) ($existing->password_hash ?? '')),
             $publishedAt,
             $id,
         ]);
@@ -270,13 +563,12 @@ class Post
             return false;
         }
         $status = in_array((string) ($snap['status'] ?? ''), ['published', 'draft'], true) ? (string) $snap['status'] : 'draft';
-        $publishedAt = $snap['published_at'] ?? null;
-        if ($status === 'published' && !$publishedAt) {
-            $publishedAt = UserTime::nowSql();
-        }
-        if ($status === 'draft') {
-            $publishedAt = null;
-        }
+        $publishedAt = self::normalizePublishedAt(
+            ['published_at' => $snap['published_at'] ?? ''],
+            $status,
+            null
+        );
+        $sticky = !empty($snap['is_sticky']) ? 1 : 0;
         $layout = $snap['layout_json'] ?? null;
         if (is_array($layout)) {
             $layout = json_encode($layout, JSON_UNESCAPED_UNICODE);
@@ -293,7 +585,7 @@ class Post
         $stmt = $db->prepare('
             UPDATE cms_posts SET title = ?, slug = ?, excerpt = ?, body = ?, blocks_json = ?, layout_json = ?,
                 category_id = ?, featured_image_id = ?, meta_title = ?, meta_description = ?, llm_summary = ?,
-                citation_snippet = ?, faq_json = ?, robots_noindex = ?, content_layout = ?, status = ?, published_at = ?
+                citation_snippet = ?, faq_json = ?, robots_noindex = ?, content_layout = ?, status = ?, is_sticky = ?, password_hash = ?, published_at = ?
             WHERE id = ? AND deleted_at IS NULL
         ');
         $stmt->execute([
@@ -313,12 +605,76 @@ class Post
             !empty($snap['robots_noindex']) ? 1 : 0,
             PublicTheme::normalizeContentLayout($snap['content_layout'] ?? null),
             $status,
+            $sticky,
+            ContentPassword::storedHash((object) ['password_hash' => $snap['password_hash'] ?? null]),
             $publishedAt,
             $id,
         ]);
         Tag::syncPostTags($id, (string) ($snap['tags'] ?? ''));
         AuditLog::record('post', $id, 'restored', ['revision_id' => $revisionId, 'revision_no' => (int) $rev->revision_no]);
         return true;
+    }
+
+    public static function bulkSetStatus(array $ids, string $status): int
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn ($id) => $id > 0));
+        if ($ids === [] || !in_array($status, ['published', 'draft'], true)) {
+            return 0;
+        }
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        if ($status === 'published') {
+            $params = array_merge([UserTime::nowSql()], $ids);
+            $sql = 'UPDATE cms_posts SET status = \'published\', published_at = COALESCE(published_at, ?)
+                WHERE id IN (' . $in . ') AND deleted_at IS NULL';
+        } else {
+            $params = $ids;
+            $sql = 'UPDATE cms_posts SET status = \'draft\', published_at = NULL
+                WHERE id IN (' . $in . ') AND deleted_at IS NULL';
+        }
+        $stmt = Database::getInstance()->prepare($sql);
+        $stmt->execute($params);
+        $n = $stmt->rowCount();
+        if ($n > 0) {
+            AuditLog::record('post', $ids[0], 'bulk_status', ['status' => $status, 'ids' => $ids, 'count' => $n]);
+        }
+        return $n;
+    }
+
+    /** @param list<int> $ids */
+    public static function bulkSetSticky(array $ids, bool $sticky): int
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn ($id) => $id > 0));
+        if ($ids === []) {
+            return 0;
+        }
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $params = array_merge([$sticky ? 1 : 0], $ids);
+        $stmt = Database::getInstance()->prepare(
+            'UPDATE cms_posts SET is_sticky = ? WHERE id IN (' . $in . ') AND deleted_at IS NULL'
+        );
+        $stmt->execute($params);
+        $n = $stmt->rowCount();
+        if ($n > 0) {
+            AuditLog::record('post', $ids[0], 'bulk_sticky', ['sticky' => $sticky ? 1 : 0, 'ids' => $ids, 'count' => $n]);
+        }
+        return $n;
+    }
+
+    /** @param list<int> $ids */
+    public static function bulkSoftDelete(array $ids): int
+    {
+        $ids = array_values(array_filter(array_map('intval', $ids), static fn ($id) => $id > 0));
+        if ($ids === []) {
+            return 0;
+        }
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = Database::getInstance()->prepare('UPDATE cms_posts SET deleted_at = NOW() WHERE id IN (' . $in . ') AND deleted_at IS NULL');
+        $stmt->execute($ids);
+        $n = $stmt->rowCount();
+        if ($n > 0) {
+            AuditLog::record('post', $ids[0], 'bulk_deleted', ['ids' => $ids, 'count' => $n]);
+        }
+        return $n;
     }
 
     public static function softDelete(int $id): bool
@@ -352,24 +708,25 @@ class Post
 
     public static function publishedForSitemap(): array
     {
-        return Database::getInstance()->query("
+        return Database::getInstance()->query('
             SELECT p.slug, p.updated_at, p.published_at, p.category_id, c.slug AS category_slug
             FROM cms_posts p
             LEFT JOIN cms_categories c ON c.id = p.category_id
-            WHERE p.deleted_at IS NULL AND p.status = 'published' AND p.robots_noindex = 0
+            WHERE ' . self::liveSql('p') . ' AND p.robots_noindex = 0
             ORDER BY p.published_at DESC
-        ")->fetchAll(\PDO::FETCH_OBJ);
+        ')->fetchAll(\PDO::FETCH_OBJ);
     }
 
     /** @return array<int, object> */
     public static function publishedForLlms(int $limit = 30): array
     {
         $limit = max(1, min(100, $limit));
-        $stmt = Database::getInstance()->query(self::selectSql() . "
-            WHERE p.deleted_at IS NULL AND p.status = 'published' AND p.robots_noindex = 0
+        $stmt = Database::getInstance()->query(self::selectSql() . '
+            WHERE ' . self::liveSql('p') . ' AND p.robots_noindex = 0
+              AND ' . ContentPassword::openSql('p') . '
             ORDER BY p.published_at DESC
-            LIMIT {$limit}
-        ");
+            LIMIT ' . $limit . '
+        ');
         return $stmt->fetchAll(\PDO::FETCH_OBJ);
     }
 
@@ -377,11 +734,11 @@ class Post
     public static function publishedForFeed(int $limit = 20): array
     {
         $limit = max(1, min(50, $limit));
-        $stmt = Database::getInstance()->query(self::selectSql() . "
-            WHERE p.deleted_at IS NULL AND p.status = 'published' AND p.robots_noindex = 0
+        $stmt = Database::getInstance()->query(self::selectSql() . '
+            WHERE ' . self::liveSql('p') . ' AND p.robots_noindex = 0
             ORDER BY p.published_at DESC
-            LIMIT {$limit}
-        ");
+            LIMIT ' . $limit . '
+        ');
         return $stmt->fetchAll(\PDO::FETCH_OBJ);
     }
 

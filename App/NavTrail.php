@@ -28,6 +28,7 @@ class NavTrail
             'tags' => [$home, ['label' => 'Content', 'url' => null], ['label' => 'Tags', 'url' => AdminPath::url('tags')]],
             'menus' => [$home, ['label' => 'Content', 'url' => null], ['label' => 'Menus', 'url' => AdminPath::url('menus')]],
             'comments' => [$home, ['label' => 'Content', 'url' => null], ['label' => 'Comments', 'url' => AdminPath::url('comments')]],
+            'subscribers' => [$home, ['label' => 'Content', 'url' => null], ['label' => 'Subscribers', 'url' => AdminPath::url('subscribers')]],
             'widgets' => [$home, ['label' => 'Appearance', 'url' => null], ['label' => 'Widgets', 'url' => AdminPath::url('widgets')]],
             'customize' => [$home, ['label' => 'Appearance', 'url' => null], ['label' => 'Customize', 'url' => AdminPath::url('customize')]],
             'media' => [$home, ['label' => 'Content', 'url' => null], ['label' => 'Media', 'url' => AdminPath::url('media')]],

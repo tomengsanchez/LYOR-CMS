@@ -1,0 +1,62 @@
+/**
+ * Pulse — teal civic / community
+ * Additive styles only. Loaded after site.css when this pack is imported.
+ * Designed for Header / After header / Homepage / After content widgets.
+ */
+
+.public-site {
+  --pulse-ink: #134e4a;
+  --pulse-mist: #f4f7f8;
+  --pulse-teal: var(--pub-accent, #0d9488);
+  background-image:
+    radial-gradient(1200px 420px at 8% -10%, color-mix(in srgb, var(--pulse-teal) 16%, transparent), transparent 70%),
+    radial-gradient(900px 360px at 100% 0%, color-mix(in srgb, #0f766e 10%, transparent), transparent 65%);
+}
+
+.public-header {
+  border-bottom: 0 !important;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--pulse-teal) 28%, transparent);
+}
+
+.public-widget-area--header {
+  background: color-mix(in srgb, var(--pulse-teal) 8%, var(--pub-surface, #fff));
+  border-bottom-color: color-mix(in srgb, var(--pulse-teal) 22%, var(--pub-border, #ddd));
+}
+
+.public-widget-area--after-header .public-widget--cta {
+  background: color-mix(in srgb, var(--pulse-teal) 10%, var(--pub-surface, #fff));
+  border-color: color-mix(in srgb, var(--pulse-teal) 28%, var(--pub-border, #ddd));
+}
+
+.public-widget--cta .btn {
+  border-radius: 999px;
+  padding-left: 1.1rem;
+  padding-right: 1.1rem;
+}
+
+.widget-featured-card {
+  background: var(--pub-surface, #fff);
+  border: 1px solid var(--pub-border);
+  border-radius: var(--pub-radius, 8px);
+  padding: 0.75rem;
+  height: 100%;
+}
+
+.widget-featured-title {
+  letter-spacing: -0.02em;
+}
+
+.public-widget-area--after-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.public-nav a:hover,
+.public-nav a.active {
+  color: var(--pulse-teal);
+}
+
+.public-footer {
+  border-top: 1px solid color-mix(in srgb, var(--pulse-teal) 20%, var(--pub-border, #ddd));
+}

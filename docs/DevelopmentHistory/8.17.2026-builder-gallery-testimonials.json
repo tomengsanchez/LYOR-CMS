@@ -1,0 +1,18 @@
+{
+  "date": "2026-08-17",
+  "title": "Visual builder Gallery and Testimonials modules",
+  "entries": [
+    {
+      "area": "Layout builder",
+      "summary": "Catalog/normalize/render Gallery (2–4 col image grid, max 12) and Testimonials (quote/name/role/photo). URLs use safeUrl; captions and quotes are escaped. No lightbox JS."
+    },
+    {
+      "area": "Frontend editor",
+      "summary": "Custom inspectors use data-gal-* and data-tml-* (not carousel slide attrs). Uploads can target a gallery/testimonial item. Canvas shows thumbs or quote names."
+    },
+    {
+      "area": "Backup/restore",
+      "summary": "No schema change. Items live in layout_json; photos that are Media library files restore with uploads."
+    }
+  ]
+}

@@ -18,9 +18,10 @@ $app = [
         'enabled' => true,
         'hsts' => true,
         'hsts_max_age' => 31536000,
-        // Optional custom CSP string; omit to use the built-in default (self + jsDelivr/jQuery CDN + Google Maps frame-src).
+        // Optional custom CSP string; omit to use the built-in default (self + jsDelivr/jQuery CDN + Maps + Video embeds).
         // Default img-src includes https: so Media “Register URL” / layout hotlinks work. If you override csp, keep that
-        // (or list allowed image hosts) and include frame-src for https://maps.google.com and https://www.google.com.
+        // (or list allowed image hosts), media-src for HTTPS video files, and frame-src for maps.google.com,
+        // www.google.com, www.youtube-nocookie.com, and player.vimeo.com.
         // 'csp' => "...",
     ],
 

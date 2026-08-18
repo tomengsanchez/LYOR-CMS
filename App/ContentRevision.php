@@ -30,6 +30,7 @@ class ContentRevision
             'robots_noindex' => !empty($page->robots_noindex) ? 1 : 0,
             'content_layout' => (string) ($page->content_layout ?? ''),
             'parent_id' => !empty($page->parent_id) ? (int) $page->parent_id : null,
+            'password_hash' => ContentPassword::storedHash($page),
         ];
     }
 
@@ -54,6 +55,8 @@ class ContentRevision
             'robots_noindex' => !empty($post->robots_noindex) ? 1 : 0,
             'content_layout' => (string) ($post->content_layout ?? ''),
             'published_at' => $post->published_at ?? null,
+            'is_sticky' => !empty($post->is_sticky) ? 1 : 0,
+            'password_hash' => ContentPassword::storedHash($post),
             'tags' => \App\Models\Tag::namesForPost((int) ($post->id ?? 0)),
         ];
     }

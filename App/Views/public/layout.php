@@ -25,6 +25,12 @@ $logoUrl = $logoPath !== '' ? $baseUrl . '/serve/app-logo' : '';
 $showSidebar = \App\DiscussionSettings::get()->show_sidebar && \App\Models\Widget::areaHasWidgets(\App\Models\Widget::AREA_SIDEBAR);
 $sidebarHtml = $showSidebar ? \App\Models\Widget::renderArea(\App\Models\Widget::AREA_SIDEBAR) : '';
 $footerWidgetsHtml = \App\Models\Widget::renderArea(\App\Models\Widget::AREA_FOOTER);
+$headerWidgetsHtml = \App\Models\Widget::renderArea(\App\Models\Widget::AREA_HEADER);
+$afterHeaderWidgetsHtml = \App\Models\Widget::renderArea(\App\Models\Widget::AREA_AFTER_HEADER);
+$homeWidgetsHtml = ($publicNavActive ?? '') === 'home'
+    ? \App\Models\Widget::renderArea(\App\Models\Widget::AREA_HOME)
+    : '';
+$afterContentWidgetsHtml = \App\Models\Widget::renderArea(\App\Models\Widget::AREA_AFTER_CONTENT);
 $siteSeo = \App\Models\AppSettings::getSiteSeoConfig();
 $rssFeedUrl = !empty($siteSeo->enable_rss_feed) ? $baseUrl . '/feed.xml' : '';
 $htmlLang = \App\PublicSeo::localeLanguage($siteSeo->locale ?? 'en_US');
@@ -47,6 +53,9 @@ $isEditorial = \App\PublicTheme::isEditorialChrome($pubTheme);
     <?php require __DIR__ . '/partials/social_meta.php'; ?>
     <?php elseif (!empty($publicMetaDescription)): ?>
     <meta name="description" content="<?= htmlspecialchars($publicMetaDescription) ?>">
+    <?php endif; ?>
+    <?php if (!empty($publicRobotsNoindex) && empty($publicShare)): ?>
+    <meta name="robots" content="noindex, nofollow">
     <?php endif; ?>
     <?php if (!empty($publicJsonLd) && is_array($publicJsonLd)): ?>
     <?php require __DIR__ . '/partials/json_ld.php'; ?>
@@ -75,8 +84,30 @@ $isEditorial = \App\PublicTheme::isEditorialChrome($pubTheme);
     <?php endif; ?>
 </head>
 <body class="public-site<?= $themePreviewActive ? ' public-site--theme-preview' : '' ?><?= $customizerFrame ? ' public-site--customizer-frame' : '' ?>">
+    <a class="skip-to-content" href="#public-content">Skip to content</a>
+    <?php
+    $newsletterFlashOk = (string) ($_SESSION['newsletter_message'] ?? '');
+    $newsletterFlashErr = (string) ($_SESSION['newsletter_error'] ?? '');
+    unset($_SESSION['newsletter_message'], $_SESSION['newsletter_error']);
+    ?>
+    <?php if ($newsletterFlashOk !== ''): ?>
+    <div class="newsletter-site-flash newsletter-flash-ok" role="status"><?= htmlspecialchars($newsletterFlashOk) ?></div>
+    <?php endif; ?>
+    <?php if ($newsletterFlashErr !== ''): ?>
+    <div class="newsletter-site-flash newsletter-flash-err" role="alert"><?= htmlspecialchars($newsletterFlashErr) ?></div>
+    <?php endif; ?>
+    <?php if (!empty($publicPreviewNotice)): ?>
+    <div class="public-preview-banner" role="status"><?= htmlspecialchars((string) $publicPreviewNotice) ?></div>
+    <?php endif; ?>
     <?php if ($themePreviewActive && !$customizerFrame): ?>
     <?php require __DIR__ . '/partials/theme_preview_banner.php'; ?>
+    <?php endif; ?>
+    <?php if ($headerWidgetsHtml !== ''): ?>
+    <div class="public-widget-area public-widget-area--header" aria-label="Header">
+        <div class="container">
+            <div class="public-widget-area-inner"><?= $headerWidgetsHtml ?></div>
+        </div>
+    </div>
     <?php endif; ?>
     <header class="public-header<?= $isEditorial ? ' public-header--editorial' : '' ?>">
         <div class="container">
@@ -109,12 +140,25 @@ $isEditorial = \App\PublicTheme::isEditorialChrome($pubTheme);
             </nav>
         </div>
     </header>
-    <main class="public-main <?= htmlspecialchars($layoutClass) ?><?= $showSidebar ? ' public-main--with-sidebar' : '' ?>">
+    <?php if ($afterHeaderWidgetsHtml !== ''): ?>
+    <div class="public-widget-area public-widget-area--after-header" aria-label="After header">
+        <div class="container">
+            <div class="public-widget-area-inner"><?= $afterHeaderWidgetsHtml ?></div>
+        </div>
+    </div>
+    <?php endif; ?>
+    <main id="public-content" class="public-main <?= htmlspecialchars($layoutClass) ?><?= $showSidebar ? ' public-main--with-sidebar' : '' ?>" tabindex="-1">
         <div class="container">
             <?php if ($showSidebar): ?>
             <div class="row g-4 public-layout-row">
                 <div class="col-lg-8 public-layout-main">
                     <?= $content ?? '' ?>
+                    <?php if ($homeWidgetsHtml !== ''): ?>
+                    <div class="public-widget-area public-widget-area--home" aria-label="Homepage"><?= $homeWidgetsHtml ?></div>
+                    <?php endif; ?>
+                    <?php if ($afterContentWidgetsHtml !== ''): ?>
+                    <div class="public-widget-area public-widget-area--after-content" aria-label="After content"><?= $afterContentWidgetsHtml ?></div>
+                    <?php endif; ?>
                 </div>
                 <aside class="col-lg-4 public-sidebar" aria-label="Sidebar">
                     <?= $sidebarHtml ?>
@@ -122,6 +166,12 @@ $isEditorial = \App\PublicTheme::isEditorialChrome($pubTheme);
             </div>
             <?php else: ?>
             <?= $content ?? '' ?>
+            <?php if ($homeWidgetsHtml !== ''): ?>
+            <div class="public-widget-area public-widget-area--home" aria-label="Homepage"><?= $homeWidgetsHtml ?></div>
+            <?php endif; ?>
+            <?php if ($afterContentWidgetsHtml !== ''): ?>
+            <div class="public-widget-area public-widget-area--after-content" aria-label="After content"><?= $afterContentWidgetsHtml ?></div>
+            <?php endif; ?>
             <?php endif; ?>
         </div>
     </main>
@@ -144,5 +194,7 @@ $isEditorial = \App\PublicTheme::isEditorialChrome($pubTheme);
     </footer>
     <script src="/public/assets/js/public/carousel.js"></script>
     <script src="/public/assets/js/public/blog-view.js"></script>
+    <script src="/public/assets/js/public/enhance.js"></script>
+    <a href="#public-content" class="public-back-to-top" data-back-to-top hidden>Back to top</a>
 </body>
 </html>
