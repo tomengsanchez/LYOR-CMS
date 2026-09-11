@@ -13,7 +13,7 @@ What to configure for local, staging, and production. **Never commit secrets** (
 | `config/database-sample.php` | Template DB credentials | Yes |
 | `config/database.php` | Live PDO DSN credentials | **No** (local/deploy) |
 | `config/app-sample.php` | Optional `base_url` template | Yes |
-| `config/app.php` | Optional `base_url` for subfolder installs; optional `security_headers.csp` override (default already allows Maps + Video embeds) | Usually no |
+| `config/app.php` | Optional `base_url` for subfolder installs; CORS `allowed_origins` (include `http://cms.local` for local API clients); optional `security_headers.csp` override (default already allows Maps + Video embeds) | Usually no |
 | `.env.playwright.example` | Playwright `BASE_URL`, admin creds template | Yes |
 | `.env.playwright` | Local E2E secrets | **No** (gitignored) |
 | `composer.json` / `vendor/` | PHP deps (mPDF) | lock yes; vendor via `composer install` |
@@ -81,6 +81,7 @@ When adding a setting: document it here, prefer UI over raw SQL, and note backup
 | `upload_max_filesize` / `post_max_size` | Large enough for media library uploads |
 | `max_execution_time` | Raise for large CLI restore/backup |
 | Document root | Point to `public/` when possible; root `.htaccess` can forward |
+| Local hostname | XAMPP: `cms.local` → `C:/xampp/htdocs/cms/public` in **Apache** `httpd-vhosts.conf` + Windows hosts. Not a file in this repo. |
 
 ---
 
@@ -100,6 +101,7 @@ Working directory must be **project root**.
 
 | Item | Local | Staging | Production |
 |------|-------|---------|------------|
+| Hostname / docroot | `http://cms.local` → `public/` (machine Apache vhost; not in repo) | Staging host | Production host |
 | `config/database.php` | Dev DB | Staging DB | Prod DB |
 | Default `admin` / `admin123` | OK | Change | **Must change** (deploy checks) |
 | Email provider | `log` or test SMTP | Real test inbox | Production provider |

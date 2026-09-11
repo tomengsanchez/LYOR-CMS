@@ -13,6 +13,8 @@ Single app server + one MySQL/MariaDB primary is the supported default. Multiple
 5. Default login after fresh migrate: see README (change immediately)
 6. HTTPS, file permissions on `public/uploads`, `storage/`, `logs/`
 
+Virtual host / hostname mapping lives on the **web server** (XAMPP: `apache/conf/extra/httpd-vhosts.conf` + OS hosts file). Do **not** commit a project-local vhost file for deploy — operators configure Apache/nginx on each host. Local default hostname is `http://cms.local` with document root `public/`.
+
 ## PHP
 
 `upload_max_filesize` / `post_max_size` large enough for media. Raise `max_execution_time` for CLI restore.

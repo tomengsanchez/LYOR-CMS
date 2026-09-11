@@ -30,6 +30,7 @@ $app = [
         'allow_all_origins' => false,  // true = any Origin (local dev only)
         'allowed_origins' => [
             'http://localhost:4200',
+            'http://cms.local',
             'http://eco.local',
             'http://eco.local:4200',
         ],

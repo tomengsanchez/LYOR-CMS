@@ -348,8 +348,10 @@ npm run test:e2e:cms-manhood-exclusive-rooms  # sample post with external image 
 ## 11. Configuration
 
 - **Database:** `config/database.php` from `config/database-sample.php`
-- **Base URL:** `config/app.php` → `base_url` for subfolder installs
-- **Document root:** Point vhost at `public/` (recommended)
+- **Base URL:** `config/app.php` → `base_url` for subfolder installs (leave empty when the host is the site root, e.g. `http://cms.local`)
+- **Document root:** Point the web server at `public/` (recommended)
+- **Local XAMPP (`cms.local`):** Edit the **machine** Apache vhost (`C:/xampp/apache/conf/extra/httpd-vhosts.conf`) and Windows `hosts` (`127.0.0.1 cms.local`). Do **not** add a vhost file inside this repo — that is a deploy-server concern, not something we ship with the app. Restart Apache after changing the vhost. Playwright `BASE_URL` defaults to `http://cms.local`.
+- **CORS:** `config/app.php` `cors.allowed_origins` includes `http://cms.local` for local API clients
 
 ---
 

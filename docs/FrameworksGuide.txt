@@ -8,6 +8,7 @@ UML: docs/UML.md
 Backend stack
 Custom PHP MVC (not Laravel). Core/ is the framework. Front controller: public/index.php.
 Config: copy config/database-sample.php and optional config/app-sample.php.
+Local host: http://cms.local (Apache vhost on the machine → public/; do not add a vhost file to this repo).
 
 API
 REST under /api/: auth, pages, posts, media, notifications, settings, meta error codes.
