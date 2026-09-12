@@ -27,7 +27,7 @@ Failure: `{ "success": false, "data": null, "error": { "code": "...", "message":
 | GET | `/api/system/general` | admin / `view_settings` | General settings (subset; includes newsletter flags and `google` IDs) |
 | GET | `/api/meta/error-codes` | public | Error code registry |
 
-Exact verbs and paths: see Postman **CMS (authenticated)** and `public/index.php`. Visual layout save from the **frontend editor** is session + CSRF (`POST /admin/builder/.../save`), not Bearer. Atom / Blogger feed import is **admin + CLI only** (`POST /admin/posts/import`, `php cli/import_atom_feed.php`) — not a REST endpoint. Template: `docs/samples/cms-atom-import/sample.atom`. Optional `spread_year` / `--spread-year` spaces LIVE dates across that calendar year. Imported `published_at` values in the future stay off the public site until due (same as post write).
+Exact verbs and paths: see Postman **CMS (authenticated)** and `public/index.php`. Visual layout save from the **frontend editor** is session + CSRF (`POST /admin/builder/.../save`), not Bearer. Atom / Blogger feed import is **admin + CLI only** (`POST /admin/posts/import`, `php cli/import_atom_feed.php`) — not a REST endpoint. Template: `docs/samples/cms-atom-import/sample.atom`. The optional `cms` namespace (`https://simplecms.local/ns/atom-import/1`) maps `meta_title`, `llm_summary`, `citation_snippet`, `faq_json`, and `robots_noindex` into the same post fields exposed by the write API. During update, supplied fields overwrite and omitted fields preserve stored metadata. Optional `spread_year` / `--spread-year` spaces LIVE dates across that calendar year. Imported `published_at` values in the future stay off the public site until due (same as post write).
 
 ## Public (no auth)
 

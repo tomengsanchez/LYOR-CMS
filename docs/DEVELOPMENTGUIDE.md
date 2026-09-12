@@ -339,7 +339,8 @@ npm run test:e2e:cms          # headless (smoke + wp-extended + pulse UX + newsl
 npm run test:e2e:cms:headed # watch mode
 php cli/seed_filipino_men_site.php        # The Filipino Men chrome (pages/menu/theme; no essay import)
 php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom   # Atom template (backdate + schedule; links use base_url)
-php cli/import_atom_feed.php xyz/feed.atom --spread-year=2026          # LalakiPH essays, dates spaced across 2026
+php cli/import_atom_feed.php docs/atoms-collections/feed.atom --spread-year=2026  # Original LalakiPH essays
+php cli/import_atom_feed.php docs/atoms-collections/the-filipino-men-sept-21-30-2026.atom --dry-run --verbose  # 50 hand-scheduled SEO/AEO posts
 npm run test:e2e:cms-pulse-ux             # Pulse widgets through password-protect (BASE_URL)
 npm run test:e2e:cms-newsletter           # Subscribe form + admin list/confirm/delete (BASE_URL)
 npm run test:e2e:cms-builder-tomeng       # sample post with all column layouts
@@ -359,7 +360,7 @@ npm run test:e2e:cms-manhood-exclusive-rooms  # sample post with external image 
 - **Document root:** The **project root** (this repo), not `public/`. Root `index.php` + `.htaccess` forward into `public/index.php` and block `config/`, `App/`, `Core/`, `storage/`, `logs/`, `cli/`, `database/`, `tests/`, `vendor/`. Static files stay at `/public/assets/…`.
 - **Local XAMPP (`cms.local`):** Edit the **machine** Apache vhost (`C:/xampp/apache/conf/extra/httpd-vhosts.conf`) — `DocumentRoot` and `<Directory>` must be `C:/xampp/htdocs/cms` — plus Windows `hosts` (`127.0.0.1 cms.local`). Do **not** add a vhost file inside this repo. Restart Apache after changing the vhost. Playwright `BASE_URL` defaults to `http://cms.local`.
 - **CORS:** `config/app.php` `cors.allowed_origins` includes `http://cms.local` for local API clients
-- **The Filipino Men (local journal chrome):** `php cli/seed_filipino_men_site.php` or `npm run seed:filipino-men`. Applies the paper-journal pack, empty desks, and pages. Does **not** import `xyz/feed.atom` essays. Import from the template `docs/samples/cms-atom-import/sample.atom`, or a Blogger dump such as `xyz/feed.atom`, via `php cli/import_atom_feed.php` (or Posts → Import).
+- **The Filipino Men (local journal chrome):** `php cli/seed_filipino_men_site.php` or `npm run seed:filipino-men`. Applies the paper-journal pack, empty desks, and pages. Does **not** import essays. Import from `docs/samples/cms-atom-import/sample.atom`, a Blogger dump such as `docs/atoms-collections/feed.atom`, or the hand-scheduled 50-post collection `docs/atoms-collections/the-filipino-men-sept-21-30-2026.atom`. Enriched feeds declare `xmlns:cms="https://simplecms.local/ns/atom-import/1"` and may supply `meta_title`, `llm_summary`, `citation_snippet`, `faq_json`, and `robots_noindex`; omitted fields preserve existing metadata during `--update`.
 
 ---
 

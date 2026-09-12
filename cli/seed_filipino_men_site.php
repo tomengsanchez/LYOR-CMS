@@ -2,7 +2,7 @@
 /**
  * Design-only seed for "The Filipino Men" journal.
  * Applies branding, style pack, empty desks (categories), pages, menu, widgets.
- * Does NOT import essays from xyz/feed.atom (use php cli/import_atom_feed.php).
+ * Does NOT import essays from docs/atoms-collections/feed.atom (use php cli/import_atom_feed.php).
  *
  * Usage (project root): php cli/seed_filipino_men_site.php
  */

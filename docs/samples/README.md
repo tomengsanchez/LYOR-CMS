@@ -11,5 +11,6 @@ Fixture zips and folders for Appearance → Customize **style pack** import (`Ap
 | Enterprise | [cms-style-pack-enterprise/](cms-style-pack-enterprise/) (modern navy / slate) |
 | The Filipino Men | [cms-style-pack-filipino-men/](cms-style-pack-filipino-men/) (warm paper journal) |
 | Atom import template | [cms-atom-import/](cms-atom-import/) (`sample.atom` for Posts → Import) |
+| Scheduled Atom collections | [../atoms-collections/](../atoms-collections/) (production editorial feeds with native SEO/AEO fields) |
 
 Each pack: `cms-theme.json` plus optional `extra.css`. Backup stores theme CSS in `app_settings` and media files under uploads — not these sample zips. The Atom file is a content-import template, not a style pack.

@@ -16,7 +16,9 @@
   PAGE entries are skipped unless include-pages is on.
   Existing slugs are skipped unless update is on.
 -->
-<feed xmlns="http://www.w3.org/2005/Atom" xmlns:blogger="http://schemas.google.com/blogger/2018">
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:blogger="http://schemas.google.com/blogger/2018"
+      xmlns:cms="https://simplecms.local/ns/atom-import/1">
   <title>Simple CMS sample import</title>
 
   <!-- 1. Backdated POST: published in the past → live immediately, date kept. -->
@@ -56,6 +58,16 @@
     <blogger:status>LIVE</blogger:status>
     <blogger:filename>/2099/01/sample-scheduled-post.html</blogger:filename>
     <blogger:metaDescription>A published post that stays off the public site until the future datetime.</blogger:metaDescription>
+    <cms:meta_title>Sample scheduled post: Atom SEO and AEO</cms:meta_title>
+    <cms:llm_summary>This example stays hidden until its scheduled time and demonstrates native CMS SEO and AEO fields in Atom.</cms:llm_summary>
+    <cms:citation_snippet>Future-dated LIVE Atom entries are scheduled without a cron job because public requests check published_at.</cms:citation_snippet>
+    <cms:faq_json><![CDATA[
+[
+  {"question":"Does scheduled publishing need cron?","answer":"No. Public requests compare published_at with the site clock."},
+  {"question":"Can an Atom feed populate AEO fields?","answer":"Yes. Use the documented cms namespace fields."}
+]
+]]></cms:faq_json>
+    <cms:robots_noindex>false</cms:robots_noindex>
   </entry>
 
   <!-- 3. DRAFT POST: imported as draft; published_at is cleared. -->

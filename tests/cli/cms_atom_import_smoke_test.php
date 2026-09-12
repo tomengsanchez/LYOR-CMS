@@ -44,7 +44,9 @@ $futureSlug = 'imp-future-' . $suffix;
 $catName = 'Imp Cat ' . $suffix;
 $xml = <<<XML
 <?xml version="1.0" encoding="UTF-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom" xmlns:blogger="http://schemas.google.com/blogger/2018">
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:blogger="http://schemas.google.com/blogger/2018"
+      xmlns:cms="https://simplecms.local/ns/atom-import/1">
   <title>Import smoke</title>
   <entry>
     <title>Past Essay {$suffix}</title>
@@ -56,6 +58,11 @@ $xml = <<<XML
     <blogger:status>LIVE</blogger:status>
     <blogger:filename>/2020/01/{$pastSlug}.html</blogger:filename>
     <blogger:metaDescription>A past post</blogger:metaDescription>
+    <cms:meta_title>Past SEO title {$suffix}</cms:meta_title>
+    <cms:llm_summary>Direct answer summary {$suffix}</cms:llm_summary>
+    <cms:citation_snippet>Import smoke citation {$suffix}.</cms:citation_snippet>
+    <cms:faq_json><![CDATA[[{"question":"Smoke question?","answer":"Smoke answer."}]]]></cms:faq_json>
+    <cms:robots_noindex>true</cms:robots_noindex>
   </entry>
   <entry>
     <title>Future Essay {$suffix}</title>
@@ -81,6 +88,7 @@ XML;
 $dry = AtomFeedImporter::importXml($xml, ['dry_run' => true, 'base_url' => 'http://imported.example']);
 assert((int) $dry['created'] === 2, 'dry-run counts two posts');
 assert(Post::findBySlug($pastSlug) === null, 'dry-run does not write');
+assert(\App\Models\Category::findByName($catName) === null, 'dry-run does not create categories');
 
 $result = AtomFeedImporter::importXml($xml, ['base_url' => 'http://imported.example']);
 assert(!empty($result['ok']), 'import ok: ' . implode('; ', $result['errors'] ?? []));
@@ -97,6 +105,11 @@ $expectPast = AtomFeedImporter::atomDateToSql('2020-01-15T08:00:00.000Z');
 $expectFuture = AtomFeedImporter::atomDateToSql('2099-12-01T00:00:00.000Z');
 assert((string) $past->published_at === (string) $expectPast, 'backdated published_at');
 assert((string) $future->published_at === (string) $expectFuture, 'scheduled published_at');
+assert((string) $past->meta_title === 'Past SEO title ' . $suffix, 'cms meta title imported');
+assert((string) $past->llm_summary === 'Direct answer summary ' . $suffix, 'cms LLM summary imported');
+assert((string) $past->citation_snippet === 'Import smoke citation ' . $suffix . '.', 'cms citation imported');
+assert(str_contains((string) $past->faq_json, 'Smoke question?'), 'cms FAQ imported');
+assert(!empty($past->robots_noindex), 'cms robots noindex imported');
 assert(Post::isLive($past), 'past is live');
 assert(Post::isScheduled($future), 'future is scheduled');
 assert(!Post::isLive($future), 'future is not live yet');
@@ -113,6 +126,53 @@ assert(!str_contains($body, 'blogspot.com'), 'no blogspot leftovers in body');
 assert(!str_contains($body, 'style='), 'inline styles stripped');
 assert(!str_contains($body, 'google.com/search'), 'google wrapper removed');
 assert(str_contains((string) $future->body, SiteUrl::href($pastPath, 'http://imported.example')), 'future body links back');
+
+$updateXml = <<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+      xmlns:blogger="http://schemas.google.com/blogger/2018"
+      xmlns:cms="https://simplecms.local/ns/atom-import/1">
+  <entry>
+    <title>Past Essay {$suffix}</title>
+    <content type="html"><![CDATA[<p>Updated body.</p>]]></content>
+    <published>2020-01-15T08:00:00.000Z</published>
+    <blogger:type>POST</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <blogger:filename>/2020/01/{$pastSlug}.html</blogger:filename>
+    <blogger:metaDescription>Updated meta</blogger:metaDescription>
+    <cms:meta_title>Updated SEO {$suffix}</cms:meta_title>
+    <cms:llm_summary>Updated LLM {$suffix}</cms:llm_summary>
+    <cms:citation_snippet>Updated citation {$suffix}.</cms:citation_snippet>
+    <cms:faq_json><![CDATA[[{"question":"Updated question?","answer":"Updated answer."}]]]></cms:faq_json>
+    <cms:robots_noindex>false</cms:robots_noindex>
+  </entry>
+</feed>
+XML;
+$updatedResult = AtomFeedImporter::importXml($updateXml, ['update' => true]);
+assert((int) $updatedResult['updated'] === 1, 'cms fields update existing post');
+$pastUpdated = Post::findBySlug($pastSlug);
+assert((string) $pastUpdated->meta_title === 'Updated SEO ' . $suffix, 'provided cms meta title overwrites');
+assert((string) $pastUpdated->llm_summary === 'Updated LLM ' . $suffix, 'provided cms LLM overwrites');
+assert((string) $pastUpdated->citation_snippet === 'Updated citation ' . $suffix . '.', 'provided cms citation overwrites');
+assert(str_contains((string) $pastUpdated->faq_json, 'Updated question?'), 'provided cms FAQ overwrites');
+assert(empty($pastUpdated->robots_noindex), 'provided false clears robots noindex');
+
+$preserveXml = str_replace(
+    [
+        '    <cms:meta_title>Updated SEO ' . $suffix . "</cms:meta_title>\n",
+        '    <cms:llm_summary>Updated LLM ' . $suffix . "</cms:llm_summary>\n",
+        '    <cms:citation_snippet>Updated citation ' . $suffix . ".</cms:citation_snippet>\n",
+        "    <cms:faq_json><![CDATA[[{\"question\":\"Updated question?\",\"answer\":\"Updated answer.\"}]]]></cms:faq_json>\n",
+        "    <cms:robots_noindex>false</cms:robots_noindex>\n",
+    ],
+    '',
+    $updateXml
+);
+AtomFeedImporter::importXml($preserveXml, ['update' => true]);
+$pastPreserved = Post::findBySlug($pastSlug);
+assert((string) $pastPreserved->meta_title === 'Updated SEO ' . $suffix, 'omitted cms meta title preserved');
+assert((string) $pastPreserved->llm_summary === 'Updated LLM ' . $suffix, 'omitted cms LLM preserved');
+assert(str_contains((string) $pastPreserved->faq_json, 'Updated question?'), 'omitted cms FAQ preserved');
 
 $skip = AtomFeedImporter::importXml($xml, ['base_url' => 'http://imported.example']);
 assert((int) $skip['skipped'] >= 2, 'second import skips existing');

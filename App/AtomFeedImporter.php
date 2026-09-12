@@ -19,6 +19,7 @@ use Core\Auth;
 final class AtomFeedImporter
 {
     public const MAX_BYTES = 8388608;
+    public const CMS_NAMESPACE = 'https://simplecms.local/ns/atom-import/1';
 
     /**
      * @param array{
@@ -138,7 +139,8 @@ final class AtomFeedImporter
             $excerpt = (string) $entry['excerpt'];
             $meta = (string) $entry['meta_description'];
             $labels = $entry['labels'];
-            $catId = self::resolveCategoryId($labels, $createCats);
+            // A dry run must never create missing categories.
+            $catId = self::resolveCategoryId($labels, $createCats && !$dryRun);
             $tags = self::tagCsv($labels, $catId);
             $isFuture = $status === 'published' && is_string($publishedAt) && $publishedAt > $now;
             $isPast = $status === 'published' && is_string($publishedAt) && $publishedAt <= $now;
@@ -151,14 +153,16 @@ final class AtomFeedImporter
                     continue;
                 }
                 if (!$dryRun) {
-                    $ok = self::persistPage($existing, [
+                    $pagePayload = [
                         'title' => $title,
                         'slug' => $slug,
                         'body' => $body,
                         'status' => $status === 'published' ? 'published' : 'draft',
                         'meta_description' => $meta !== '' ? $meta : $excerpt,
                         'author_id' => $authorId,
-                    ]);
+                    ];
+                    $pagePayload = array_merge($pagePayload, self::seoPayload($entry, $existing, $title));
+                    $ok = self::persistPage($existing, $pagePayload);
                     if (!$ok) {
                         $errors[] = 'Could not save page: ' . $title;
                         $items[] = self::itemRow($entry, 'error', 'save failed');
@@ -191,20 +195,16 @@ final class AtomFeedImporter
                 'status' => $status,
                 'category_id' => $catId,
                 'tags' => $tags,
-                'meta_title' => $title,
                 'meta_description' => $meta !== '' ? $meta : $excerpt,
                 'published_at' => $publishedAt ?? '',
                 'author_id' => $authorId,
             ];
+            $payload = array_merge($payload, self::seoPayload($entry, $existing, $title));
             if ($existing) {
                 $payload['featured_image_id'] = $existing->featured_image_id ?? null;
                 $payload['content_layout'] = $existing->content_layout ?? '';
                 $payload['blocks_json'] = $existing->blocks_json ?? null;
                 $payload['is_sticky'] = !empty($existing->is_sticky);
-                $payload['llm_summary'] = (string) ($existing->llm_summary ?? '');
-                $payload['citation_snippet'] = (string) ($existing->citation_snippet ?? '');
-                $payload['faq_json'] = $existing->faq_json ?? null;
-                $payload['robots_noindex'] = !empty($existing->robots_noindex);
             }
 
             if (!$dryRun) {
@@ -424,6 +424,7 @@ final class AtomFeedImporter
     private static function entryFromXml(\SimpleXMLElement $entry): ?array
     {
         $b = $entry->children('http://schemas.google.com/blogger/2018');
+        $cms = $entry->children(self::CMS_NAMESPACE);
         $type = strtoupper(trim((string) ($b->type ?? '')));
         if ($type === '') {
             $type = 'POST';
@@ -473,6 +474,19 @@ final class AtomFeedImporter
                 $labels[] = $term;
             }
         }
+        $cmsFields = [];
+        foreach (['meta_title', 'llm_summary', 'citation_snippet', 'faq_json'] as $field) {
+            if (isset($cms->$field)) {
+                $cmsFields[$field] = trim(html_entity_decode(
+                    (string) $cms->$field,
+                    ENT_QUOTES | ENT_HTML5,
+                    'UTF-8'
+                ));
+            }
+        }
+        if (isset($cms->robots_noindex)) {
+            $cmsFields['robots_noindex'] = self::parseBoolean((string) $cms->robots_noindex);
+        }
         $kind = $type === 'PAGE' ? 'page' : 'post';
         $destPath = $kind === 'page'
             ? self::pageDestPath($slug)
@@ -502,6 +516,7 @@ final class AtomFeedImporter
             'published_at' => $publishedAt,
             'status' => $status,
             'labels' => $labels,
+            'cms_fields' => $cmsFields,
             'filename' => $filename,
             'dest_path' => $destPath,
             'source_paths' => array_values(array_unique($sourcePaths)),
@@ -590,6 +605,34 @@ final class AtomFeedImporter
     }
 
     /**
+     * Atom cms:* values overwrite only when explicitly present. Missing values
+     * preserve existing SEO/AEO on update and use safe defaults on create.
+     *
+     * @param array<string, mixed> $entry
+     * @return array<string, mixed>
+     */
+    private static function seoPayload(array $entry, ?object $existing, string $title): array
+    {
+        $fields = is_array($entry['cms_fields'] ?? null) ? $entry['cms_fields'] : [];
+        $fromFeed = static function (string $key, mixed $fallback) use ($fields): mixed {
+            return array_key_exists($key, $fields) ? $fields[$key] : $fallback;
+        };
+
+        return [
+            'meta_title' => $fromFeed('meta_title', $existing->meta_title ?? $title),
+            'llm_summary' => $fromFeed('llm_summary', $existing->llm_summary ?? ''),
+            'citation_snippet' => $fromFeed('citation_snippet', $existing->citation_snippet ?? ''),
+            'faq_json' => $fromFeed('faq_json', $existing->faq_json ?? null),
+            'robots_noindex' => $fromFeed('robots_noindex', !empty($existing->robots_noindex)),
+        ];
+    }
+
+    private static function parseBoolean(string $raw): bool
+    {
+        return in_array(strtolower(trim($raw)), ['1', 'true', 'yes', 'on'], true);
+    }
+
+    /**
      * @param array<string, mixed> $data
      */
     private static function persistPost(?object $existing, array $data): bool
@@ -611,10 +654,6 @@ final class AtomFeedImporter
             $data['content_layout'] = $existing->content_layout ?? '';
             $data['blocks_json'] = $existing->blocks_json ?? null;
             $data['parent_id'] = $existing->parent_id ?? null;
-            $data['llm_summary'] = (string) ($existing->llm_summary ?? '');
-            $data['citation_snippet'] = (string) ($existing->citation_snippet ?? '');
-            $data['faq_json'] = $existing->faq_json ?? null;
-            $data['robots_noindex'] = !empty($existing->robots_noindex);
 
             return Page::update((int) $existing->id, $data);
         }

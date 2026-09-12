@@ -12,7 +12,7 @@ ob_start();
 <div class="mb-3">
     <label class="form-label" for="atomFeedFile">Feed file</label>
     <input type="file" name="feed" id="atomFeedFile" class="form-control" required accept=".atom,.xml,application/xml,text/xml,application/atom+xml">
-    <small class="text-muted d-block mt-1">Maximum 8 MB. Follow the template at <code>docs/samples/cms-atom-import/sample.atom</code> (backdated, scheduled, draft, and a PAGE). PAGE entries are skipped unless you include them below.</small>
+    <small class="text-muted d-block mt-1">Maximum 8 MB. Follow <code>docs/samples/cms-atom-import/sample.atom</code> (backdated, scheduled, draft, PAGE, and optional <code>cms:*</code> SEO/AEO fields). PAGE entries are skipped unless included below.</small>
 </div>
 <div class="form-check mb-2">
     <input type="checkbox" class="form-check-input" name="update_existing" value="1" id="atomUpdateExisting">
@@ -34,7 +34,7 @@ ob_start();
 <button type="submit" class="btn btn-primary">Import</button>
 </form>
 </div></div>
-<p class="small text-muted mt-3 mb-0">CLI: <code>php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom</code> &nbsp;·&nbsp; LalakiPH dump: <code>php cli/import_atom_feed.php xyz/feed.atom --spread-year=2026</code></p>
+<p class="small text-muted mt-3 mb-0">CLI: <code>php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom</code> &nbsp;·&nbsp; The Filipino Men scheduled collection: <code>php cli/import_atom_feed.php docs/atoms-collections/the-filipino-men-sept-21-30-2026.atom --dry-run --verbose</code></p>
 <?php
 $content = ob_get_clean();
 $pageTitle = 'Import posts';

@@ -1,3 +1,12 @@
+## September 21–30 The Filipino Men editorial collection + Atom SEO/AEO (2026-09-12)
+
+- Added `docs/atoms-collections/the-filipino-men-sept-21-30-2026.atom`: 50 unique 700–1,500-word English/Taglish articles, five per day at 06:30 / 10:30 / 14:30 / 18:30 / 22:00 Philippine time. Topics cover Biblical manhood, Christian family life, civic accountability, sports, cost of living, flood readiness, work/AI, relationships, and mental health. Current-affairs claims are bounded to facts available on September 12; no future sports outcomes are invented.
+- Atom feeds can declare `xmlns:cms="https://simplecms.local/ns/atom-import/1"` and supply `meta_title`, `llm_summary`, `citation_snippet`, `faq_json`, and `robots_noindex`. Values use existing `PublicSeo` normalization. On `--update`, supplied fields overwrite and omitted fields preserve existing metadata. Dry runs no longer create missing categories. No migration or REST endpoint change.
+- Every collection post includes direct-answer copy, body FAQ, structured FAQ JSON, citation snippet, meta description, internal links, and one primary category. New desks may be created automatically: Faith & Family, Civic Life & Accountability, and Sports & Strength.
+- Smoke coverage, sample feed, import UI/help, API contract, development guide, and Atom collection README updated. Import with feed dates unchanged; do **not** use `--spread-year`.
+
+---
+
 ## Google Analytics, Ads, and Search settings (2026-09-12)
 
 - System → General has a **Google** block: GA4/UA measurement ID, Google Ads (`AW-`), AdSense (`ca-pub-`), Programmable Search CX, and Search Console verification (same `seo_google_site_verification` key, moved out of SEO). IDs only — junk/`javascript:` is rejected. Public layout loads official gtag/AdSense scripts via `google-tags.js` (data attributes). Tags skip theme preview and the Customizer iframe. Verification meta is on every public page. CSE results appear below built-in `/search` when CX is set.

@@ -11,7 +11,7 @@
  *   php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom
  *   php cli/import_atom_feed.php path/to/feed.atom --update --include-pages
  *   php cli/import_atom_feed.php path/to/feed.atom --limit=5
- *   php cli/import_atom_feed.php xyz/feed.atom --spread-year=2026
+ *   php cli/import_atom_feed.php docs/atoms-collections/feed.atom --spread-year=2026
  */
 require dirname(__DIR__) . '/bootstrap.php';
 require __DIR__ . '/cli_script_args.php';

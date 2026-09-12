@@ -1,0 +1,42 @@
+{
+  "date": "2026-09-12",
+  "title": "September 21-30 The Filipino Men editorial Atom collection",
+  "summary": "Added 50 hand-scheduled long-form posts and extended Atom import with native CMS SEO/AEO fields.",
+  "changes": [
+    {
+      "area": "content",
+      "items": [
+        "docs/atoms-collections/the-filipino-men-sept-21-30-2026.atom",
+        "Five unique posts daily from September 21 through 30 at 06:30, 10:30, 14:30, 18:30, and 22:00 Philippine time",
+        "Mixed 700-1500 word English/Taglish articles with direct answers, FAQ, internal links, and nonpartisan Christian civic framing",
+        "New primary desks: Faith & Family, Civic Life & Accountability, Sports & Strength"
+      ]
+    },
+    {
+      "area": "importer",
+      "items": [
+        "cms namespace supports meta_title, llm_summary, citation_snippet, faq_json, and robots_noindex",
+        "Supplied cms fields overwrite on update; omitted fields preserve existing metadata",
+        "Dry-run category resolution is read-only and does not create missing categories",
+        "Existing Post and PublicSeo normalization reused; no migration"
+      ]
+    },
+    {
+      "area": "quality",
+      "items": [
+        "Validated 50 unique titles, ids, and filenames with no overlap against the original feed",
+        "Validated exactly five time slots on each of ten days",
+        "Validated 700-1500 word bodies, metadata lengths, internal links, and three valid FAQ pairs per entry",
+        "Extended cms_atom_import_smoke_test for create, overwrite, preserve, FAQ, and robots behavior"
+      ]
+    },
+    {
+      "area": "documentation",
+      "items": [
+        "Atom sample and README",
+        "Posts import UI and Help",
+        "DEVELOPMENTGUIDE, API_CONTRACT, CHANGES, and atoms-collections README"
+      ]
+    }
+  ]
+}

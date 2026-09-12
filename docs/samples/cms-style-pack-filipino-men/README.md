@@ -27,9 +27,9 @@ Seed the designed site (pages, menu, empty desks — **no post import**):
 php cli/seed_filipino_men_site.php
 ```
 
-Import from the Atom template (or a Blogger dump such as `xyz/feed.atom`). Feed dates = backdate or schedule; links use `config/app.php` `base_url`:
+Import from the Atom template (or a Blogger dump such as `docs/atoms-collections/feed.atom`). Feed dates = backdate or schedule; links use `config/app.php` `base_url`:
 
 ```bash
 php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom
-php cli/import_atom_feed.php xyz/feed.atom
+php cli/import_atom_feed.php docs/atoms-collections/feed.atom
 ```
