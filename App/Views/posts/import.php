@@ -22,6 +22,11 @@ ob_start();
     <input type="checkbox" class="form-check-input" name="include_pages" value="1" id="atomIncludePages">
     <label class="form-check-label" for="atomIncludePages">Include PAGE entries from the feed</label>
 </div>
+<div class="mb-3">
+    <label class="form-label" for="atomSpreadYear">Spread publish dates across year</label>
+    <input type="number" name="spread_year" id="atomSpreadYear" class="form-control" min="2000" max="2100" placeholder="Leave empty to keep feed dates" style="max-width:16rem">
+    <small class="text-muted d-block mt-1">Optional. Evenly spaces LIVE posts from 1 January through 31 December (oldest feed date first). Future days stay scheduled until due.</small>
+</div>
 <div class="form-check mb-3">
     <input type="checkbox" class="form-check-input" name="dry_run" value="1" id="atomDryRun">
     <label class="form-check-label" for="atomDryRun">Dry run (parse and count only; do not write)</label>
@@ -29,7 +34,7 @@ ob_start();
 <button type="submit" class="btn btn-primary">Import</button>
 </form>
 </div></div>
-<p class="small text-muted mt-3 mb-0">CLI: <code>php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom</code></p>
+<p class="small text-muted mt-3 mb-0">CLI: <code>php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom</code> &nbsp;·&nbsp; LalakiPH dump: <code>php cli/import_atom_feed.php xyz/feed.atom --spread-year=2026</code></p>
 <?php
 $content = ob_get_clean();
 $pageTitle = 'Import posts';

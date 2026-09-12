@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-12",
+  "title": "Atom import spread-year and LalakiPH essay import",
+  "summary": "Optional spread-year spaces LIVE post dates across a calendar year. xyz/feed.atom essays imported for 2026 (pages skipped). Docs and Help updated.",
+  "changes": [
+    {
+      "area": "importer",
+      "items": [
+        "AtomFeedImporter::applySpreadYear / normalizeSpreadYear",
+        "CLI --spread-year=YYYY",
+        "Admin Posts import year field"
+      ]
+    },
+    {
+      "area": "content",
+      "items": [
+        "xyz/feed.atom imported with spread-year 2026"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "Help Posts, DEVELOPMENTGUIDE, samples atom README",
+        "changes/2026-09/CHANGES.md",
+        "cms_atom_import_smoke_test spread-year asserts"
+      ]
+    }
+  ]
+}

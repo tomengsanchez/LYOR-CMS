@@ -336,6 +336,7 @@ npm run test:e2e:cms          # headless (smoke + wp-extended + pulse UX + newsl
 npm run test:e2e:cms:headed # watch mode
 php cli/seed_filipino_men_site.php        # The Filipino Men chrome (pages/menu/theme; no essay import)
 php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom   # Atom template (backdate + schedule; links use base_url)
+php cli/import_atom_feed.php xyz/feed.atom --spread-year=2026          # LalakiPH essays, dates spaced across 2026
 npm run test:e2e:cms-pulse-ux             # Pulse widgets through password-protect (BASE_URL)
 npm run test:e2e:cms-newsletter           # Subscribe form + admin list/confirm/delete (BASE_URL)
 npm run test:e2e:cms-builder-tomeng       # sample post with all column layouts

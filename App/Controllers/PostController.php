@@ -314,6 +314,7 @@ class PostController extends Controller
             'include_pages' => $includePages,
             'dry_run' => $dryRun,
             'author_id' => (int) Auth::id(),
+            'spread_year' => $_POST['spread_year'] ?? '',
         ]);
         if (!empty($result['error']) && (int) $result['created'] === 0 && (int) $result['updated'] === 0) {
             Flash::error((string) $result['error']);

@@ -1,3 +1,10 @@
+## Atom import spread-year (2026-09-12)
+
+- Optional `--spread-year=YYYY` (admin: **Spread publish dates across year**) spaces LIVE post `published_at` evenly from 1 January through 31 December. Oldest feed date lands in January; pages and drafts keep their feed dates. Dates still in the future stay scheduled until due.
+- `xyz/feed.atom` (LalakiPH essays) imported with `--spread-year=2026`. PAGE entries skipped. Help: Posts.
+
+---
+
 ## Atom / Blogger post import (backdate + schedule, 2026-09-11)
 
 - Admin **Posts → Import** (`/admin/posts/import`) and CLI `php cli/import_atom_feed.php [feed.atom]` ingest Atom/Blogger exports. Template: `docs/samples/cms-atom-import/sample.atom`. Feed `published` is stored as `published_at` (past = live backdated; future = hidden until due via existing `Post::liveSql`, no cron).

@@ -13,7 +13,7 @@ php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom
 
 Admin: upload `sample.atom` at `/admin/posts/import`.
 
-Internal links use `config/app.php` `base_url` at import time. Future `published` stays off the public site until due (no cron). PAGE entries need `--include-pages`. Existing slugs need `--update`.
+Internal links use `config/app.php` `base_url` at import time. Future `published` stays off the public site until due (no cron). PAGE entries need `--include-pages`. Existing slugs need `--update`. Optional `--spread-year=2026` (or the admin year field) spaces LIVE posts from 1 January through 31 December.
 
 ## Fields
 

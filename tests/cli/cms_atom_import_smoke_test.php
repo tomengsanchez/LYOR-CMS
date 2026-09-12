@@ -144,4 +144,34 @@ assert(str_contains($sampleBody, $schedHref), 'sample internal link rewritten');
 assert(!str_contains($sampleBody, 'old-site.example'), 'sample old host removed');
 assert(!str_contains($sampleBody, 'google.com/search'), 'sample google wrapper unwrapped');
 
+$spreadParsed = AtomFeedImporter::parse(<<<XML
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:blogger="http://schemas.google.com/blogger/2018">
+  <entry><title>S1</title><content type="html">a</content><published>2026-09-09T12:00:00Z</published><blogger:type>POST</blogger:type><blogger:status>LIVE</blogger:status><blogger:filename>/2026/09/spread-one.html</blogger:filename></entry>
+  <entry><title>S2</title><content type="html">b</content><published>2026-09-09T13:00:00Z</published><blogger:type>POST</blogger:type><blogger:status>LIVE</blogger:status><blogger:filename>/2026/09/spread-two.html</blogger:filename></entry>
+  <entry><title>S3</title><content type="html">c</content><published>2026-09-09T14:00:00Z</published><blogger:type>POST</blogger:type><blogger:status>LIVE</blogger:status><blogger:filename>/2026/09/spread-three.html</blogger:filename></entry>
+  <entry><title>Draft</title><content type="html">d</content><published>2026-09-09T15:00:00Z</published><blogger:type>POST</blogger:type><blogger:status>DRAFT</blogger:status><blogger:filename>/2026/09/spread-draft.html</blogger:filename></entry>
+</feed>
+XML);
+$spread = AtomFeedImporter::applySpreadYear($spreadParsed['entries'], 2026);
+$spreadDates = [];
+$draftAt = '';
+foreach ($spread as $e) {
+    if (($e['slug'] ?? '') === 'spread-draft') {
+        $draftAt = (string) ($e['published_at'] ?? '');
+        continue;
+    }
+    if (($e['kind'] ?? '') === 'post' && ($e['status'] ?? '') === 'published') {
+        $spreadDates[] = (string) $e['published_at'];
+    }
+}
+sort($spreadDates);
+assert(count($spreadDates) === 3, 'spread keeps three live posts');
+assert(str_starts_with($spreadDates[0], '2026-01-01'), 'spread starts 1 January');
+assert(str_starts_with($spreadDates[2], '2026-12-31'), 'spread ends 31 December');
+assert($spreadDates[0] < $spreadDates[1] && $spreadDates[1] < $spreadDates[2], 'spread is ordered');
+assert($draftAt === '' || !str_starts_with($draftAt, '2026-01-01'), 'draft date not spread to January');
+assert(AtomFeedImporter::normalizeSpreadYear('') === null, 'empty spread year ignored');
+assert(AtomFeedImporter::normalizeSpreadYear('2026') === 2026, 'spread year parses');
+
 echo "cms_atom_import_smoke_test: OK\n";

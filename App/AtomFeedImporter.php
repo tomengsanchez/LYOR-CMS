@@ -28,7 +28,8 @@ final class AtomFeedImporter
      *   limit?: int,
      *   author_id?: int,
      *   base_url?: string|null,
-     *   create_missing_categories?: bool
+     *   create_missing_categories?: bool,
+     *   spread_year?: int|string|null
      * } $opts
      * @return array{
      *   ok: bool,
@@ -91,6 +92,11 @@ final class AtomFeedImporter
         }
         $createCats = !array_key_exists('create_missing_categories', $opts)
             || !empty($opts['create_missing_categories']);
+
+        $spreadYear = self::normalizeSpreadYear($opts['spread_year'] ?? null);
+        if ($spreadYear !== null) {
+            $entries = self::applySpreadYear($entries, $spreadYear);
+        }
 
         $pathMap = self::buildPathMap($entries);
         $now = UserTime::nowSql();
@@ -274,6 +280,99 @@ final class AtomFeedImporter
         }
 
         return ['entries' => $out];
+    }
+
+    /** @return int|null Year 2000–2100, or null to keep feed dates. */
+    public static function normalizeSpreadYear(mixed $raw): ?int
+    {
+        if ($raw === null || $raw === false) {
+            return null;
+        }
+        if (is_string($raw)) {
+            $raw = trim($raw);
+            if ($raw === '') {
+                return null;
+            }
+        }
+        $year = (int) $raw;
+        if ($year < 2000 || $year > 2100) {
+            return null;
+        }
+
+        return $year;
+    }
+
+    /**
+     * Evenly space LIVE post dates from 1 Jan through 31 Dec of $year (site timezone).
+     * Oldest feed `published` lands in January. Pages and drafts are unchanged.
+     *
+     * @param list<array<string, mixed>> $entries
+     * @return list<array<string, mixed>>
+     */
+    public static function applySpreadYear(array $entries, int $year): array
+    {
+        $year = self::normalizeSpreadYear($year);
+        if ($year === null) {
+            return $entries;
+        }
+        $idxs = [];
+        foreach ($entries as $i => $entry) {
+            if (($entry['kind'] ?? '') !== 'post' || ($entry['status'] ?? '') !== 'published') {
+                continue;
+            }
+            $idxs[] = $i;
+        }
+        $n = count($idxs);
+        if ($n === 0) {
+            return $entries;
+        }
+        usort($idxs, static function (int $a, int $b) use ($entries): int {
+            $pa = (string) ($entries[$a]['published_at'] ?? '');
+            $pb = (string) ($entries[$b]['published_at'] ?? '');
+            if ($pa !== $pb) {
+                return $pa <=> $pb;
+            }
+
+            return $a <=> $b;
+        });
+        UserTime::apply();
+        $tz = new \DateTimeZone(UserTime::timezoneId());
+        $start = new \DateTimeImmutable(sprintf('%04d-01-01 00:00:00', $year), $tz);
+        $spanDays = (checkdate(2, 29, $year) ? 366 : 365) - 1;
+        $hours = [8, 10, 12, 15, 18];
+        foreach ($idxs as $k => $i) {
+            $day = $n === 1 ? 0 : (int) round($spanDays * $k / ($n - 1));
+            $hour = $hours[$k % count($hours)];
+            $minute = ($k * 7) % 60;
+            $dt = $start->modify('+' . $day . ' days')->setTime($hour, $minute, 0);
+            $entries[$i]['published_at'] = $dt->format('Y-m-d H:i:s');
+        }
+
+        return self::refreshDestPaths($entries);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $entries
+     * @return list<array<string, mixed>>
+     */
+    public static function refreshDestPaths(array $entries): array
+    {
+        foreach ($entries as $i => $entry) {
+            $slug = (string) ($entry['slug'] ?? '');
+            if ($slug === '') {
+                continue;
+            }
+            if (($entry['kind'] ?? '') === 'page') {
+                $entries[$i]['dest_path'] = self::pageDestPath($slug);
+            } else {
+                $entries[$i]['dest_path'] = Permalink::urlForPost((object) [
+                    'slug' => $slug,
+                    'published_at' => $entry['published_at'] ?? null,
+                ]);
+            }
+        }
+
+        return $entries;
     }
 
     public static function atomDateToSql(string $raw): ?string
