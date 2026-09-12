@@ -206,13 +206,21 @@ class Page
     public static function create(array $data): int
     {
         $db = Database::getInstance();
-        $slug = CmsSlug::unique($db, 'cms_pages', CmsSlug::from($data['title'] ?? '', 'page'));
+        $slugSource = trim((string) ($data['slug'] ?? ''));
+        if ($slugSource === '') {
+            $slugSource = (string) ($data['title'] ?? '');
+        }
+        $slug = CmsSlug::unique($db, 'cms_pages', CmsSlug::from($slugSource, 'page'));
         if (CmsSlug::conflictsWithOtherContent($db, 'cms_pages', $slug)) {
             return 0;
         }
         $featuredId = Media::resolveImageId(
             !empty($data['featured_image_id']) ? (int) $data['featured_image_id'] : null
         );
+        $authorId = (int) ($data['author_id'] ?? 0);
+        if ($authorId <= 0) {
+            $authorId = (int) Auth::id();
+        }
         $stmt = $db->prepare('
             INSERT INTO cms_pages (title, slug, body, blocks_json, status, password_hash, meta_title, meta_description, featured_image_id, llm_summary, citation_snippet, faq_json, robots_noindex, content_layout, parent_id, author_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -233,7 +241,7 @@ class Page
             !empty($data['robots_noindex']) ? 1 : 0,
             PublicTheme::normalizeContentLayout($data['content_layout'] ?? null),
             self::normalizeParentId(!empty($data['parent_id']) ? (int) $data['parent_id'] : null),
-            Auth::id(),
+            $authorId,
         ]);
         $id = (int) $db->lastInsertId();
         AuditLog::record('page', $id, 'created');

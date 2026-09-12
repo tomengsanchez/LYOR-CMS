@@ -10,7 +10,12 @@ ob_start();
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Posts</h2>
-    <?php if (\Core\Auth::can('add_posts')): ?><a href="<?= admin_url('posts/create') ?>" class="btn btn-primary">Add Post</a><?php endif; ?>
+    <div class="d-flex gap-2">
+    <?php if (\Core\Auth::can('add_posts')): ?>
+    <a href="<?= admin_url('posts/import') ?>" class="btn btn-outline-secondary">Import</a>
+    <a href="<?= admin_url('posts/create') ?>" class="btn btn-primary">Add Post</a>
+    <?php endif; ?>
+    </div>
 </div>
 <?php require __DIR__ . '/../partials/list_toolbar.php'; ?>
 <div data-bulk-scope>

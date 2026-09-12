@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-11",
+  "title": "The Filipino Men journal chrome without essay import",
+  "summary": "Bundled paper-journal style pack plus CLI seed for branding, empty desks, Home/About/Topics/FAQ, and menu. Inspired by xyz/feed.atom (LalakiPH) tone and labels. Posts are not imported. Docs and Help updated.",
+  "changes": [
+    {
+      "area": "theme",
+      "items": [
+        "docs/samples/cms-style-pack-filipino-men/ — cms-theme.json + extra.css",
+        "ThemeStylePack bundled slug filipino-men",
+        "cli/build_style_pack.php target"
+      ]
+    },
+    {
+      "area": "cli",
+      "items": [
+        "cli/seed_filipino_men_site.php — design seed only"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "DEVELOPMENTGUIDE.md, CONFIGURATION.md, samples/README.md",
+        "Help Customize / General",
+        "changes/2026-09/CHANGES.md"
+      ]
+    }
+  ]
+}

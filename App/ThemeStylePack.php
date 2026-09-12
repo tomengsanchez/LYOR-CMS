@@ -123,6 +123,7 @@ class ThemeStylePack
             'manly' => 'Manly (oak, iron, leather)',
             'pulse' => 'Pulse (header & homepage widgets)',
             'enterprise' => 'Enterprise (modern navy & slate)',
+            'filipino-men' => 'The Filipino Men (paper journal)',
         ];
     }
 
@@ -143,6 +144,9 @@ class ThemeStylePack
         }
         if (in_array($slug, ['corporate', 'business', 'professional', 'b2b'], true)) {
             return 'enterprise';
+        }
+        if (in_array($slug, ['filipino', 'tfm', 'lalaki', 'everyday-manhood', 'the-filipino-men'], true)) {
+            return 'filipino-men';
         }
         $allowed = array_keys(self::bundledPackLabels());
         return in_array($slug, $allowed, true) ? $slug : 'example';

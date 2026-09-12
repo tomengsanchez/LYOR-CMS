@@ -1,0 +1,109 @@
+{
+  "format": "cms-style-pack",
+  "version": 1,
+  "name": "The Filipino Men",
+  "notes": "Warm paper journal for everyday Filipino manhood. Editorial chrome, magazine essays, terracotta ink. Occupied widget areas are left unchanged on activate.",
+  "settings": {
+    "pub_theme_preset": "custom",
+    "public_accent_color": "#a12a22",
+    "pub_theme_custom_bg": "#f6efe4",
+    "pub_theme_custom_surface": "#fffaf3",
+    "pub_theme_custom_text": "#1b1510",
+    "pub_theme_font": "serif",
+    "pub_theme_font_size": "lg",
+    "pub_theme_line_height": "relaxed",
+    "pub_theme_radius": "sm",
+    "pub_theme_width": "wide",
+    "pub_theme_blog_width": "normal",
+    "pub_theme_color_mode": "light",
+    "pub_theme_header": "solid",
+    "pub_theme_header_height": "tall",
+    "pub_theme_footer_style": "solid",
+    "pub_theme_footer_align": "split",
+    "pub_theme_button_style": "solid",
+    "pub_theme_button_size": "md",
+    "pub_theme_card_shadow": "soft",
+    "pub_theme_content_spacing": "spacious",
+    "pub_theme_link_style": "underline",
+    "pub_theme_nav_style": "underline",
+    "pub_theme_nav_uppercase": "1",
+    "pub_theme_brand_weight": "black",
+    "pub_theme_heading_scale": "dramatic",
+    "pub_theme_blog_list_style": "magazine",
+    "pub_theme_blog_grid_columns": "2",
+    "pub_theme_blog_image_ratio": "landscape",
+    "pub_theme_blog_show_excerpt": "1",
+    "pub_theme_blog_show_read_more": "1",
+    "pub_theme_blog_show_category": "1",
+    "pub_theme_blog_view_switcher": "0",
+    "pub_theme_image_style": "square",
+    "pub_theme_border_style": "subtle",
+    "pub_theme_sticky_header": "1",
+    "pub_theme_show_admin_link": "0",
+    "pub_theme_show_site_title": "1",
+    "pub_theme_show_breadcrumbs": "1",
+    "pub_theme_sidebar_style": "bordered",
+    "pub_theme_prose_align": "left",
+    "pub_theme_logo_size": "lg",
+    "pub_theme_transition": "subtle",
+    "pub_theme_focus": "accent",
+    "pub_theme_show_blog_search": "1",
+    "pub_theme_show_post_dates": "1",
+    "pub_theme_show_list_featured": "1",
+    "pub_theme_chrome": "editorial",
+    "pub_theme_blog_kicker": "FOR THE EVERYDAY FILIPINO MAN",
+    "pub_theme_date_format": "human",
+    "pub_theme_show_site_tagline": "1"
+  },
+  "extra_css": "extra.css",
+  "widgets": {
+    "after_header": [
+      {
+        "widget_type": "cta",
+        "title": "",
+        "is_enabled": true,
+        "config": {
+          "headline": "A journal, not a flex.",
+          "text": "Essays on work, money, love, fatherhood, and peace — written for men who are trying, not performing.",
+          "label": "Read the essays",
+          "url": "/blog"
+        }
+      }
+    ],
+    "after_content": [
+      {
+        "widget_type": "cta",
+        "title": "",
+        "is_enabled": true,
+        "config": {
+          "headline": "Keep going.",
+          "text": "This is not a page for perfect men. This is a page for men who show up again tomorrow.",
+          "label": "Who we are",
+          "url": "/p/about"
+        }
+      }
+    ],
+    "footer": [
+      {
+        "widget_type": "custom_html",
+        "title": "The Filipino Men",
+        "is_enabled": true,
+        "config": {
+          "html": "<p>A journal for everyday Filipino manhood. Responsibility. Presence. Peace over pressure.</p>"
+        }
+      },
+      {
+        "widget_type": "categories",
+        "title": "Desks",
+        "is_enabled": true,
+        "config": {}
+      },
+      {
+        "widget_type": "pages",
+        "title": "In this house",
+        "is_enabled": true,
+        "config": {}
+      }
+    ]
+  }
+}

@@ -121,6 +121,7 @@ assert(str_contains($index, 'install-bundled-style-pack'), 'install bundled rout
 assert(isset(ThemeStylePack::bundledPackLabels()['manly']), 'manly bundled label');
 assert(isset(ThemeStylePack::bundledPackLabels()['pulse']), 'pulse bundled label');
 assert(isset(ThemeStylePack::bundledPackLabels()['enterprise']), 'enterprise bundled label');
+assert(isset(ThemeStylePack::bundledPackLabels()['filipino-men']), 'filipino-men bundled label');
 
 // Ensure default developer template zip exists and imports.
 $build = dirname(__DIR__, 2) . '/cli/build_sample_style_pack.php';
@@ -179,6 +180,19 @@ $enterpriseImport = ThemeStylePack::importFromPath($enterprise);
 assert(!empty($enterpriseImport['ok']), 'enterprise zip imports: ' . ($enterpriseImport['message'] ?? ''));
 assert(stripos(ThemeStylePack::packName(), 'Enterprise') !== false, 'enterprise pack name');
 assert(AppSettings::get('pub_theme_font') === 'modern', 'enterprise modern font');
+ThemeStylePack::clearActivePack();
+PublicTheme::saveConfig(array_merge(PublicTheme::configToPostFields(), [
+    'pub_theme_preset' => $beforePreset,
+    'public_accent_color' => $beforeAccent,
+]));
+
+$tfm = ThemeStylePack::samplePackAbsolutePath('filipino-men');
+assert($tfm !== null && is_file($tfm), 'filipino-men zip path');
+$tfmImport = ThemeStylePack::importFromPath($tfm);
+assert(!empty($tfmImport['ok']), 'filipino-men zip imports: ' . ($tfmImport['message'] ?? ''));
+assert(stripos(ThemeStylePack::packName(), 'Filipino Men') !== false, 'filipino-men pack name');
+assert(AppSettings::get('pub_theme_font') === 'serif', 'filipino-men serif font');
+assert(AppSettings::get('pub_theme_chrome') === 'editorial', 'filipino-men editorial chrome');
 ThemeStylePack::clearActivePack();
 PublicTheme::saveConfig(array_merge(PublicTheme::configToPostFields(), [
     'pub_theme_preset' => $beforePreset,

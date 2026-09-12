@@ -1,10 +1,9 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteBase /
-    # B1: When document root is the project root (not recommended), block internals.
+    # B1: DocumentRoot is the project root. Block internals from HTTP.
     RewriteRule ^(config|App|Core|storage|logs|cli|database|tests|vendor)(/|$) - [F,L]
     # Developer guide: no app login — forbid non-local access (localhost / ::1 still OK).
-    # Prefer DocumentRoot = public/ in production so /dev-help is not under the web root.
     RewriteCond %{REMOTE_ADDR} !^127\.0\.0\.1$
     RewriteCond %{REMOTE_ADDR} !^::1$
     RewriteRule ^dev-help(/|$) - [F,L]

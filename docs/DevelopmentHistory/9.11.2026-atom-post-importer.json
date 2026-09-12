@@ -1,0 +1,31 @@
+{
+  "date": "2026-09-11",
+  "title": "Atom post importer with backdates, scheduling, and base_url links",
+  "summary": "Admin and CLI Atom/Blogger importer stores feed dates as published_at (past live, future hidden until due) and rewrites internal links using config/app.php base_url. Pages skipped by default. Docs and Help updated.",
+  "changes": [
+    {
+      "area": "importer",
+      "items": [
+        "App\\AtomFeedImporter, App\\ImportHtml, App\\SiteUrl",
+        "cli/import_atom_feed.php",
+        "GET/POST /admin/posts/import"
+      ]
+    },
+    {
+      "area": "models",
+      "items": [
+        "Post::create and Page::create honor slug and author_id",
+        "Category::findByName"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "Help Posts, DEVELOPMENTGUIDE, CONFIGURATION, API_CONTRACT",
+        "docs/samples/cms-atom-import/sample.atom template",
+        "changes/2026-09/CHANGES.md",
+        "tests/cli/cms_atom_import_smoke_test.php"
+      ]
+    }
+  ]
+}

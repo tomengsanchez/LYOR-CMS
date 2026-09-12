@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Simple CMS Atom import template. Copy, edit titles/slugs/dates/body, then import.
+  CLI: php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom
+  Admin: Posts, Import (upload this .atom file).
+  Field guide: docs/samples/cms-atom-import/README.md
+
+  Required: title, content, published (for live/scheduled posts).
+  Slug = blogger:filename basename without .html (else from title).
+  First matching category term is the CMS category; extra terms become tags.
+  Internal hrefs matching another entry filename (any host) use config/app.php base_url.
+  Google /search links become plain text.
+
+  blogger:type POST (default) or PAGE.
+  blogger:status LIVE (published; future published = scheduled) or DRAFT.
+  PAGE entries are skipped unless include-pages is on.
+  Existing slugs are skipped unless update is on.
+-->
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:blogger="http://schemas.google.com/blogger/2018">
+  <title>Simple CMS sample import</title>
+
+  <!-- 1. Backdated POST: published in the past → live immediately, date kept. -->
+  <entry>
+    <title>Sample backdated post</title>
+    <content type="html"><![CDATA[
+<p>This post is <strong>already live</strong> because <code>published</code> is in the past. The public date stays 1 March 2024.</p>
+<p>Internal links are rewritten from the old path to this site’s <code>base_url</code>:</p>
+<ul>
+  <li><a href="https://old-site.example/2099/01/sample-scheduled-post.html">Scheduled sister post</a> (hidden on the public site until due)</li>
+  <li><a href="https://old-site.example/p/sample-import-notes.html">Import notes page</a> (import with --include-pages)</li>
+</ul>
+<p>Google wrapper links are stripped to text only: <a href="https://www.google.com/search?q=sample+import">sample import</a>.</p>
+<h2>Keep HTML simple</h2>
+<p>Allowed tags include p, headings h2–h6, lists, blockquote, links, and emphasis. Inline <span style="color:red">style attributes</span> are removed on import.</p>
+]]></content>
+    <published>2024-03-01T08:00:00Z</published>
+    <category term="Sample Import"/>
+    <category term="Getting Started"/>
+    <blogger:type>POST</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <blogger:filename>/2024/03/sample-backdated-post.html</blogger:filename>
+    <blogger:metaDescription>A live post whose publish date is in the past (backdated).</blogger:metaDescription>
+  </entry>
+
+  <!-- 2. Scheduled POST: published in the future → status published, not public until that datetime. -->
+  <entry>
+    <title>Sample scheduled post</title>
+    <content type="html"><![CDATA[
+<p>This post is <strong>scheduled</strong>. Editors see it in admin; visitors do not until 15 January 2099 (site timezone).</p>
+<p>Related: <a href="https://old-site.example/2024/03/sample-backdated-post.html">the backdated sample</a>.</p>
+<p>No cron job is required. Each public request checks <code>published_at</code>.</p>
+]]></content>
+    <published>2099-01-15T09:00:00Z</published>
+    <category term="Sample Import"/>
+    <blogger:type>POST</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <blogger:filename>/2099/01/sample-scheduled-post.html</blogger:filename>
+    <blogger:metaDescription>A published post that stays off the public site until the future datetime.</blogger:metaDescription>
+  </entry>
+
+  <!-- 3. DRAFT POST: imported as draft; published_at is cleared. -->
+  <entry>
+    <title>Sample draft post</title>
+    <content type="html"><![CDATA[
+<p>This entry uses <code>blogger:status</code> DRAFT, so it lands in admin as a draft and is not public.</p>
+]]></content>
+    <published>2024-06-01T00:00:00Z</published>
+    <category term="Sample Import"/>
+    <blogger:type>POST</blogger:type>
+    <blogger:status>DRAFT</blogger:status>
+    <blogger:filename>/2024/06/sample-draft-post.html</blogger:filename>
+    <blogger:metaDescription>Imported as a draft.</blogger:metaDescription>
+  </entry>
+
+  <!-- 4. PAGE: skipped unless include-pages is on. Still used to rewrite /p/sample-import-notes.html links. -->
+  <entry>
+    <title>Sample import notes</title>
+    <content type="html"><![CDATA[
+<p>This is a <strong>PAGE</strong> entry. Default import skips it so designed About/FAQ pages are not overwritten.</p>
+<p>To write it as <code>/p/sample-import-notes</code>, run with <code>--include-pages</code> (and <code>--update</code> if the slug already exists).</p>
+]]></content>
+    <published>2024-03-01T08:00:00Z</published>
+    <blogger:type>PAGE</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <blogger:filename>/p/sample-import-notes.html</blogger:filename>
+    <blogger:metaDescription>Notes page for the Atom import template.</blogger:metaDescription>
+  </entry>
+</feed>

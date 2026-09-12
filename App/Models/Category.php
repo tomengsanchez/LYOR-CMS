@@ -28,6 +28,18 @@ class Category
         return $row ?: null;
     }
 
+    public static function findByName(string $name): ?object
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return null;
+        }
+        $stmt = Database::getInstance()->prepare('SELECT * FROM cms_categories WHERE LOWER(name) = LOWER(?) LIMIT 1');
+        $stmt->execute([$name]);
+        $row = $stmt->fetch(\PDO::FETCH_OBJ);
+        return $row ?: null;
+    }
+
     public static function create(array $data): int
     {
         $db = Database::getInstance();

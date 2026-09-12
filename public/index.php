@@ -96,6 +96,8 @@ $router->post('/admin/posts/update/{id}', 'PostController@update');
 $router->post('/admin/posts/delete/{id}', 'PostController@delete');
 $router->post('/admin/posts/duplicate/{id}', 'PostController@duplicate');
 $router->post('/admin/posts/bulk', 'PostController@bulk');
+$router->get('/admin/posts/import', 'PostController@importForm');
+$router->post('/admin/posts/import', 'PostController@importStore');
 $router->post('/admin/posts/restore/{id}/{revisionId}', 'RevisionController@restorePost');
 
 // Admin — Content library search

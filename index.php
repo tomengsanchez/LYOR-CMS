@@ -1,3 +1,3 @@
 <?php
-// Redirect to public entry point - configure your web server document root to /public/ for production
+// Front controller when DocumentRoot is the project root (required for this app).
 require __DIR__ . '/public/index.php';

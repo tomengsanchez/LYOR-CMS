@@ -2,7 +2,7 @@
 namespace App\Controllers;
 
 use App\AdminPath;
-
+use App\AtomFeedImporter;
 use App\ContentPassword;
 use App\Flash;
 use App\ListConfig;
@@ -10,6 +10,7 @@ use App\ListHelper;
 use App\Models\Category;
 use App\Models\Media;
 use App\Models\Post;
+use Core\Auth;
 use Core\Controller;
 
 class PostController extends Controller
@@ -247,6 +248,90 @@ class PostController extends Controller
             Flash::error('Unknown bulk action.');
         }
         $this->redirect(AdminPath::url('posts'));
+    }
+
+    public function importForm(): void
+    {
+        $this->requireCapability('add_posts');
+        $this->view('posts/import');
+    }
+
+    public function importStore(): void
+    {
+        $this->validateCsrf();
+        $this->requireCapability('add_posts');
+        $update = !empty($_POST['update_existing']);
+        $includePages = !empty($_POST['include_pages']);
+        $dryRun = !empty($_POST['dry_run']);
+        if ($update && !Auth::can('edit_posts')) {
+            Flash::error('Updating existing posts needs the edit_posts capability.');
+            $this->redirect(AdminPath::url('posts/import'));
+            return;
+        }
+        if ($includePages && !Auth::canAny(['add_pages', 'edit_pages'])) {
+            Flash::error('Including PAGE entries needs add_pages or edit_pages.');
+            $this->redirect(AdminPath::url('posts/import'));
+            return;
+        }
+        $file = $_FILES['feed'] ?? null;
+        if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            Flash::error('Choose an Atom or XML feed file.');
+            $this->redirect(AdminPath::url('posts/import'));
+            return;
+        }
+        if ((int) ($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+            Flash::error('Upload failed. Try a smaller file (max 8 MB).');
+            $this->redirect(AdminPath::url('posts/import'));
+            return;
+        }
+        $tmp = (string) ($file['tmp_name'] ?? '');
+        $size = (int) ($file['size'] ?? 0);
+        $name = strtolower((string) ($file['name'] ?? ''));
+        if ($tmp === '' || !is_uploaded_file($tmp)) {
+            Flash::error('Upload failed.');
+            $this->redirect(AdminPath::url('posts/import'));
+            return;
+        }
+        if ($size <= 0 || $size > AtomFeedImporter::MAX_BYTES) {
+            Flash::error('Feed must be between 1 byte and 8 MB.');
+            $this->redirect(AdminPath::url('posts/import'));
+            return;
+        }
+        $ext = pathinfo($name, PATHINFO_EXTENSION);
+        if (!in_array($ext, ['atom', 'xml'], true)) {
+            Flash::error('Use a .atom or .xml feed export.');
+            $this->redirect(AdminPath::url('posts/import'));
+            return;
+        }
+        $xml = file_get_contents($tmp);
+        if (!is_string($xml) || trim($xml) === '') {
+            Flash::error('Could not read the uploaded feed.');
+            $this->redirect(AdminPath::url('posts/import'));
+            return;
+        }
+        $result = AtomFeedImporter::importXml($xml, [
+            'update' => $update,
+            'include_pages' => $includePages,
+            'dry_run' => $dryRun,
+            'author_id' => (int) Auth::id(),
+        ]);
+        if (!empty($result['error']) && (int) $result['created'] === 0 && (int) $result['updated'] === 0) {
+            Flash::error((string) $result['error']);
+            $this->redirect(AdminPath::url('posts/import'));
+            return;
+        }
+        $prefix = $dryRun ? 'Dry run: ' : '';
+        $msg = $prefix . (int) $result['created'] . ' created, '
+            . (int) $result['updated'] . ' updated, '
+            . (int) $result['skipped'] . ' skipped'
+            . ' (' . (int) $result['backdated'] . ' backdated, '
+            . (int) $result['scheduled'] . ' scheduled).';
+        if (!empty($result['errors'])) {
+            Flash::warning($msg . ' Some rows failed.');
+        } else {
+            Flash::success($msg);
+        }
+        $this->redirect(AdminPath::url('posts/import'));
     }
 
     protected function csrfRedirectUrl(): string

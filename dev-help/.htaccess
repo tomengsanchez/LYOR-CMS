@@ -2,7 +2,7 @@ DirectoryIndex index.php
 
 # Developer guide is not behind PAPeR login.
 # Allow only local connections (typical XAMPP/Laragon on this machine).
-# Prefer production DocumentRoot = public/ so this folder is not web-served at all.
+# DocumentRoot is the project root; this folder stays localhost-only.
 <IfModule mod_authz_core.c>
     Require local
 </IfModule>

@@ -13,7 +13,7 @@ What to configure for local, staging, and production. **Never commit secrets** (
 | `config/database-sample.php` | Template DB credentials | Yes |
 | `config/database.php` | Live PDO DSN credentials | **No** (local/deploy) |
 | `config/app-sample.php` | Optional `base_url` template | Yes |
-| `config/app.php` | Optional `base_url` for subfolder installs; CORS `allowed_origins` (include `http://cms.local` for local API clients); optional `security_headers.csp` override (default already allows Maps + Video embeds) | Usually no |
+| `config/app.php` | Optional `base_url` for subfolder installs **and** Atom import link rewriting; CORS `allowed_origins` (include `http://cms.local` for local API clients); optional `security_headers.csp` override (default already allows Maps + Video embeds) | Usually no |
 | `.env.playwright.example` | Playwright `BASE_URL`, admin creds template | Yes |
 | `.env.playwright` | Local E2E secrets | **No** (gitignored) |
 | `composer.json` / `vendor/` | PHP deps (mPDF) | lock yes; vendor via `composer install` |
@@ -48,7 +48,7 @@ Key/value store (`App\Models\AppSettings`). Managed mainly via System / Settings
 ### General (`App\GeneralSettings` + branding via `App\Models\AppSettings`)
 - Org **timezone**, **region**
 - Branding: `app_name`, `company_name`, `app_logo_path`
-- **Public site theme** (`App\PublicTheme`): presets (incl. **editorial**/crimson, amber/indigo/coral/mint), fonts/size/line height, radius, widths (default **full** 1320px), color mode, header/footer, button/shadow/link/spacing, sticky header, show admin link, custom colors. Editorial magazine options: `pub_theme_chrome` (`default`|`editorial`), `pub_theme_blog_kicker`, `pub_theme_date_format`, `pub_theme_show_site_tagline`; checkbox `pub_theme_apply_editorial_pack` applies the reusable style pack. Blog list: `pub_theme_blog_list_style` (list/grid/cards/magazine/compact), columns, image ratio, excerpt/read-more/category/view-switcher. Live editor: `/admin/customize`. **Style pack upload** (`App\ThemeStylePack`): CMS zip (`cms-theme.json` + optional `extra.css`) or WordPress theme zip (colors/metadata only); bundled packs include **Manly** (`?pack=manly`), **Pulse** (`?pack=pulse`), and **Enterprise** (`?pack=enterprise`; can seed empty widget areas); settings keys `pub_theme_pack_name` / `pub_theme_pack_source` / `pub_theme_pack_css` / library; requires PHP `zip` extension.
+- **Public site theme** (`App\PublicTheme`): presets (incl. **editorial**/crimson, amber/indigo/coral/mint), fonts/size/line height, radius, widths (default **full** 1320px), color mode, header/footer, button/shadow/link/spacing, sticky header, show admin link, custom colors. Editorial magazine options: `pub_theme_chrome` (`default`|`editorial`), `pub_theme_blog_kicker`, `pub_theme_date_format`, `pub_theme_show_site_tagline`; checkbox `pub_theme_apply_editorial_pack` applies the reusable style pack. Blog list: `pub_theme_blog_list_style` (list/grid/cards/magazine/compact), columns, image ratio, excerpt/read-more/category/view-switcher. Live editor: `/admin/customize`. **Style pack upload** (`App\ThemeStylePack`): CMS zip (`cms-theme.json` + optional `extra.css`) or WordPress theme zip (colors/metadata only); bundled packs include **Manly** (`?pack=manly`), **Pulse** (`?pack=pulse`), **Enterprise** (`?pack=enterprise`; can seed empty widget areas), and **The Filipino Men** (`?pack=filipino-men`; paper journal); settings keys `pub_theme_pack_name` / `pub_theme_pack_source` / `pub_theme_pack_css` / library; requires PHP `zip` extension.
 - **Per content:** `cms_pages.content_layout`, `cms_posts.content_layout`, `cms_pages.parent_id`
 - **Reading:** `reading_show_on_front`, `reading_page_on_front`, `reading_posts_per_page`
 - **Discussion:** `discussion_comments_enabled`, `discussion_moderation`, `discussion_require_name_email`, `discussion_show_sidebar`, `discussion_comment_rate_limit` (max comments per IP per hour; 0 = unlimited)
@@ -80,8 +80,8 @@ When adding a setting: document it here, prefer UI over raw SQL, and note backup
 | `date.timezone` | Prefer org timezone via app (`UserTime`); keep php.ini sensible |
 | `upload_max_filesize` / `post_max_size` | Large enough for media library uploads |
 | `max_execution_time` | Raise for large CLI restore/backup |
-| Document root | Point to `public/` when possible; root `.htaccess` can forward |
-| Local hostname | XAMPP: `cms.local` → `C:/xampp/htdocs/cms/public` in **Apache** `httpd-vhosts.conf` + Windows hosts. Not a file in this repo. |
+| Document root | **Project root** (not `public/`). Root `.htaccess` forwards to `index.php` and blocks internals. |
+| Local hostname | XAMPP: `cms.local` → `C:/xampp/htdocs/cms` in **Apache** `httpd-vhosts.conf` + Windows hosts. Not a file in this repo. |
 
 ---
 
@@ -93,7 +93,7 @@ When adding a setting: document it here, prefer UI over raw SQL, and note backup
 | Traffic prune | `php cli/prune_live_traffic.php` | Per retention policy (e.g. daily/weekly) |
 | Backup | `php cli/backup.php` | At least daily in production; copy off-server |
 
-Working directory must be **project root**.
+Working directory must be **project root**. Scheduled **posts** do not use cron: public lists hide a published post until `published_at` is due (`Post::liveSql`).
 
 ---
 
@@ -101,11 +101,11 @@ Working directory must be **project root**.
 
 | Item | Local | Staging | Production |
 |------|-------|---------|------------|
-| Hostname / docroot | `http://cms.local` → `public/` (machine Apache vhost; not in repo) | Staging host | Production host |
+| Hostname / docroot | `http://cms.local` → project root (machine Apache vhost; not in repo) | Staging host, project-root docroot | Production host, project-root docroot |
 | `config/database.php` | Dev DB | Staging DB | Prod DB |
 | Default `admin` / `admin123` | OK | Change | **Must change** (deploy checks) |
 | Email provider | `log` or test SMTP | Real test inbox | Production provider |
 | 2FA | Optional | Recommended | Recommended |
-| `dev-help/` exposed | Localhost OK (`Require local`) | Restrict | **Not public** (prefer `public/` docroot; see DEPLOYMENT §4.1) |
+| `dev-help/` exposed | Localhost OK (`Require local` + root `.htaccess`) | Restrict | **Not public** (localhost-only rules; do not expose remotely) |
 | Backup offsite | Optional | Yes | **Required** |
 | HTTPS | Optional | Yes | **Required** |

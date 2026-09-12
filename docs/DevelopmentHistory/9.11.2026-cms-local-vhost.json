@@ -1,12 +1,12 @@
 {
   "date": "2026-09-11",
-  "title": "Serve Simple CMS at http://cms.local via machine Apache vhost",
-  "summary": "Point XAMPP httpd-vhosts.conf DocumentRoot at public/ and add Windows hosts 127.0.0.1 cms.local. Do not ship a vhost file in the repo. CORS allow-list includes http://cms.local. Docs: DEVELOPMENTGUIDE, DEPLOYMENT, CONFIGURATION, September CHANGES.",
+  "title": "Serve Simple CMS at http://cms.local from project-root DocumentRoot",
+  "summary": "XAMPP httpd-vhosts.conf DocumentRoot is C:/xampp/htdocs/cms (project root, not public/). Windows hosts 127.0.0.1 cms.local. Do not ship a vhost file in the repo. CORS allow-list includes http://cms.local. Docs: DEVELOPMENTGUIDE, DEPLOYMENT, CONFIGURATION, September CHANGES.",
   "changes": [
     {
       "area": "web-server",
       "items": [
-        "C:/xampp/apache/conf/extra/httpd-vhosts.conf — ServerName cms.local, DocumentRoot C:/xampp/htdocs/cms/public",
+        "C:/xampp/apache/conf/extra/httpd-vhosts.conf — ServerName cms.local, DocumentRoot C:/xampp/htdocs/cms",
         "Windows hosts — 127.0.0.1 cms.local"
       ]
     },

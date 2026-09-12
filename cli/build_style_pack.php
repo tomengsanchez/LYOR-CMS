@@ -9,6 +9,7 @@
  *   php cli/build_style_pack.php manly
  *   php cli/build_style_pack.php pulse
  *   php cli/build_style_pack.php enterprise
+ *   php cli/build_style_pack.php filipino-men
  */
 $root = dirname(__DIR__);
 
@@ -42,6 +43,11 @@ $known = [
         'dir' => 'cms-style-pack-enterprise',
         'zip' => 'cms-style-pack-enterprise.zip',
         'readme' => "Enterprise\n==========\n\nModern navy / slate professional pack. Header, After header, Homepage, and After content starter widgets (empty areas only).\n\n1. Edit cms-theme.json + extra.css as needed.\n2. Re-zip with files at the ARCHIVE ROOT.\n3. Import in Appearance → Customize.\n\nNot a WordPress PHP theme.\n",
+    ],
+    'filipino-men' => [
+        'dir' => 'cms-style-pack-filipino-men',
+        'zip' => 'cms-style-pack-filipino-men.zip',
+        'readme' => "The Filipino Men\n================\n\nWarm paper journal for everyday Filipino manhood. Editorial chrome, magazine essays.\n\n1. Edit cms-theme.json + extra.css as needed.\n2. Re-zip with files at the ARCHIVE ROOT.\n3. Import in Appearance → Customize.\n\nSeed chrome (no post import): php cli/seed_filipino_men_site.php\n\nNot a WordPress PHP theme.\n",
     ],
 ];
 

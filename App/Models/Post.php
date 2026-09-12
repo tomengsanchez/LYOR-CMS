@@ -390,7 +390,11 @@ class Post
     public static function create(array $data): int
     {
         $db = Database::getInstance();
-        $slug = CmsSlug::unique($db, 'cms_posts', CmsSlug::from($data['title'] ?? '', 'post'));
+        $slugSource = trim((string) ($data['slug'] ?? ''));
+        if ($slugSource === '') {
+            $slugSource = (string) ($data['title'] ?? '');
+        }
+        $slug = CmsSlug::unique($db, 'cms_posts', CmsSlug::from($slugSource, 'post'));
         if (CmsSlug::conflictsWithOtherContent($db, 'cms_posts', $slug)) {
             return 0;
         }
@@ -400,6 +404,10 @@ class Post
             !empty($data['featured_image_id']) ? (int) $data['featured_image_id'] : null
         );
         $sticky = !empty($data['is_sticky']) ? 1 : 0;
+        $authorId = (int) ($data['author_id'] ?? 0);
+        if ($authorId <= 0) {
+            $authorId = (int) Auth::id();
+        }
         $stmt = $db->prepare('
             INSERT INTO cms_posts (title, slug, excerpt, body, blocks_json, category_id, featured_image_id, meta_title, meta_description, llm_summary, citation_snippet, faq_json, robots_noindex, content_layout, status, is_sticky, password_hash, published_at, author_id)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -424,7 +432,7 @@ class Post
             $sticky,
             ContentPassword::hashFromWrite($data, null),
             $publishedAt,
-            Auth::id(),
+            $authorId,
         ]);
         $id = (int) $db->lastInsertId();
         Tag::syncPostTags($id, $data['tags'] ?? '');

@@ -59,3 +59,22 @@ function paper_cli_has_flag(array $argv, string $name): bool
     }
     return false;
 }
+
+/**
+ * @param list<mixed> $argv
+ */
+function paper_cli_arg_value(array $argv, string $name, ?string $default = null): ?string
+{
+    $flag = paper_cli_normalize_long_flag($name);
+    $prefix = $flag . '=';
+    foreach ($argv as $arg) {
+        if (!is_string($arg)) {
+            continue;
+        }
+        $arg = trim($arg);
+        if (strpos($arg, $prefix) === 0) {
+            return substr($arg, strlen($prefix));
+        }
+    }
+    return $default;
+}

@@ -72,7 +72,7 @@ Legacy paths (`/login`, `/pages`, …) **301 redirect** to `/admin/...` via `Leg
 │   └── e2e/                  # Playwright (cms-smoke, cms-wp-extended)
 ├── docs/                     # This guide, CHANGES, API, Postman
 ├── bootstrap.php
-└── index.php                 # Forwards to public/ when docroot = project root
+└── index.php                 # Front controller when DocumentRoot = project root
 ```
 
 ---
@@ -184,7 +184,7 @@ Format: PHP file returning `name`, `up`, `down` callables. DDL steps should be i
 | Site SEO | `AppSettings::getSiteSeoConfig()` | sitemap, RSS, JSON export, llms.txt, AI crawlers, OG defaults, AI citation/E-E-A-T/topic clusters |
 | Content unlock | `ContentPassword` | `cms_content_pass_key` (HMAC for visitor unlock cookies; created on first use) |
 
-Preview unsaved theme: `/?theme_preview=1` (admin only). **Customizer:** `/admin/customize` — sidebar controls + iframe (`customize_frame=1`), session sync via `POST /admin/customize/preview`, publish via `POST /admin/customize/publish` (`CustomizeController`, `theme-preview-bridge.js`). **Style packs:** library at `public/uploads/theme-packs/library/{id}/`; activate/delete/install-bundled + import/export/sample routes on `/admin/customize/*-style-pack`. Bundled zips: example, Play · Build · Sound, **Manly**, **Pulse**, **Enterprise** (can seed empty widget areas). Rebuild zips: `php cli/build_style_pack.php`.
+Preview unsaved theme: `/?theme_preview=1` (admin only). **Customizer:** `/admin/customize` — sidebar controls + iframe (`customize_frame=1`), session sync via `POST /admin/customize/preview`, publish via `POST /admin/customize/publish` (`CustomizeController`, `theme-preview-bridge.js`). **Style packs:** library at `public/uploads/theme-packs/library/{id}/`; activate/delete/install-bundled + import/export/sample routes on `/admin/customize/*-style-pack`. Bundled zips: example, Play · Build · Sound, **Manly**, **Pulse**, **Enterprise**, **The Filipino Men** (paper journal; `php cli/seed_filipino_men_site.php` for chrome-only site; essays via `php cli/import_atom_feed.php`). Rebuild zips: `php cli/build_style_pack.php`.
 
 ---
 
@@ -309,6 +309,7 @@ Postman: `docs/postman/Simple-CMS-API.postman_collection.json`.
 php tests/cli/cms_wp_features_smoke_test.php
 php tests/cli/cms_wp_extended_smoke_test.php
 php tests/cli/cms_theme_style_pack_smoke_test.php
+php tests/cli/cms_atom_import_smoke_test.php
 php tests/cli/cms_pages_smoke_test.php
 php tests/cli/cms_routes_smoke_test.php
 php tests/cli/cms_rss_smoke_test.php
@@ -318,7 +319,7 @@ php tests/cli/cms_revisions_redirects_search_smoke_test.php
 php tests/cli/cms_builder_templates_write_api_smoke_test.php
 ```
 
-Or: `npm run test:cms-wp-features`, `npm run test:cms-wp-extended`, `npm run test:cms-newsletter`, `npm run test:cms-rss`, `npm run test:cms-llm`, `npm run test:cms-media-responsive`, `npm run test:cms-inline-media`, `npm run test:cms-revisions-redirects-search`, `npm run test:cms-builder-templates-write-api`.
+Or: `npm run test:cms-wp-features`, `npm run test:cms-wp-extended`, `npm run test:cms-newsletter`, `npm run test:cms-rss`, `npm run test:cms-llm`, `npm run test:cms-media-responsive`, `npm run test:cms-inline-media`, `npm run test:cms-revisions-redirects-search`, `npm run test:cms-builder-templates-write-api`, `npm run test:cms-atom-import`.
 
 ### Playwright E2E
 
@@ -333,6 +334,8 @@ ADMIN_PASS=admin123
 ```bash
 npm run test:e2e:cms          # headless (smoke + wp-extended + pulse UX + newsletter)
 npm run test:e2e:cms:headed # watch mode
+php cli/seed_filipino_men_site.php        # The Filipino Men chrome (pages/menu/theme; no essay import)
+php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom   # Atom template (backdate + schedule; links use base_url)
 npm run test:e2e:cms-pulse-ux             # Pulse widgets through password-protect (BASE_URL)
 npm run test:e2e:cms-newsletter           # Subscribe form + admin list/confirm/delete (BASE_URL)
 npm run test:e2e:cms-builder-tomeng       # sample post with all column layouts
@@ -348,10 +351,11 @@ npm run test:e2e:cms-manhood-exclusive-rooms  # sample post with external image 
 ## 11. Configuration
 
 - **Database:** `config/database.php` from `config/database-sample.php`
-- **Base URL:** `config/app.php` → `base_url` for subfolder installs (leave empty when the host is the site root, e.g. `http://cms.local`)
-- **Document root:** Point the web server at `public/` (recommended)
-- **Local XAMPP (`cms.local`):** Edit the **machine** Apache vhost (`C:/xampp/apache/conf/extra/httpd-vhosts.conf`) and Windows `hosts` (`127.0.0.1 cms.local`). Do **not** add a vhost file inside this repo — that is a deploy-server concern, not something we ship with the app. Restart Apache after changing the vhost. Playwright `BASE_URL` defaults to `http://cms.local`.
+- **Base URL:** `config/app.php` → `base_url` for subfolder installs (leave empty when the host is the site root, e.g. `http://cms.local`). The Atom importer rewrites internal links using this value so the same feed works on another host.
+- **Document root:** The **project root** (this repo), not `public/`. Root `index.php` + `.htaccess` forward into `public/index.php` and block `config/`, `App/`, `Core/`, `storage/`, `logs/`, `cli/`, `database/`, `tests/`, `vendor/`. Static files stay at `/public/assets/…`.
+- **Local XAMPP (`cms.local`):** Edit the **machine** Apache vhost (`C:/xampp/apache/conf/extra/httpd-vhosts.conf`) — `DocumentRoot` and `<Directory>` must be `C:/xampp/htdocs/cms` — plus Windows `hosts` (`127.0.0.1 cms.local`). Do **not** add a vhost file inside this repo. Restart Apache after changing the vhost. Playwright `BASE_URL` defaults to `http://cms.local`.
 - **CORS:** `config/app.php` `cors.allowed_origins` includes `http://cms.local` for local API clients
+- **The Filipino Men (local journal chrome):** `php cli/seed_filipino_men_site.php` or `npm run seed:filipino-men`. Applies the paper-journal pack, empty desks, and pages. Does **not** import `xyz/feed.atom` essays. Import from the template `docs/samples/cms-atom-import/sample.atom`, or a Blogger dump such as `xyz/feed.atom`, via `php cli/import_atom_feed.php` (or Posts → Import).
 
 ---
 

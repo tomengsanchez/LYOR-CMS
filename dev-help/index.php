@@ -56,13 +56,13 @@ $pageTitle = 'PAPeR · Developer guide';
             </p>
             <p class="lead">
                 This guide lives in <code>dev-help/</code> and is <strong>not</strong> behind the app login.
-                Apache rules allow <strong>localhost only</strong> when the document root is the project root; production should use
-                <code>public/</code> as the document root so this folder is not web-served (see <code>docs/DEPLOYMENT.md</code> §4.1).
+                Document root is the <strong>project root</strong> (not <code>public/</code>). Apache rules allow
+                <strong>localhost only</strong> for this folder (see <code>docs/DEPLOYMENT.md</code>).
             </p>
             <p class="note">
-                <strong>Hosting path:</strong> if your web server document root is only <code>public/</code>, URLs like
-                <code><?= htmlspecialchars($devHelpBase) ?>/</code> will not resolve unless you add a vhost alias to this folder or
-                serve the project from the repository root (common in local XAMPP when <code>htdocs</code> is the app root).
+                <strong>Hosting path:</strong> serve the repository root so URLs like
+                <code><?= htmlspecialchars($devHelpBase) ?>/</code> resolve. Do not point the vhost at
+                <code>public/</code> for this app.
             </p>
         </header>
 
