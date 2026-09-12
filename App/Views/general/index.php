@@ -9,6 +9,7 @@ $reading = $reading ?? \App\ReadingSettings::get();
 $discussion = $discussion ?? \App\DiscussionSettings::get();
 $newsletter = $newsletter ?? \App\NewsletterSettings::get();
 $permalinks = $permalinks ?? \App\PermalinkSettings::get();
+$google = $google ?? \App\GoogleSettings::get();
 $themePresets = \App\PublicTheme::presets();
 $mediaImages = $mediaImages ?? [];
 $helpChat = $helpChat ?? \App\HelpChatSettings::get();
@@ -607,6 +608,41 @@ ob_start();
                 </div>
             </div>
             <hr class="my-4">
+            <h6 class="mb-3">Google (Analytics, Ads, Search)</h6>
+            <p class="text-muted small">Paste IDs only — the public site loads Google’s official scripts. Theme preview and the Customizer iframe do not fire tags. Invalid IDs are ignored on save.</p>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="googleAnalyticsId">Google Analytics (GA4)</label>
+                    <input type="text" name="google_analytics_id" id="googleAnalyticsId" class="form-control" maxlength="24"
+                        value="<?= htmlspecialchars($google->analytics_id ?? '') ?>" placeholder="G-XXXXXXXXXX" autocomplete="off">
+                    <small class="text-muted d-block mt-1">Measurement ID from <a href="https://analytics.google.com/" target="_blank" rel="noopener">Google Analytics</a>. Legacy <code>UA-XXXX-Y</code> is also accepted.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="googleAdsId">Google Ads</label>
+                    <input type="text" name="google_ads_id" id="googleAdsId" class="form-control" maxlength="24"
+                        value="<?= htmlspecialchars($google->ads_id ?? '') ?>" placeholder="AW-0000000000" autocomplete="off">
+                    <small class="text-muted d-block mt-1">Conversion / remarketing ID from <a href="https://ads.google.com/" target="_blank" rel="noopener">Google Ads</a> (starts with <code>AW-</code>).</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="googleAdsenseClient">AdSense</label>
+                    <input type="text" name="google_adsense_client" id="googleAdsenseClient" class="form-control" maxlength="32"
+                        value="<?= htmlspecialchars($google->adsense_client ?? '') ?>" placeholder="ca-pub-0000000000000000" autocomplete="off">
+                    <small class="text-muted d-block mt-1">Publisher ID from <a href="https://www.google.com/adsense/" target="_blank" rel="noopener">AdSense</a> for Auto ads. Create ad units in AdSense after the site is approved.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="seoGoogleSiteVerification">Search Console verification</label>
+                    <input type="text" name="seo_google_site_verification" id="seoGoogleSiteVerification" class="form-control" maxlength="120"
+                        value="<?= htmlspecialchars($siteSeo->google_site_verification ?? '') ?>" placeholder="meta tag content only" autocomplete="off">
+                    <small class="text-muted d-block mt-1">HTML-tag <code>content</code> value only (not the full tag). Then add this sitemap in Search Console: <code><?= htmlspecialchars(($baseUrl !== '' ? $baseUrl : '') . '/sitemap.xml') ?></code></small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="googleCseCx">Programmable Search (optional)</label>
+                    <input type="text" name="google_cse_cx" id="googleCseCx" class="form-control" maxlength="80"
+                        value="<?= htmlspecialchars($google->cse_cx ?? '') ?>" placeholder="cx engine ID" autocomplete="off">
+                    <small class="text-muted d-block mt-1">Engine ID from <a href="https://programmablesearchengine.google.com/" target="_blank" rel="noopener">Programmable Search</a>. Adds Google results on <code>/search</code> below the built-in CMS results.</small>
+                </div>
+            </div>
+            <hr class="my-4">
             <h6 class="mb-3">SEO &amp; LLM (site-wide defaults)</h6>
             <p class="text-muted small">Fallbacks for pages and posts without their own SEO fields. Per-page overrides remain in <strong>Pages</strong>.</p>
             <div class="row g-3">
@@ -646,11 +682,6 @@ ob_start();
                         <input type="text" name="seo_twitter_handle" class="form-control" maxlength="15"
                             value="<?= htmlspecialchars($siteSeo->twitter_handle ?? '') ?>" placeholder="yourbrand">
                     </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Google site verification</label>
-                    <input type="text" name="seo_google_site_verification" class="form-control" maxlength="120"
-                        value="<?= htmlspecialchars($siteSeo->google_site_verification ?? '') ?>" placeholder="meta tag content only">
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Site keywords</label>

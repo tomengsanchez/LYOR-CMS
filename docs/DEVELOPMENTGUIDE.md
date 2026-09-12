@@ -47,6 +47,7 @@ Legacy paths (`/login`, `/pages`, …) **301 redirect** to `/admin/...` via `Leg
 │   ├── DiscussionSettings.php
 │   ├── NewsletterSettings.php
 │   ├── PermalinkSettings.php
+│   ├── GoogleSettings.php    # Analytics, Ads, AdSense, CSE IDs
 │   ├── PublicTheme.php       # Site theme customizer
 │   ├── ThemeStylePack.php    # Style pack zip import/export
 │   ├── PublicToc.php         # Heading ids + on-page TOC
@@ -127,7 +128,7 @@ API handlers: `'Api\PostController@listApi'` → `App\Controllers\Api\PostContro
 | `cms_widgets` | Public widget areas (header / after_header / home / sidebar / after_content / footer) |
 | `cms_newsletter_subscribers` | Newsletter list (pending / confirmed / unsubscribed + confirm/unsub tokens) |
 
-Settings for reading, discussion, newsletter, permalinks, and public theme are stored in **app_settings** (not separate tables).
+Settings for reading, discussion, newsletter, permalinks, Google tags, and public theme are stored in **app_settings** (not separate tables).
 
 ---
 
@@ -180,6 +181,7 @@ Format: PHP file returning `name`, `up`, `down` callables. DDL steps should be i
 | Discussion | `DiscussionSettings` | comments, moderation, sidebar, **comment_rate_limit** |
 | Newsletter | `NewsletterSettings` | enabled, double opt-in, **rate_limit** |
 | Permalinks | `PermalinkSettings` | page/post URL patterns |
+| Google | `GoogleSettings` | `google_analytics_id`, `google_ads_id`, `google_adsense_client`, `google_cse_cx` (IDs only; Search Console stays `seo_google_site_verification`) |
 | Public theme | `PublicTheme` / `ThemeStylePack` | presets, fonts, widths, color mode; style-pack zip import/export |
 | Site SEO | `AppSettings::getSiteSeoConfig()` | sitemap, RSS, JSON export, llms.txt, AI crawlers, OG defaults, AI citation/E-E-A-T/topic clusters |
 | Content unlock | `ContentPassword` | `cms_content_pass_key` (HMAC for visitor unlock cookies; created on first use) |
@@ -200,7 +202,7 @@ Key CMS capabilities: `view_pages`, `view_posts`, `moderate_comments`, `manage_c
 
 **External files only** under `public/assets/js/`. Views may output JSON config blocks for JS; no inline `onclick` / behavior scripts.
 
-Examples: `public/assets/js/content/blocks.js`, `public/assets/js/content/bulk-list.js`, `public/assets/js/builder/*.js` (boot `editor.js` plus `ns.js`, `history.js`, `model.js`, `styles.js`, `canvas.js`, `layers.js`, `dnd.js`, `actions.js`, `wysiwyg.js`, `panel.js`, `save.js`, `ui.js`), `public/assets/js/widgets/form.js`, `public/assets/js/public/comments.js`, `public/assets/js/public/enhance.js`.
+Examples: `public/assets/js/content/blocks.js`, `public/assets/js/content/bulk-list.js`, `public/assets/js/builder/*.js` (boot `editor.js` plus `ns.js`, `history.js`, `model.js`, `styles.js`, `canvas.js`, `layers.js`, `dnd.js`, `actions.js`, `wysiwyg.js`, `panel.js`, `save.js`, `ui.js`), `public/assets/js/widgets/form.js`, `public/assets/js/public/comments.js`, `public/assets/js/public/enhance.js`, `public/assets/js/public/google-tags.js` (gtag bootstrap from data attributes).
 
 ### Content revisions
 
@@ -310,6 +312,7 @@ php tests/cli/cms_wp_features_smoke_test.php
 php tests/cli/cms_wp_extended_smoke_test.php
 php tests/cli/cms_theme_style_pack_smoke_test.php
 php tests/cli/cms_atom_import_smoke_test.php
+php tests/cli/cms_google_settings_smoke_test.php
 php tests/cli/cms_pages_smoke_test.php
 php tests/cli/cms_routes_smoke_test.php
 php tests/cli/cms_rss_smoke_test.php
@@ -319,7 +322,7 @@ php tests/cli/cms_revisions_redirects_search_smoke_test.php
 php tests/cli/cms_builder_templates_write_api_smoke_test.php
 ```
 
-Or: `npm run test:cms-wp-features`, `npm run test:cms-wp-extended`, `npm run test:cms-newsletter`, `npm run test:cms-rss`, `npm run test:cms-llm`, `npm run test:cms-media-responsive`, `npm run test:cms-inline-media`, `npm run test:cms-revisions-redirects-search`, `npm run test:cms-builder-templates-write-api`, `npm run test:cms-atom-import`.
+Or: `npm run test:cms-wp-features`, `npm run test:cms-wp-extended`, `npm run test:cms-newsletter`, `npm run test:cms-rss`, `npm run test:cms-llm`, `npm run test:cms-media-responsive`, `npm run test:cms-inline-media`, `npm run test:cms-revisions-redirects-search`, `npm run test:cms-builder-templates-write-api`, `npm run test:cms-atom-import`, `npm run test:cms-google-settings`.
 
 ### Playwright E2E
 

@@ -1,0 +1,39 @@
+{
+  "date": "2026-09-12",
+  "title": "Admin Google Analytics, Ads, and Search settings",
+  "summary": "System → General stores Google IDs only (GA4/Ads/AdSense/CSE + existing Search Console verification). Public site loads official scripts; CSP updated; /search can show Programmable Search below CMS results.",
+  "changes": [
+    {
+      "area": "settings",
+      "items": [
+        "App\\GoogleSettings normalize/save for google_analytics_id, google_ads_id, google_adsense_client, google_cse_cx",
+        "General form Google block; Search Console verification moved from SEO (same seo_google_site_verification key)",
+        "GET /api/system/general includes google"
+      ]
+    },
+    {
+      "area": "public",
+      "items": [
+        "google_tags.php + google-tags.js (data attributes, no inline gtag)",
+        "Verification meta on every public page",
+        "CSE results-only block on /search when CX is set",
+        "Tags skipped on theme preview and Customizer iframe"
+      ]
+    },
+    {
+      "area": "security",
+      "items": [
+        "Default CSP allows official Google Analytics, Ads, AdSense, and CSE hosts",
+        "IDs only — script snippets and javascript: rejected"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "Help General / Search, CONFIGURATION, DEVELOPMENTGUIDE, API_CONTRACT, SECURITY, Postman",
+        "changes/2026-09/CHANGES.md",
+        "cms_google_settings_smoke_test"
+      ]
+    }
+  ]
+}

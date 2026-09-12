@@ -13,6 +13,7 @@ use App\Models\AppSettings;
 use App\PublicTheme;
 use App\UserUiSettings;
 use App\UserNotificationSettings;
+use App\GoogleSettings;
 
 class SettingsController extends Controller
 {
@@ -62,6 +63,7 @@ class SettingsController extends Controller
             'discussion' => DiscussionSettings::get(),
             'newsletter' => \App\NewsletterSettings::get(),
             'permalinks' => PermalinkSettings::get(),
+            'google' => GoogleSettings::get(),
             'regions' => GeneralSettings::regions(),
             'timezones' => GeneralSettings::timezones(),
         ]);

@@ -45,6 +45,8 @@ Draft/scheduled **preview** (`?preview=1`) requires an authenticated session wit
 
 **Video module:** only YouTube, Vimeo, or HTTPS `.mp4`/`.webm`/`.ogg` URLs survive normalize. Public embeds use constructed `youtube-nocookie.com` / `player.vimeo.com` iframe `src` (or a native `<video>`). The default CSP `frame-src` / `media-src` in `Core\SecurityHeaders` matches that allowlist. Section video backgrounds use the same parser and construct mute/loop query params in PHP (never a user-supplied iframe `src`). The editor canvas never loads those iframes.
 
+**Google tags (System → General):** store measurement / publisher / CSE IDs only. `GoogleSettings` rejects values that do not match `G-…` / `UA-…` / `AW-…` / `ca-pub-…` / CSE CX. The public site never accepts pasted script snippets. Default CSP `script-src` / `connect-src` / `frame-src` include official Google Analytics, Ads, AdSense, and Programmable Search hosts. Theme preview and the Customizer iframe do not inject tags.
+
 **Accordion / Tabs / Icon list / Gallery / Testimonials:** titles, icons, captions, quotes, and names are HTML-escaped. Accordion and Tabs **bodies** are allowlisted rich text (same as Text/CTA/Blurb), not raw HTML. Gallery and carousel links use `safeUrl`. Tabs use constructed radio `name`/`id` from the module id. Public UI needs no extra JS except the existing carousel script.
 
 **Inner row:** only one nested row is stored. A nested `inner_row` inside an inner column is dropped during `normalize`. Nested module markup still goes through the same type sanitizers.

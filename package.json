@@ -63,6 +63,7 @@
     "test:e2e:cms-moses-devotional:fast": "powershell -NoProfile -Command \"$env:HEADLESS='true'; $env:PW_SLOW_MO_MS='0'; if (-not $env:BASE_URL) { $env:BASE_URL='http://cms.local' }; $env:E2E_SKIP_MIGRATE='1'; npx playwright test tests/e2e/cms-moses-devotional-post.spec.ts --workers=1\"",
     "test:cms-theme-style-pack": "php tests/cli/cms_theme_style_pack_smoke_test.php",
     "test:cms-atom-import": "php tests/cli/cms_atom_import_smoke_test.php",
+    "test:cms-google-settings": "php tests/cli/cms_google_settings_smoke_test.php",
     "import:atom": "php cli/import_atom_feed.php docs/samples/cms-atom-import/sample.atom",
     "build:sample-style-pack": "php cli/build_style_pack.php",
     "seed:filipino-men": "php cli/seed_filipino_men_site.php",

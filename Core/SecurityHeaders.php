@@ -4,7 +4,8 @@ namespace Core;
 /**
  * Sends baseline HTTP security headers for browser responses.
  * CSP allows first-party assets plus known CDNs used by the layout (jsDelivr, jQuery CDN).
- * frame-src: self, Google Maps, and layout Video embeds / section video backgrounds (YouTube nocookie + Vimeo player only).
+ * frame-src: self, Google Maps, Google Ads/CSE frames, and layout Video embeds (YouTube nocookie + Vimeo).
+ * script/connect also allow Google Analytics, Ads, AdSense, and Programmable Search when configured in General.
  * media-src allows HTTPS video files for the Video module and section file backgrounds. img-src includes https: for hotlinks.
  */
 class SecurityHeaders
@@ -31,13 +32,13 @@ class SecurityHeaders
                 . "base-uri 'self'; "
                 . "form-action 'self'; "
                 . "frame-ancestors 'self'; "
-                . "frame-src 'self' https://maps.google.com https://www.google.com https://www.youtube-nocookie.com https://player.vimeo.com; "
+                . "frame-src 'self' https://maps.google.com https://www.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://cse.google.com https://www.youtube-nocookie.com https://player.vimeo.com; "
                 . "media-src 'self' https:; "
                 . "img-src 'self' data: blob: https:; "
                 . "font-src 'self' data: https://cdn.jsdelivr.net; "
-                . "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-                . "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com; "
-                . "connect-src 'self'";
+                . "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.gstatic.com; "
+                . "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://partner.googleadservices.com https://cse.google.com https://www.google.com https://www.gstatic.com; "
+                . "connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://stats.g.doubleclick.net https://www.google.com https://www.googleadservices.com https://partner.googleadservices.com https://cse.google.com";
         }
         header('Content-Security-Policy: ' . $csp);
 

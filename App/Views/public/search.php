@@ -1,4 +1,5 @@
 <?php
+use App\GoogleSettings;
 use App\Models\Post;
 use App\Permalink;
 
@@ -46,6 +47,16 @@ ob_start();
         </li>
         <?php endforeach; ?>
     </ul>
+</section>
+<?php endif; ?>
+<?php
+$googleCseCx = GoogleSettings::get()->cse_cx ?? '';
+if ($googleCseCx !== '' && trim((string) $searchQuery) !== ''):
+?>
+<section class="public-card mt-4" aria-labelledby="googleSearchHeading">
+    <h2 id="googleSearchHeading" class="h5">Google Search</h2>
+    <script async src="https://cse.google.com/cse.js?cx=<?= htmlspecialchars((string) $googleCseCx) ?>"></script>
+    <div class="gcse-searchresults-only" data-queryParameterName="q"></div>
 </section>
 <?php endif; ?>
 <?php

@@ -24,7 +24,6 @@ $llmSummary = trim((string) ($publicLlmSummary ?? ''));
 $citationSnippet = trim((string) ($publicCitationSnippet ?? ''));
 $ogLocale = str_replace('_', '-', (string) ($siteSeo->locale ?? 'en_US'));
 $twitterHandle = trim((string) ($siteSeo->twitter_handle ?? ''));
-$googleVerify = trim((string) ($siteSeo->google_site_verification ?? ''));
 $siteKeywords = trim((string) ($siteSeo->site_keywords ?? ''));
 $preferredCitation = trim((string) ($siteSeo->preferred_citation ?? ''));
 if ($llmSummary === '' && trim((string) ($siteSeo->llm_site_summary ?? '')) !== '') {
@@ -47,9 +46,6 @@ if ($llmSummary === '' && trim((string) ($siteSeo->llm_site_summary ?? '')) !== 
 <?php endif; ?>
 <?php if ($siteKeywords !== ''): ?>
 <meta name="keywords" content="<?= htmlspecialchars($siteKeywords) ?>">
-<?php endif; ?>
-<?php if ($googleVerify !== ''): ?>
-<meta name="google-site-verification" content="<?= htmlspecialchars($googleVerify) ?>">
 <?php endif; ?>
 <?php if ($jsonAlternateUrl !== ''): ?>
 <link rel="alternate" type="application/json" href="<?= htmlspecialchars($jsonAlternateUrl) ?>" title="Machine-readable document">

@@ -49,6 +49,15 @@ $isEditorial = \App\PublicTheme::isEditorialChrome($pubTheme);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($publicTitle) ?></title>
+    <?php
+    $googleVerifyMeta = trim((string) ($siteSeo->google_site_verification ?? ''));
+    if ($googleVerifyMeta !== ''):
+    ?>
+    <meta name="google-site-verification" content="<?= htmlspecialchars($googleVerifyMeta) ?>">
+    <?php endif; ?>
+    <?php if (\App\GoogleSettings::shouldInjectOnPublic()): ?>
+    <?php require __DIR__ . '/partials/google_tags.php'; ?>
+    <?php endif; ?>
     <?php if (!empty($publicShare) && is_array($publicShare)): ?>
     <?php require __DIR__ . '/partials/social_meta.php'; ?>
     <?php elseif (!empty($publicMetaDescription)): ?>

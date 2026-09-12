@@ -176,7 +176,7 @@
             "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
             "url": "{{baseUrl}}/api/system/general"
           },
-          "description": "Branding, site SEO, public theme, reading, discussion, newsletter, permalinks."
+          "description": "Branding, site SEO, public theme, reading, discussion, newsletter, permalinks, google (Analytics/Ads/CSE IDs)."
         },
         {
           "name": "Meta Error Codes",

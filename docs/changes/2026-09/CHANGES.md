@@ -1,3 +1,10 @@
+## Google Analytics, Ads, and Search settings (2026-09-12)
+
+- System → General has a **Google** block: GA4/UA measurement ID, Google Ads (`AW-`), AdSense (`ca-pub-`), Programmable Search CX, and Search Console verification (same `seo_google_site_verification` key, moved out of SEO). IDs only — junk/`javascript:` is rejected. Public layout loads official gtag/AdSense scripts via `google-tags.js` (data attributes). Tags skip theme preview and the Customizer iframe. Verification meta is on every public page. CSE results appear below built-in `/search` when CX is set.
+- Default CSP allows Google tag/ads/CSE hosts. Backup is `app_settings` (no migration). Help: General / Search. API: `GET /api/system/general` includes `google`. Smoke: `php tests/cli/cms_google_settings_smoke_test.php`.
+
+---
+
 ## Atom import spread-year (2026-09-12)
 
 - Optional `--spread-year=YYYY` (admin: **Spread publish dates across year**) spaces LIVE post `published_at` evenly from 1 January through 31 December. Oldest feed date lands in January; pages and drafts keep their feed dates. Dates still in the future stay scheduled until due.
