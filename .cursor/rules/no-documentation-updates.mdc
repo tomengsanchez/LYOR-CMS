@@ -1,0 +1,32 @@
+---
+description: Do not update project documentation. Still save Atom collection files.
+alwaysApply: true
+---
+
+# No documentation updates
+
+Skip docs by default so chats stay smaller. Do not create, edit, or append project documentation unless the user says in that message that documentation should be updated.
+
+Leave these alone:
+
+- `docs/DEVELOPMENTGUIDE.md`
+- `docs/changes/**`
+- `docs/DevelopmentHistory/**`
+- `docs/adr/**`
+- `README.md` and other `**/README.md`
+- `App/Views/help/**`
+- `docs/samples/**` guides (not Atom XML)
+- `docs/.cursorrules`
+
+Do not add “docs updated” notes, CHANGELOG entries, help copy, or development-history JSON as a side effect of a feature or content task.
+
+# Keep Atom collections
+
+Still create and save ready-to-import feeds under `docs/atoms-collections/` (new `.atom` files and edits to existing ones). That folder is content, not documentation.
+
+```text
+# ❌ BAD — content task also rewrites CHANGES / DEVELOPMENTGUIDE / Help / history JSON
+# ✅ GOOD — write docs/atoms-collections/my-post.atom and stop
+```
+
+If `/paper-checkdocs` or the user says to update docs, follow that request for that turn only.

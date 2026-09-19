@@ -44,6 +44,8 @@ The Filipino Men scheduled editorial collection demonstrates all fields:
 ```bash
 php cli/import_atom_feed.php docs/atoms-collections/the-filipino-men-sept-21-30-2026.atom --dry-run --verbose
 php cli/import_atom_feed.php docs/atoms-collections/the-filipino-men-sept-21-30-2026.atom --verbose
+php cli/import_atom_feed.php docs/atoms-collections/young-men-unused-to-hard-talk.atom --dry-run --verbose
+php cli/import_atom_feed.php docs/atoms-collections/young-men-unused-to-hard-talk.atom --verbose
 ```
 
-Blogger/WordPress-style Atom exports that use the same elements also work (example dump: `docs/atoms-collections/feed.atom`).
+Blogger/WordPress-style Atom exports that use the same elements also work (example dump: `docs/atoms-collections/feed.atom`). A one-off English editorial is `docs/atoms-collections/young-men-unused-to-hard-talk.atom` (keep its feed date; do not `--spread-year`).

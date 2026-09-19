@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-19",
+  "title": "English Atom post: young men unused to hard talk",
+  "summary": "Added a one-off English The Filipino Men Atom essay on older men avoiding uncomfortable manhood conversations, so younger men never learn to receive hard talk.",
+  "changes": [
+    {
+      "area": "content",
+      "items": [
+        "docs/atoms-collections/young-men-unused-to-hard-talk.atom",
+        "Direct-answer English essay with FAQ, SEO/AEO fields, and internal links",
+        "Primary category Manhood & Mindset; tags Mentorship, Fatherhood, Character"
+      ]
+    },
+    {
+      "area": "import",
+      "items": [
+        "Keep feed date 2026-09-19 18:30 +08:00",
+        "Do not use --spread-year",
+        "Use --update only if the slug already exists"
+      ]
+    },
+    {
+      "area": "docs",
+      "items": [
+        "atoms-collections README, sample import README, DEVELOPMENTGUIDE, CHANGES, Help Posts"
+      ]
+    }
+  ]
+}

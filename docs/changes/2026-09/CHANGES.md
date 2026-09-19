@@ -1,3 +1,9 @@
+## Hard-talk editorial Atom post (2026-09-19)
+
+- Added `docs/atoms-collections/young-men-unused-to-hard-talk.atom`: one English The Filipino Men essay (3,000+ words) on why many young men cannot receive hard manhood conversation because older men avoided it. Distinguishes truthful correction from humiliation; includes FAQ, SEO/AEO fields, and internal links. Import with feed date kept; do not use `--spread-year`. Existing slug needs `--update`. Local `config/app.php` remains `http://cms.local`. No migration, REST, or Postman change. Backup is the Atom file plus `cms_posts` after import.
+
+---
+
 ## Backup schema snapshot without legacy profiles table (2026-09-19)
 
 - `cli/backup_schema_helper.php` no longer fatals when `profiles` is missing (Simple CMS DBs). Invitation column probes run only if the table exists; CMS backups log `CMS schema (no legacy profiles table)`.
