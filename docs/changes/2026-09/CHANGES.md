@@ -1,3 +1,10 @@
+## Backup schema snapshot without legacy profiles table (2026-09-19)
+
+- `cli/backup_schema_helper.php` no longer fatals when `profiles` is missing (Simple CMS DBs). Invitation column probes run only if the table exists; CMS backups log `CMS schema (no legacy profiles table)`.
+- Fixes production: `Table '….profiles' doesn't exist` during `paper_backup_schema_snapshot()` after mysqldump/PDO dump.
+
+---
+
 ## Backup mysqldump option-file password quoting (2026-09-19)
 
 - `mysqldump` / `mysql` client credentials are written with **double-quoted** option-file values (`paper_mysql_option_file_quote` / `paper_write_mysql_client_cnf` in `cli/backup_sql_helper.php`). Passwords containing `#`, spaces, quotes, or `;` no longer truncate in the temp `.cnf`, which caused **1045 Access denied** on production while the website and `php cli/migrate.php --status` (PDO) still worked.

@@ -73,6 +73,10 @@ test.describe("CMS Pulse through password UX", () => {
 
     await page.goto(`${baseURL}/admin/posts`);
     await expect(page.locator("#postBulkForm")).toBeVisible();
+    await expect(page.locator("#postListFilters")).toBeVisible();
+    await expect(page.locator("#postFilterStatus")).toBeVisible();
+    await expect(page.getByRole("link", { name: /^Published/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^Created/ })).toBeVisible();
     await expect(page.locator("[data-bulk-apply]")).toBeDisabled();
     const firstRow = page.locator(".js-bulk-row").first();
     await firstRow.check();

@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-/** Profile invitation columns introduced in migration_064 (and used by current app code). */
+/** Profile invitation columns introduced in migration_064 (legacy PAPeR; optional on Simple CMS). */
 const PAPER_PROFILE_INVITATION_COLUMNS = [
     'invitation_rsvp',
     'invitation_reason_not_accepting',
@@ -29,16 +29,56 @@ const PAPER_PROFILE_INVITATION_COLUMNS = [
 ];
 
 /**
- * @return list<string> Column names present on profiles at backup/restore time.
+ * Whether a base table exists in the current database (MySQL/MariaDB).
+ */
+function paper_table_exists(\PDO $db, string $table): bool
+{
+    $table = trim($table);
+    if ($table === '' || !preg_match('/^[A-Za-z0-9_]+$/', $table)) {
+        return false;
+    }
+
+    try {
+        $stmt = $db->prepare(
+            'SELECT 1 FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$table]);
+        if ($stmt->fetchColumn()) {
+            return true;
+        }
+    } catch (\Throwable $e) {
+        // Fall through to SHOW TABLES.
+    }
+
+    try {
+        $stmt = $db->query('SHOW TABLES LIKE ' . $db->quote($table));
+        return (bool) ($stmt && $stmt->fetchColumn());
+    } catch (\Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * @return list<string> Column names present on profiles at backup/restore time (empty if no profiles table).
  */
 function paper_profiles_invitation_columns_present(\PDO $db): array
 {
+    if (!paper_table_exists($db, 'profiles')) {
+        return [];
+    }
+
     $present = [];
     foreach (PAPER_PROFILE_INVITATION_COLUMNS as $col) {
-        $stmt = $db->prepare('SHOW COLUMNS FROM profiles LIKE ?');
-        $stmt->execute([$col]);
-        if ($stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $present[] = $col;
+        try {
+            $stmt = $db->prepare('SHOW COLUMNS FROM profiles LIKE ?');
+            $stmt->execute([$col]);
+            if ($stmt->fetch(\PDO::FETCH_ASSOC)) {
+                $present[] = $col;
+            }
+        } catch (\Throwable $e) {
+            return $present;
         }
     }
 
@@ -48,6 +88,7 @@ function paper_profiles_invitation_columns_present(\PDO $db): array
 /**
  * @return array{
  *   last_migration: ?string,
+ *   profiles_table_present: bool,
  *   profiles_invitation_columns: list<string>,
  *   profiles_invitation_ready: bool
  * }
@@ -65,12 +106,15 @@ function paper_backup_schema_snapshot(\PDO $db): array
         $lastMigration = null;
     }
 
-    $invitationCols = paper_profiles_invitation_columns_present($db);
+    $profilesPresent = paper_table_exists($db, 'profiles');
+    $invitationCols = $profilesPresent ? paper_profiles_invitation_columns_present($db) : [];
 
     return [
         'last_migration' => $lastMigration,
+        'profiles_table_present' => $profilesPresent,
         'profiles_invitation_columns' => $invitationCols,
-        'profiles_invitation_ready' => count($invitationCols) === count(PAPER_PROFILE_INVITATION_COLUMNS),
+        'profiles_invitation_ready' => $profilesPresent
+            && count($invitationCols) === count(PAPER_PROFILE_INVITATION_COLUMNS),
     ];
 }
 
@@ -103,18 +147,29 @@ function paper_run_pending_migrations(string $root): array
 function paper_print_schema_restore_report(array $manifestSchema, \PDO $db): void
 {
     $live = paper_backup_schema_snapshot($db);
-    $backupReady = !empty($manifestSchema['profiles_invitation_ready']);
-    $liveReady = (bool) $live['profiles_invitation_ready'];
-
-    fwrite(STDOUT, "Schema after restore: invitation columns "
-        . count($live['profiles_invitation_columns']) . '/' . count(PAPER_PROFILE_INVITATION_COLUMNS)
-        . ($liveReady ? " (ready)\n" : " (incomplete — run php cli/migrate.php)\n"));
+    $backupHadProfiles = array_key_exists('profiles_table_present', $manifestSchema)
+        ? !empty($manifestSchema['profiles_table_present'])
+        : (!empty($manifestSchema['profiles_invitation_ready'])
+            || !empty($manifestSchema['profiles_invitation_columns']));
+    $liveHasProfiles = (bool) $live['profiles_table_present'];
 
     $backupMigration = isset($manifestSchema['last_migration']) ? (string) $manifestSchema['last_migration'] : '';
     $liveMigration = $live['last_migration'] ?? '';
     if ($backupMigration !== '' || $liveMigration !== '') {
         fwrite(STDOUT, "Migrations: backup had `{$backupMigration}`; database now has `{$liveMigration}`.\n");
     }
+
+    if (!$liveHasProfiles && !$backupHadProfiles) {
+        fwrite(STDOUT, "Schema after restore: CMS schema (no legacy profiles table).\n");
+        return;
+    }
+
+    $backupReady = !empty($manifestSchema['profiles_invitation_ready']);
+    $liveReady = (bool) $live['profiles_invitation_ready'];
+
+    fwrite(STDOUT, "Schema after restore: invitation columns "
+        . count($live['profiles_invitation_columns']) . '/' . count(PAPER_PROFILE_INVITATION_COLUMNS)
+        . ($liveReady ? " (ready)\n" : " (incomplete — run php cli/migrate.php)\n"));
 
     if ($backupReady && !$liveReady) {
         fwrite(STDERR, "WARNING: Backup included full invitation schema but restored DB is missing columns.\n");

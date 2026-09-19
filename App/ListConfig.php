@@ -20,6 +20,7 @@ class ListConfig
             ['key' => 'category_name', 'label' => 'Category', 'sortable' => true],
             ['key' => 'status', 'label' => 'Status', 'sortable' => true],
             ['key' => 'published_at', 'label' => 'Published', 'sortable' => true],
+            ['key' => 'created_at', 'label' => 'Created', 'sortable' => true],
             ['key' => 'author_name', 'label' => 'Author', 'sortable' => true],
         ],
         'categories' => [
@@ -77,7 +78,11 @@ class ListConfig
             }
         }
         if (!empty($_SESSION['list_columns'][$module]) && is_array($_SESSION['list_columns'][$module])) {
-            return $_SESSION['list_columns'][$module];
+            $sessionKeys = array_values($_SESSION['list_columns'][$module]);
+            if ($module === 'posts' && $sessionKeys === ['title', 'slug', 'category_name', 'status', 'published_at', 'author_name']) {
+                return $defaultKeys;
+            }
+            return $sessionKeys;
         }
         return $defaultKeys;
     }

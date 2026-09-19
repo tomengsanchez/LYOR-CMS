@@ -195,6 +195,10 @@
         flex: 1 1 auto;
     }
 
+    .post-list-filters .d-flex.gap-2 > * {
+        flex: 1 1 auto;
+    }
+
     .table-responsive {
         -webkit-overflow-scrolling: touch;
     }
@@ -219,7 +223,8 @@
     }
 
     .list-toolbar .btn,
-    .grievance-filter-form .btn {
+    .grievance-filter-form .btn,
+    .post-list-filters .btn {
         width: 100%;
     }
 

@@ -41,9 +41,10 @@ class ListHelper
 
     public static function sort(array $rows, string $sortBy, string $order, array $columnKeys, string $module): array
     {
-        if (!in_array($sortBy, $columnKeys, true)) return $rows;
         $col = ListConfig::getColumnByKey($module, $sortBy);
-        if (!$col || empty($col['sortable'])) return $rows;
+        if (!$col || empty($col['sortable'])) {
+            return $rows;
+        }
 
         $desc = strtolower($order) === 'desc';
         usort($rows, function ($a, $b) use ($sortBy, $desc, $module) {

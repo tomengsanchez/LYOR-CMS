@@ -92,6 +92,155 @@ class Post
         ')->fetchAll(\PDO::FETCH_OBJ);
     }
 
+    /**
+     * Query filters for the admin posts list.
+     *
+     * @param array<string, mixed> $get
+     * @return array{status:string,category_id:string,author_id:string,sticky:string,date_field:string,date_from:string,date_to:string}
+     */
+    public static function adminListFiltersFromRequest(array $get): array
+    {
+        $status = trim((string) ($get['status'] ?? ''));
+        if (!in_array($status, ['draft', 'published', 'scheduled'], true)) {
+            $status = '';
+        }
+        $rawCategory = $get['category_id'] ?? '';
+        $categoryId = '';
+        if ($rawCategory === '0' || $rawCategory === 0) {
+            $categoryId = '0';
+        } elseif ((int) $rawCategory > 0) {
+            $categoryId = (string) (int) $rawCategory;
+        }
+        $authorId = ((int) ($get['author_id'] ?? 0) > 0) ? (string) (int) $get['author_id'] : '';
+        $sticky = trim((string) ($get['sticky'] ?? ''));
+        if (!in_array($sticky, ['0', '1'], true)) {
+            $sticky = '';
+        }
+        $dateField = trim((string) ($get['date_field'] ?? ''));
+        if (!in_array($dateField, ['published_at', 'created_at'], true)) {
+            $dateField = 'published_at';
+        }
+        $dateFrom = self::normalizeFilterDate((string) ($get['date_from'] ?? ''));
+        $dateTo = self::normalizeFilterDate((string) ($get['date_to'] ?? ''));
+        if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
+            $tmp = $dateFrom;
+            $dateFrom = $dateTo;
+            $dateTo = $tmp;
+        }
+        return [
+            'status' => $status,
+            'category_id' => $categoryId,
+            'author_id' => $authorId,
+            'sticky' => $sticky,
+            'date_field' => $dateField,
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+        ];
+    }
+
+    public static function adminListFiltersActive(array $filters): bool
+    {
+        return ($filters['status'] ?? '') !== ''
+            || ($filters['category_id'] ?? '') !== ''
+            || ($filters['author_id'] ?? '') !== ''
+            || ($filters['sticky'] ?? '') !== ''
+            || ($filters['date_from'] ?? '') !== ''
+            || ($filters['date_to'] ?? '') !== '';
+    }
+
+    /**
+     * @param object[] $rows
+     * @param array{status?:string,category_id?:string,author_id?:string,sticky?:string,date_field?:string,date_from?:string,date_to?:string} $filters
+     * @return object[]
+     */
+    public static function filterAdminList(array $rows, array $filters): array
+    {
+        $status = (string) ($filters['status'] ?? '');
+        $categoryId = (string) ($filters['category_id'] ?? '');
+        $authorId = (string) ($filters['author_id'] ?? '');
+        $sticky = (string) ($filters['sticky'] ?? '');
+        $dateField = (($filters['date_field'] ?? '') === 'created_at') ? 'created_at' : 'published_at';
+        $dateFrom = (string) ($filters['date_from'] ?? '');
+        $dateTo = (string) ($filters['date_to'] ?? '');
+        if ($status === '' && $categoryId === '' && $authorId === '' && $sticky === '' && $dateFrom === '' && $dateTo === '') {
+            return array_values($rows);
+        }
+        return array_values(array_filter($rows, static function ($row) use ($status, $categoryId, $authorId, $sticky, $dateField, $dateFrom, $dateTo) {
+            if ($status !== '') {
+                $label = self::publicStatusLabel($row);
+                if ($label !== $status) {
+                    return false;
+                }
+            }
+            if ($categoryId === '0') {
+                if ((int) ($row->category_id ?? 0) > 0) {
+                    return false;
+                }
+            } elseif ($categoryId !== '' && (int) ($row->category_id ?? 0) !== (int) $categoryId) {
+                return false;
+            }
+            if ($authorId !== '' && (int) ($row->author_id ?? 0) !== (int) $authorId) {
+                return false;
+            }
+            if ($sticky === '1' && empty($row->is_sticky)) {
+                return false;
+            }
+            if ($sticky === '0' && !empty($row->is_sticky)) {
+                return false;
+            }
+            if ($dateFrom !== '' || $dateTo !== '') {
+                $day = substr(trim((string) ($row->{$dateField} ?? '')), 0, 10);
+                if ($day === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) {
+                    return false;
+                }
+                if ($dateFrom !== '' && $day < $dateFrom) {
+                    return false;
+                }
+                if ($dateTo !== '' && $day > $dateTo) {
+                    return false;
+                }
+            }
+            return true;
+        }));
+    }
+
+    /**
+     * @param object[] $rows
+     * @return array<int, string>
+     */
+    public static function authorsFromRows(array $rows): array
+    {
+        $out = [];
+        foreach ($rows as $row) {
+            $id = (int) ($row->author_id ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+            $name = trim((string) ($row->author_name ?? ''));
+            if ($name === '') {
+                $name = 'User #' . $id;
+            }
+            if (!isset($out[$id])) {
+                $out[$id] = $name;
+            }
+        }
+        natcasesort($out);
+        return $out;
+    }
+
+    private static function normalizeFilterDate(string $value): string
+    {
+        $value = trim($value);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return '';
+        }
+        $dt = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
+        if (!$dt || $dt->format('Y-m-d') !== $value) {
+            return '';
+        }
+        return $value;
+    }
+
     public static function find(int $id): ?object
     {
         $stmt = Database::getInstance()->prepare(self::selectSql() . '

@@ -29,14 +29,20 @@ class PostController extends Controller
         $columns = ListConfig::resolveFromRequest(self::LIST_MODULE);
         $_SESSION['list_columns'][self::LIST_MODULE] = $columns;
         $search = trim($_GET['q'] ?? '');
-        $sort = $_GET['sort'] ?? '';
+        $sort = trim((string) ($_GET['sort'] ?? ''));
         $order = in_array(strtolower($_GET['order'] ?? ''), ['asc', 'desc']) ? strtolower($_GET['order']) : 'desc';
         $page = max(1, (int) ($_GET['page'] ?? 1));
         $perPage = max(10, min(100, (int) ($_GET['per_page'] ?? 15)));
+        $filters = Post::adminListFiltersFromRequest($_GET);
+        if ($sort === '' || !ListConfig::getColumnByKey(self::LIST_MODULE, $sort)) {
+            $sort = 'published_at';
+        }
 
         $rows = Post::allActive();
+        $authors = Post::authorsFromRows($rows);
+        $rows = Post::filterAdminList($rows, $filters);
         $rows = ListHelper::search($rows, $search, $columns, self::LIST_MODULE);
-        $rows = ListHelper::sort($rows, $sort ?: ($columns[0] ?? 'title'), $order, $columns, self::LIST_MODULE);
+        $rows = ListHelper::sort($rows, $sort, $order, $columns, self::LIST_MODULE);
         $pagination = ListHelper::paginate($rows, $page, $perPage);
 
         $this->view('posts/index', [
@@ -44,12 +50,17 @@ class PostController extends Controller
             'listModule' => self::LIST_MODULE,
             'listBaseUrl' => self::LIST_BASE,
             'listSearch' => $search,
-            'listSort' => $sort ?: ($columns[0] ?? ''),
+            'listSort' => $sort,
             'listOrder' => $order,
             'listColumns' => $columns,
             'listAllColumns' => ListConfig::getColumns(self::LIST_MODULE),
             'listPagination' => $pagination,
             'listHasCustomColumns' => ListConfig::hasCustomColumns(self::LIST_MODULE),
+            'listExtraParams' => self::listExtraParams($filters),
+            'postFilters' => $filters,
+            'postFilterAuthors' => $authors,
+            'postFilterCategories' => Category::all(),
+            'postFiltersActive' => Post::adminListFiltersActive($filters),
         ]);
     }
 
@@ -333,6 +344,26 @@ class PostController extends Controller
             Flash::success($msg);
         }
         $this->redirect(AdminPath::url('posts/import'));
+    }
+
+    /**
+     * @param array{status:string,category_id:string,author_id:string,sticky:string,date_field:string,date_from:string,date_to:string} $filters
+     * @return array<string, string>
+     */
+    private static function listExtraParams(array $filters): array
+    {
+        $extra = [];
+        foreach ($filters as $key => $value) {
+            if ($value === '' || $value === null) {
+                continue;
+            }
+            if ($key === 'date_field' && $value === 'published_at'
+                && ($filters['date_from'] ?? '') === '' && ($filters['date_to'] ?? '') === '') {
+                continue;
+            }
+            $extra[$key] = (string) $value;
+        }
+        return $extra;
     }
 
     protected function csrfRedirectUrl(): string

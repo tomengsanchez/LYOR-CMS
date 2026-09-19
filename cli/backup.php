@@ -221,10 +221,14 @@ $manifest = [
     'includes_uploads' => !$noUploads,
     'zip' => basename($zipPath),
 ];
-if ($schemaSnapshot['profiles_invitation_ready']) {
-    fwrite(STDOUT, "Schema snapshot: invitation card columns present (" . count($schemaSnapshot['profiles_invitation_columns']) . ").\n");
+if (!empty($schemaSnapshot['profiles_table_present'])) {
+    if ($schemaSnapshot['profiles_invitation_ready']) {
+        fwrite(STDOUT, "Schema snapshot: invitation card columns present (" . count($schemaSnapshot['profiles_invitation_columns']) . ").\n");
+    } else {
+        fwrite(STDOUT, "Schema snapshot: invitation card columns incomplete — run php cli/migrate.php before relying on invitation backups.\n");
+    }
 } else {
-    fwrite(STDOUT, "Schema snapshot: invitation card columns incomplete — run php cli/migrate.php before relying on invitation backups.\n");
+    fwrite(STDOUT, "Schema snapshot: CMS schema (no legacy profiles table).\n");
 }
 if ($reasonArg !== null && $reasonArg !== '') {
     $manifest['backup_reason'] = $reasonArg;
