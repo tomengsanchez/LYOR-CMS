@@ -759,4 +759,74 @@ assert(str_contains($richHtml, '<p>a<br>b</p>') || str_contains($richHtml, '<p>a
 $richPlain = LayoutBuilder::plainText($richParsed);
 assert(str_contains($richPlain, 'Hi'), 'plainText strips rich tags');
 
+assert(isset(LayoutBuilder::moduleTypes()['widget_recent_posts']), 'widget_recent_posts module registered');
+assert(LayoutBuilder::moduleTypes()['widget_recent_posts'] === 'Recent posts', 'widget module label from Widget::types');
+assert(LayoutBuilder::widgetTypeFromModule('widget_newsletter') === 'newsletter', 'widget type mapped from module');
+assert(LayoutBuilder::widgetTypeFromModule('cta') === null, 'layout cta is not a widget module');
+assert(($catalog['widget_search']['fields'][0]['name'] ?? '') === 'title', 'search widget has title field');
+
+$widgetRaw = json_encode([
+    'version' => 1,
+    'sections' => [[
+        'id' => 'wsec',
+        'type' => 'regular',
+        'settings' => [],
+        'rows' => [[
+            'id' => 'wrow',
+            'settings' => [],
+            'columns' => [[
+                'id' => 'wcol',
+                'width' => 12,
+                'settings' => [],
+                'modules' => [
+                    [
+                        'id' => 'wm1',
+                        'type' => 'widget_recent_posts',
+                        'data' => ['title' => 'Latest', 'count' => 3],
+                        'design' => [],
+                        'advanced' => [],
+                    ],
+                    [
+                        'id' => 'wm2',
+                        'type' => 'widget_search',
+                        'data' => ['title' => 'Find'],
+                        'design' => [],
+                        'advanced' => [],
+                    ],
+                    [
+                        'id' => 'wm3',
+                        'type' => 'widget_cta',
+                        'data' => [
+                            'title' => '',
+                            'headline' => 'Join',
+                            'text' => 'Now',
+                            'label' => 'Go',
+                            'url' => '/blog',
+                        ],
+                        'design' => [],
+                        'advanced' => [],
+                    ],
+                    [
+                        'id' => 'wm-bad',
+                        'type' => 'recent_posts',
+                        'data' => ['count' => 5],
+                        'design' => [],
+                        'advanced' => [],
+                    ],
+                ],
+            ]],
+        ]],
+    ]],
+], JSON_UNESCAPED_UNICODE);
+$widgetParsed = LayoutBuilder::parse($widgetRaw);
+$widgetMods = $widgetParsed['sections'][0]['rows'][0]['columns'][0]['modules'];
+assert(count($widgetMods) === 3, 'unknown recent_posts type dropped; three widget modules kept');
+assert(($widgetMods[0]['data']['count'] ?? null) === 3, 'recent posts count sanitized');
+assert(($widgetMods[0]['data']['title'] ?? '') === 'Latest', 'widget title kept');
+$widgetHtml = LayoutBuilder::render($widgetParsed);
+assert(str_contains($widgetHtml, 'public-widget--recent_posts'), 'recent posts widget renders');
+assert(str_contains($widgetHtml, 'public-widget--search'), 'search widget renders');
+assert(str_contains($widgetHtml, 'public-widget--cta'), 'cta widget module renders');
+assert(str_contains($widgetHtml, 'widget-cta-headline'), 'cta headline present');
+
 echo "cms_layout_builder_smoke_test: OK\n";

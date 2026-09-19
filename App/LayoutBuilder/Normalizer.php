@@ -285,8 +285,33 @@ trait Normalizer
             case 'inner_row':
                 return [];
             default:
+                $widgetType = self::widgetTypeFromModule($type);
+                if ($widgetType !== null) {
+                    return self::normalizeWidgetModuleData($widgetType, $data);
+                }
                 return [];
         }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private static function normalizeWidgetModuleData(string $widgetType, array $data): array
+    {
+        $title = mb_substr(trim((string) ($data['title'] ?? '')), 0, 150);
+        $configIn = $data;
+        unset($configIn['title']);
+        if ($widgetType === 'social' && isset($data['social_lines']) && !isset($data['links'])) {
+            $configIn['links'] = \App\Models\Widget::parseSocialLines((string) $data['social_lines']);
+        }
+        unset($configIn['social_lines']);
+        $config = \App\Models\Widget::sanitizeConfig($widgetType, $configIn);
+        $out = ['title' => $title] + $config;
+        if ($widgetType === 'social') {
+            $out['social_lines'] = \App\Models\Widget::socialLinesFromConfig($config);
+        }
+        return $out;
     }
 
     /** @param array<string, mixed> $data */

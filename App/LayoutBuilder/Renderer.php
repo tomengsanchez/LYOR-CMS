@@ -339,8 +339,26 @@ trait Renderer
             case 'video':
                 return self::renderVideo($data);
             default:
+                $widgetType = self::widgetTypeFromModule($type);
+                if ($widgetType !== null) {
+                    return self::renderWidgetModule($widgetType, $data);
+                }
                 return '';
         }
+    }
+
+    /** @param array<string, mixed> $data */
+    private static function renderWidgetModule(string $widgetType, array $data): string
+    {
+        $title = trim((string) ($data['title'] ?? ''));
+        $config = $data;
+        unset($config['title'], $config['social_lines']);
+        $widget = (object) [
+            'widget_type' => $widgetType,
+            'title' => $title,
+            'config_json' => json_encode($config, JSON_UNESCAPED_UNICODE),
+        ];
+        return \App\Models\Widget::renderWidget($widget);
     }
 
     /** @param array<string, mixed> $data */

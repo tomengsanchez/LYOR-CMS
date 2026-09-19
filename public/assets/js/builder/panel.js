@@ -57,7 +57,10 @@
                         + '</div>';
                 } else {
                     html += '<input type="' + esc(type) + '" class="form-control form-control-sm" id="' + id + '" data-field="' + esc(name)
-                        + '" value="' + esc(value || '') + '"' + (meta.placeholder ? ' placeholder="' + esc(meta.placeholder) + '"' : '') + '>';
+                        + '" value="' + esc(value || '') + '"'
+                        + (meta.placeholder ? ' placeholder="' + esc(meta.placeholder) + '"' : '')
+                        + (type === 'number' ? ' min="' + meta.min + '" max="' + meta.max + '" step="' + meta.step + '"' : '')
+                        + '>';
                 }
                 if (meta.hint) {
                     html += '<div class="form-text">' + esc(meta.hint) + '</div>';
@@ -777,6 +780,15 @@
                     hint: spec.hint || '',
                     placeholder: spec.placeholder || ''
                 };
+                if (spec.min != null) {
+                    opts.min = spec.min;
+                }
+                if (spec.max != null) {
+                    opts.max = spec.max;
+                }
+                if (spec.rows) {
+                    opts.rows = spec.rows;
+                }
                 if (type === 'checkbox') {
                     return field(label, name, !!d[name], 'checkbox', opts);
                 }

@@ -233,9 +233,59 @@
                         break;
                     }
                     default:
-                        inner = '<em>' + esc(mod.type) + '</em>';
+                        if (String(mod.type || '').indexOf('widget_') === 0) {
+                            inner = widgetModuleCanvasHtml(mod.type, d);
+                        } else {
+                            inner = '<em>' + esc(mod.type) + '</em>';
+                        }
                 }
                 return wrapOpen + inner + wrapClose;
+            }
+
+            function widgetModuleCanvasHtml(type, d) {
+                var label = (moduleTypes && moduleTypes[type]) ? moduleTypes[type] : type.replace(/^widget_/, '');
+                var title = d && d.title ? String(d.title) : '';
+                var detail = '';
+                switch (type) {
+                    case 'widget_recent_posts':
+                    case 'widget_featured_posts':
+                        detail = (d.count || 5) + ' posts';
+                        break;
+                    case 'widget_archives':
+                        detail = (d.count || 12) + ' months';
+                        break;
+                    case 'widget_cta':
+                        detail = d.headline || d.label || 'Call to action';
+                        break;
+                    case 'widget_social':
+                        detail = d.social_lines ? 'Custom links' : 'Social links';
+                        break;
+                    case 'widget_custom_html':
+                        detail = 'Custom HTML';
+                        break;
+                    case 'widget_newsletter':
+                        detail = d.button || 'Subscribe';
+                        break;
+                    case 'widget_search':
+                        detail = 'Search box';
+                        break;
+                    case 'widget_pages':
+                        detail = 'Published pages';
+                        break;
+                    case 'widget_categories':
+                        detail = 'Categories';
+                        break;
+                    case 'widget_tags':
+                        detail = 'Tag cloud';
+                        break;
+                    default:
+                        detail = 'Theme widget';
+                }
+                return '<div class="cms-mod-widget cms-lb-widget-preview p-3 border rounded">'
+                    + '<div class="small text-muted mb-1">Widget</div>'
+                    + '<strong>' + esc(title || label) + '</strong>'
+                    + '<div class="small text-muted mt-1">' + esc(detail) + ' — live on the public page</div>'
+                    + '</div>';
             }
 
             function innerRowCanvasHtml(mod, si, ri, ci, mi) {

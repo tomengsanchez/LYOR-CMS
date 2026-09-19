@@ -2,15 +2,19 @@
 
 .cms-builder-app {
   margin: 0;
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   background: #1e1e1e;
   color: #f5f5f5;
 }
 
 .cms-builder-toolbar {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 100;
+  flex-shrink: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -44,7 +48,9 @@
 .cms-builder-shell {
   display: grid;
   grid-template-columns: 1fr minmax(280px, 340px);
-  min-height: calc(100vh - 52px);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .cms-builder-shell.panel-closed {
@@ -63,7 +69,9 @@
   background: #161616;
   color: #e9ecef;
   border-right: 1px solid #333;
-  max-height: calc(100vh - 52px);
+  min-height: 0;
+  height: 100%;
+  max-height: none;
   overflow: auto;
   font-size: 0.78rem;
 }
@@ -180,6 +188,8 @@
 
 .cms-builder-canvas-wrap {
   overflow: auto;
+  min-height: 0;
+  height: 100%;
   padding: 1.25rem;
   background: #2a2a2a;
 }
@@ -225,8 +235,13 @@
   border-left: 1px solid #dee2e6;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 52px);
+  min-height: 0;
+  height: 100%;
+  max-height: none;
   overflow: hidden;
+  position: sticky;
+  top: 0;
+  align-self: stretch;
 }
 
 .cms-builder-panel[hidden] {
@@ -237,6 +252,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #dee2e6;
   background: #fff;
@@ -245,12 +261,14 @@
 .cms-builder-tabs {
   background: #fff;
   padding: 0 0.5rem;
+  flex-shrink: 0;
 }
 
 .cms-builder-panel-body {
   padding: 1rem;
   overflow: auto;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .cms-builder-panel-body label {
@@ -905,12 +923,27 @@
 @media (max-width: 900px) {
   .cms-builder-shell {
     grid-template-columns: 1fr;
+    grid-template-rows: 1fr minmax(220px, 42vh);
   }
 
   .cms-builder-panel {
-    max-height: 45vh;
+    position: sticky;
+    bottom: 0;
+    top: auto;
+    height: auto;
+    max-height: 42vh;
     border-left: 0;
     border-top: 1px solid #dee2e6;
+    z-index: 50;
+  }
+
+  .cms-builder-shell.layers-open {
+    grid-template-columns: minmax(160px, 200px) 1fr;
+    grid-template-rows: 1fr minmax(220px, 42vh);
+  }
+
+  .cms-builder-shell.layers-open .cms-builder-panel {
+    grid-column: 1 / -1;
   }
 }
 

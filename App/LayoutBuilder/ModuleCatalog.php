@@ -266,7 +266,157 @@ trait ModuleCatalog
                 'design' => $boxPack,
                 'defaults' => [],
             ],
+        ] + self::widgetModuleCatalog($boxPack);
+    }
+
+    /**
+     * Theme widgets as layout modules (prefixed widget_* to avoid clashing with cta/html).
+     *
+     * @param list<string> $designPack
+     * @return array<string, array<string, mixed>>
+     */
+    private static function widgetModuleCatalog(array $designPack): array
+    {
+        $titleField = [
+            'name' => 'title',
+            'type' => 'text',
+            'label' => 'Widget title',
+            'hint' => 'Optional heading above the widget body.',
         ];
+        $defs = [
+            'recent_posts' => [
+                'hint' => 'Widget — live list of recent published posts',
+                'defaults' => ['title' => 'Recent posts', 'count' => 5],
+                'fields' => [
+                    $titleField,
+                    ['name' => 'count', 'type' => 'number', 'label' => 'Posts to show', 'min' => 1, 'max' => 10],
+                ],
+            ],
+            'featured_posts' => [
+                'hint' => 'Widget — recent posts as featured cards',
+                'defaults' => ['title' => 'Featured', 'count' => 3],
+                'fields' => [
+                    $titleField,
+                    ['name' => 'count', 'type' => 'number', 'label' => 'Posts to show', 'min' => 1, 'max' => 6],
+                ],
+            ],
+            'cta' => [
+                'hint' => 'Widget — simple headline, text, and button (theme widget style)',
+                'defaults' => [
+                    'title' => '',
+                    'headline' => 'Call to action',
+                    'text' => 'Supporting text.',
+                    'label' => 'Learn more',
+                    'url' => '#',
+                ],
+                'fields' => [
+                    $titleField,
+                    ['name' => 'headline', 'type' => 'text', 'label' => 'Headline'],
+                    ['name' => 'text', 'type' => 'textarea', 'label' => 'Text', 'rows' => 3],
+                    ['name' => 'label', 'type' => 'text', 'label' => 'Button label'],
+                    ['name' => 'url', 'type' => 'text', 'label' => 'Button URL', 'placeholder' => '/blog or https://'],
+                ],
+            ],
+            'pages' => [
+                'hint' => 'Widget — links to published pages',
+                'defaults' => ['title' => 'Pages'],
+                'fields' => [$titleField],
+            ],
+            'social' => [
+                'hint' => 'Widget — social profile links',
+                'defaults' => ['title' => 'Follow', 'social_lines' => "Facebook|https://facebook.com/\nX|https://x.com/"],
+                'fields' => [
+                    $titleField,
+                    [
+                        'name' => 'social_lines',
+                        'type' => 'textarea',
+                        'label' => 'Links',
+                        'rows' => 4,
+                        'hint' => 'One per line: Label|URL or just URL.',
+                    ],
+                ],
+            ],
+            'categories' => [
+                'hint' => 'Widget — category archive links',
+                'defaults' => ['title' => 'Categories'],
+                'fields' => [$titleField],
+            ],
+            'tags' => [
+                'hint' => 'Widget — tag cloud',
+                'defaults' => ['title' => 'Tags'],
+                'fields' => [$titleField],
+            ],
+            'archives' => [
+                'hint' => 'Widget — monthly post archives',
+                'defaults' => ['title' => 'Archives', 'count' => 12],
+                'fields' => [
+                    $titleField,
+                    ['name' => 'count', 'type' => 'number', 'label' => 'Months to show', 'min' => 1, 'max' => 24],
+                ],
+            ],
+            'custom_html' => [
+                'hint' => 'Widget — raw HTML (scripts/forms stripped publicly)',
+                'defaults' => ['title' => '', 'html' => '<p>Custom HTML</p>'],
+                'fields' => [
+                    $titleField,
+                    [
+                        'name' => 'html',
+                        'type' => 'textarea',
+                        'label' => 'HTML',
+                        'rows' => 8,
+                        'hint' => 'script, iframe, form, and input tags are stripped on the public site.',
+                    ],
+                ],
+            ],
+            'search' => [
+                'hint' => 'Widget — site search box',
+                'defaults' => ['title' => 'Search'],
+                'fields' => [$titleField],
+            ],
+            'newsletter' => [
+                'hint' => 'Widget — newsletter signup form',
+                'defaults' => [
+                    'title' => 'Newsletter',
+                    'intro' => '',
+                    'placeholder' => 'Your email',
+                    'button' => 'Subscribe',
+                    'consent_label' => '',
+                ],
+                'fields' => [
+                    $titleField,
+                    ['name' => 'intro', 'type' => 'text', 'label' => 'Intro'],
+                    ['name' => 'placeholder', 'type' => 'text', 'label' => 'Placeholder'],
+                    ['name' => 'button', 'type' => 'text', 'label' => 'Button'],
+                    ['name' => 'consent_label', 'type' => 'text', 'label' => 'Consent label'],
+                ],
+            ],
+        ];
+
+        $out = [];
+        $labels = \App\Models\Widget::types();
+        foreach ($defs as $widgetType => $meta) {
+            if (!isset($labels[$widgetType])) {
+                continue;
+            }
+            $out['widget_' . $widgetType] = [
+                'label' => (string) $labels[$widgetType],
+                'hint' => (string) ($meta['hint'] ?? 'Theme widget'),
+                'design' => $designPack,
+                'defaults' => is_array($meta['defaults'] ?? null) ? $meta['defaults'] : [],
+                'fields' => is_array($meta['fields'] ?? null) ? $meta['fields'] : [],
+            ];
+        }
+        return $out;
+    }
+
+    /** Map layout module type widget_* → Widget::types() key, or null. */
+    public static function widgetTypeFromModule(string $moduleType): ?string
+    {
+        if (!str_starts_with($moduleType, 'widget_')) {
+            return null;
+        }
+        $widgetType = substr($moduleType, 7);
+        return array_key_exists($widgetType, \App\Models\Widget::types()) ? $widgetType : null;
     }
 
     /** @return array<string, string> */
