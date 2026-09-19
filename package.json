@@ -31,6 +31,7 @@
     "test:e2e:report": "playwright show-report",
     "backup": "php cli/backup.php",
     "restore": "php cli/restore.php",
+    "test:backup-mysql-option-quote": "php tests/cli/backup_mysql_option_file_quote_test.php",
     "test:backup-restore": "php tests/cli/backup_restore_invitation_roundtrip_test.php",
     "test:backup-no-uploads": "php tests/cli/backup_no_uploads_flag_test.php",
     "test:export-project-csv": "php tests/cli/project_csv_exporter_redact_test.php && php tests/cli/export_project_csv_smoke_test.php",

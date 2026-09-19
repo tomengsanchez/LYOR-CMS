@@ -298,13 +298,7 @@ if ($sanitize['changed']) {
 $mysql = resolveMysql($mysqlArg);
 if ($mysql !== null) {
     $cnf = $workDir . '/restore.cnf';
-    file_put_contents(
-        $cnf,
-        "[client]\nhost={$host}\nuser={$user}\npassword=" . str_replace(["\n", "\r"], '', $pass) . "\ndefault-character-set={$charset}\n"
-    );
-    if (function_exists('chmod')) {
-        @chmod($cnf, 0600);
-    }
+    paper_write_mysql_client_cnf($cnf, $host, $user, $pass, $charset);
 
     $mysqlVersion = mysqlClientVersionLine($mysql);
     fwrite(STDOUT, 'import_path=mysql' . ($mysqlVersion !== '' ? " ({$mysqlVersion})" : ' (' . $mysql . ')') . "\n");

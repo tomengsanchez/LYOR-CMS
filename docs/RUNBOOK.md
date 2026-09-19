@@ -35,6 +35,7 @@ php cli/backup.php
 ## Backup / restore
 
 - **Create:** System → Backup & Restore, or `php cli/backup.php`. Optional `--no-uploads`.
+- Credentials for `mysqldump`/`mysql` are passed via a quoted temp option file (same `config/database.php` as PDO). If `mysqldump` fails, backup falls back to the PHP PDO exporter.
 - **Restore:** CLI only: `php cli/restore.php` (not in the web UI).
 - Visual layouts restore with SQL (`layout_json`). Theme files in uploads restore with media.
 - New ZIP app id is `SimpleCMS`; restore still accepts older `PAPeR` manifests if you have them.

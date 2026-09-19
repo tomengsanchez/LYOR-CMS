@@ -137,12 +137,13 @@ if ($largeMode) {
     }
 }
 
-$mysqldump = resolveMysqldump($mysqldumpArg);
-if ($mysqldump !== null) {
+$mysqldumpBin = resolveMysqldump($mysqldumpArg);
+$dumpMethod = 'pdo_exporter';
+if ($mysqldumpBin !== null) {
     $cnf = writeMysqlClientCnf($workDir, $host, $user, $pass);
     $cmd = array_merge(
         [
-            $mysqldump,
+            $mysqldumpBin,
             '--defaults-extra-file=' . $cnf,
             '--single-transaction',
             '--quick',
@@ -151,45 +152,53 @@ if ($mysqldump !== null) {
             '--default-character-set=' . $charset,
             '--add-drop-table',
         ],
-        paper_mysqldump_extra_args($mysqldump),
+        paper_mysqldump_extra_args($mysqldumpBin),
         [$dbname]
     );
     $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
     $proc = proc_open($cmd, $descriptors, $pipes, null, null, ['bypass_shell' => true]);
     if (!is_resource($proc)) {
         @unlink($cnf);
-        fwrite(STDERR, "Failed to start mysqldump.\n");
-        exit(1);
-    }
-    fclose($pipes[0]);
-    $sqlOut = fopen($sqlFile, 'wb');
-    if ($sqlOut === false) {
+        fwrite(STDERR, "Failed to start mysqldump; falling back to PHP PDO exporter.\n");
+    } else {
         fclose($pipes[0]);
+        $sqlOut = fopen($sqlFile, 'wb');
+        if ($sqlOut === false) {
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            @unlink($cnf);
+            proc_close($proc);
+            fwrite(STDERR, "Cannot open SQL output file.\n");
+            exit(1);
+        }
+        $written = stream_copy_to_stream($pipes[1], $sqlOut);
+        $err = stream_get_contents($pipes[2]);
+        fclose($sqlOut);
         fclose($pipes[1]);
         fclose($pipes[2]);
+        $code = proc_close($proc);
         @unlink($cnf);
-        proc_close($proc);
-        fwrite(STDERR, "Cannot open SQL output file.\n");
-        exit(1);
+        if ($code !== 0) {
+            fwrite(STDERR, "mysqldump failed (exit {$code}): {$err}\n");
+            fwrite(STDOUT, "Falling back to PHP PDO exporter (same credentials as the web app).\n");
+            if (is_file($sqlFile)) {
+                @unlink($sqlFile);
+            }
+        } elseif ($written === false || $written <= 0 || !is_file($sqlFile) || filesize($sqlFile) <= 0) {
+            fwrite(STDERR, "mysqldump produced empty output; falling back to PHP PDO exporter.\n");
+            if (is_file($sqlFile)) {
+                @unlink($sqlFile);
+            }
+        } else {
+            $dumpMethod = 'mysqldump';
+            fwrite(STDOUT, "Database dump: mysqldump OK (" . formatBytes((int) filesize($sqlFile)) . ")\n");
+        }
     }
-    $written = stream_copy_to_stream($pipes[1], $sqlOut);
-    $err = stream_get_contents($pipes[2]);
-    fclose($sqlOut);
-    fclose($pipes[1]);
-    fclose($pipes[2]);
-    $code = proc_close($proc);
-    @unlink($cnf);
-    if ($code !== 0) {
-        fwrite(STDERR, "mysqldump failed (exit {$code}): {$err}\n");
-        exit(1);
+}
+if ($dumpMethod !== 'mysqldump') {
+    if ($mysqldumpBin === null) {
+        fwrite(STDOUT, "mysqldump not found; using PHP PDO exporter (use mysqldump for best results).\n");
     }
-    if ($written === false || $written <= 0 || !is_file($sqlFile) || filesize($sqlFile) <= 0) {
-        fwrite(STDERR, "mysqldump produced empty output.\n");
-        exit(1);
-    }
-    fwrite(STDOUT, "Database dump: mysqldump OK (" . formatBytes((int) filesize($sqlFile)) . ")\n");
-} else {
-    fwrite(STDOUT, "mysqldump not found; using PHP PDO exporter (use mysqldump for best results).\n");
     $pdo = Database::getInstance();
     exportDatabaseWithPdo($pdo, $sqlFile);
     fwrite(STDOUT, "Database dump: PDO exporter OK\n");
@@ -208,7 +217,7 @@ $manifest = [
         'charset' => $charset,
     ],
     'schema' => $schemaSnapshot,
-    'dump_method' => $mysqldump !== null ? 'mysqldump' : 'pdo_exporter',
+    'dump_method' => $dumpMethod,
     'includes_uploads' => !$noUploads,
     'zip' => basename($zipPath),
 ];
@@ -344,14 +353,8 @@ function resolveMysqldump(?string $explicit): ?string
 function writeMysqlClientCnf(string $workDir, string $host, string $user, string $pass): string
 {
     $cnf = $workDir . '/backup.cnf';
-    $content = "[client]\n"
-        . 'host=' . $host . "\n"
-        . 'user=' . $user . "\n"
-        . 'password=' . str_replace(["\n", "\r"], '', $pass) . "\n";
-    file_put_contents($cnf, $content);
-    if (function_exists('chmod')) {
-        @chmod($cnf, 0600);
-    }
+    paper_write_mysql_client_cnf($cnf, $host, $user, $pass);
+
     return $cnf;
 }
 

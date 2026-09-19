@@ -11,6 +11,47 @@ function paper_column_extra_is_generated(?string $extra): bool
 }
 
 /**
+ * Quote a value for a MySQL/MariaDB option file ([client] section).
+ * Always double-quotes so #, ;, spaces, and quotes in passwords are not truncated
+ * or misparsed (PDO can succeed while an unquoted .cnf password fails with 1045).
+ */
+function paper_mysql_option_file_quote(string $value): string
+{
+    $escaped = str_replace(
+        ["\\", '"', "\n", "\r", "\t"],
+        ['\\\\', '\\"', '\\n', '\\r', '\\t'],
+        $value
+    );
+
+    return '"' . $escaped . '"';
+}
+
+/**
+ * Write a temporary mysql/mysqldump defaults-extra-file with quoted credentials.
+ */
+function paper_write_mysql_client_cnf(
+    string $path,
+    string $host,
+    string $user,
+    string $pass,
+    ?string $charset = null
+): void {
+    $content = "[client]\n"
+        . 'host=' . paper_mysql_option_file_quote($host) . "\n"
+        . 'user=' . paper_mysql_option_file_quote($user) . "\n"
+        . 'password=' . paper_mysql_option_file_quote($pass) . "\n";
+    if ($charset !== null && $charset !== '') {
+        $content .= 'default-character-set=' . paper_mysql_option_file_quote($charset) . "\n";
+    }
+    if (file_put_contents($path, $content) === false) {
+        throw new RuntimeException('Cannot write MySQL client option file: ' . $path);
+    }
+    if (function_exists('chmod')) {
+        @chmod($path, 0600);
+    }
+}
+
+/**
  * @return list<string>
  */
 function paper_mysqldump_extra_args(string $mysqldump): array

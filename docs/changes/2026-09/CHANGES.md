@@ -1,3 +1,11 @@
+## Backup mysqldump option-file password quoting (2026-09-19)
+
+- `mysqldump` / `mysql` client credentials are written with **double-quoted** option-file values (`paper_mysql_option_file_quote` / `paper_write_mysql_client_cnf` in `cli/backup_sql_helper.php`). Passwords containing `#`, spaces, quotes, or `;` no longer truncate in the temp `.cnf`, which caused **1045 Access denied** on production while the website and `php cli/migrate.php --status` (PDO) still worked.
+- If `mysqldump` still fails, `cli/backup.php` **falls back** to the PHP PDO exporter instead of aborting (so UI backup and restore’s pre-restore safety dump can succeed). Restore’s `mysql` client path uses the same quoting helper.
+- Smoke: `php tests/cli/backup_mysql_option_file_quote_test.php`.
+
+---
+
 ## September 21–30 The Filipino Men editorial collection + Atom SEO/AEO (2026-09-12)
 
 - Added `docs/atoms-collections/the-filipino-men-sept-21-30-2026.atom`: 50 unique 700–1,500-word English/Taglish articles, five per day at 06:30 / 10:30 / 14:30 / 18:30 / 22:00 Philippine time. Topics cover Biblical manhood, Christian family life, civic accountability, sports, cost of living, flood readiness, work/AI, relationships, and mental health. Current-affairs claims are bounded to facts available on September 12; no future sports outcomes are invented.
