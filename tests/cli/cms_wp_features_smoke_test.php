@@ -44,6 +44,11 @@ assert(count($items) >= 2, 'primary menu items');
 
 $tagId = Tag::findOrCreateByName('SmokeTestTag');
 assert($tagId > 0, 'tag created');
+$tagIdAgain = Tag::findOrCreateByName('smoketesttag');
+assert($tagIdAgain === $tagId, 'tag reuse by name is case-insensitive');
+$parsed = Tag::parseNames('Encouragements, encouragements, Other');
+assert(count($parsed) === 2, 'tag parse dedupes case variants');
+assert($parsed[0] === 'Encouragements', 'tag parse keeps first casing');
 Tag::syncPostTags(0, 'ignored'); // no-op on 0
 
 assert(Page::normalizeParentId(null) === null, 'parent null');

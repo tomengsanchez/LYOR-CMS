@@ -39,7 +39,12 @@ class TagController extends Controller
             $this->redirect(AdminPath::url('tags/create'));
             return;
         }
-        $id = Tag::create(['name' => $name, 'slug' => trim($_POST['slug'] ?? '')]);
+        if (Tag::findByName($name)) {
+            $_SESSION['tag_form_error'] = 'A tag with this name already exists.';
+            $this->redirect(AdminPath::url('tags/create'));
+            return;
+        }
+        Tag::create(['name' => $name, 'slug' => trim($_POST['slug'] ?? '')]);
         $this->redirect(AdminPath::url('tags'));
     }
 
@@ -66,6 +71,12 @@ class TagController extends Controller
         $name = trim($_POST['name'] ?? '');
         if ($name === '') {
             $_SESSION['tag_form_error'] = 'Name is required.';
+            $this->redirect(AdminPath::url('tags/edit/' . $id));
+            return;
+        }
+        $other = Tag::findByName($name);
+        if ($other && (int) $other->id !== $id) {
+            $_SESSION['tag_form_error'] = 'A tag with this name already exists.';
             $this->redirect(AdminPath::url('tags/edit/' . $id));
             return;
         }
