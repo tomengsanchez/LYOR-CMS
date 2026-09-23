@@ -1,0 +1,12 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^php \\.\\\\cli\\\\import_atom_feed\\.php docs/atoms-collections/filipino-men-loyalty-commentary\\.atom --dry-run --verbose$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^php \\.\\\\cli\\\\import_atom_feed\\.php docs/atoms-collections/filipino-men-loyalty-commentary\\.atom --verbose$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
