@@ -58,6 +58,9 @@ $isEditorial = \App\PublicTheme::isEditorialChrome($pubTheme);
     <?php if (\App\GoogleSettings::shouldInjectOnPublic()): ?>
     <?php require __DIR__ . '/partials/google_tags.php'; ?>
     <?php endif; ?>
+    <?php if (\App\AdcashSettings::shouldInjectOnPublic()): ?>
+    <?php require __DIR__ . '/partials/adcash_tags.php'; ?>
+    <?php endif; ?>
     <?php if (!empty($publicShare) && is_array($publicShare)): ?>
     <?php require __DIR__ . '/partials/social_meta.php'; ?>
     <?php elseif (!empty($publicMetaDescription)): ?>

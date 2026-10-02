@@ -16,6 +16,7 @@ use App\DiscussionSettings;
 use App\NewsletterSettings;
 use App\PermalinkSettings;
 use App\GoogleSettings;
+use App\AdcashSettings;
 
 class GeneralController extends Controller
 {
@@ -47,6 +48,7 @@ class GeneralController extends Controller
             'newsletter' => NewsletterSettings::get(),
             'permalinks' => PermalinkSettings::get(),
             'google' => GoogleSettings::get(),
+            'adcash' => AdcashSettings::get(),
         ]);
     }
 
@@ -110,6 +112,7 @@ class GeneralController extends Controller
         NewsletterSettings::save($_POST);
         PermalinkSettings::save($_POST);
         GoogleSettings::save($_POST);
+        AdcashSettings::save($_POST);
 
         AppSettings::saveSiteSeoConfig([
             'seo_title_suffix' => $_POST['seo_title_suffix'] ?? '',

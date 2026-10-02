@@ -10,6 +10,7 @@ $discussion = $discussion ?? \App\DiscussionSettings::get();
 $newsletter = $newsletter ?? \App\NewsletterSettings::get();
 $permalinks = $permalinks ?? \App\PermalinkSettings::get();
 $google = $google ?? \App\GoogleSettings::get();
+$adcash = $adcash ?? \App\AdcashSettings::get();
 $themePresets = \App\PublicTheme::presets();
 $mediaImages = $mediaImages ?? [];
 $helpChat = $helpChat ?? \App\HelpChatSettings::get();
@@ -640,6 +641,43 @@ ob_start();
                     <input type="text" name="google_cse_cx" id="googleCseCx" class="form-control" maxlength="80"
                         value="<?= htmlspecialchars($google->cse_cx ?? '') ?>" placeholder="cx engine ID" autocomplete="off">
                     <small class="text-muted d-block mt-1">Engine ID from <a href="https://programmablesearchengine.google.com/" target="_blank" rel="noopener">Programmable Search</a>. Adds Google results on <code>/search</code> below the built-in CMS results.</small>
+                </div>
+            </div>
+            <hr class="my-4">
+            <h6 class="mb-3">AdCash</h6>
+            <p class="text-muted small">Paste zone IDs only from <a href="https://adcash.myadcash.com/" target="_blank" rel="noopener">myadcash</a> (Zones → create a zone → copy the <code>zoneId</code> from the generated script). The public site loads AdCash's official <code>aclib.js</code> and runs each configured zone. Theme preview and the Customizer iframe do not fire tags. Invalid IDs are ignored on save.</p>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="adcashZoneAutotag">Autotag zone ID</label>
+                    <input type="text" name="adcash_zone_autotag" id="adcashZoneAutotag" class="form-control" maxlength="40"
+                        value="<?= htmlspecialchars($adcash->autotag ?? '') ?>" placeholder="e.g. ab1cdefg23" autocomplete="off">
+                    <small class="text-muted d-block mt-1">Recommended: one tag that rotates Pop-Under, Interstitial, In-Page Push, and Video Slider. Don't combine it with individual zones for the same formats.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="adcashZoneBanner">Banner zone ID</label>
+                    <input type="text" name="adcash_zone_banner" id="adcashZoneBanner" class="form-control" maxlength="40"
+                        value="<?= htmlspecialchars($adcash->banner ?? '') ?>" placeholder="zone ID" autocomplete="off">
+                    <small class="text-muted d-block mt-1">Display banner zone — safe to combine with Autotag.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="adcashZonePop">Pop-Under zone ID</label>
+                    <input type="text" name="adcash_zone_pop" id="adcashZonePop" class="form-control" maxlength="40"
+                        value="<?= htmlspecialchars($adcash->pop ?? '') ?>" placeholder="zone ID" autocomplete="off">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="adcashZoneInterstitial">Interstitial zone ID</label>
+                    <input type="text" name="adcash_zone_interstitial" id="adcashZoneInterstitial" class="form-control" maxlength="40"
+                        value="<?= htmlspecialchars($adcash->interstitial ?? '') ?>" placeholder="zone ID" autocomplete="off">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="adcashZoneInpagePush">In-Page Push zone ID</label>
+                    <input type="text" name="adcash_zone_inpage_push" id="adcashZoneInpagePush" class="form-control" maxlength="40"
+                        value="<?= htmlspecialchars($adcash->inpage_push ?? '') ?>" placeholder="zone ID" autocomplete="off">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="adcashZoneVideoSlider">Video Slider zone ID</label>
+                    <input type="text" name="adcash_zone_video_slider" id="adcashZoneVideoSlider" class="form-control" maxlength="40"
+                        value="<?= htmlspecialchars($adcash->video_slider ?? '') ?>" placeholder="zone ID" autocomplete="off">
                 </div>
             </div>
             <hr class="my-4">
